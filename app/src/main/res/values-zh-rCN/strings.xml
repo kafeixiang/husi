@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">虎兕</string>
-    <string name="app_name_long">匪兕匪虎 率彼旷野</string>
+    <string name="app_name">husi</string>
+    <string name="app_name_long">husi</string>
     <string name="app_desc">适用于 Android 的代理工具, 使用 Kotlin 编写。</string>
     <string name="project">项目</string>
     <string name="github">源代码</string>
@@ -509,6 +509,8 @@
     <string name="inbound_password">入站密码</string>
     <string name="http_upgrade_host">HTTPUpgrade 主机</string>
     <string name="http_upgrade_path">HTTPUpgrade 路径</string>
+    <string name="update_current_subscription">更新当前组订阅</string>
+    <string name="group_not_subscription">组类型不是订阅</string>
     <string name="allow_insecure_on_request_sum">更新订阅的时候允许不安全的连接</string>
     <string name="global_allow_insecure">总是跳过 TLS 证书验证</string>
     <string name="scan_vpn_app">探测 VPN 应用</string>
