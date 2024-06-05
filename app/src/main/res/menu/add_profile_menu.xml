@@ -86,7 +86,7 @@
                 android:title=""
                 app:showAsAction="always">
                 <menu>
-                         <item
+                        <item
                                 android:id="@+id/action_update_subscription"
                                 android:title="@string/update_current_subscription" />
                         <item
