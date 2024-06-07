@@ -509,8 +509,6 @@
     <string name="inbound_password">入站密码</string>
     <string name="http_upgrade_host">HTTPUpgrade 主机</string>
     <string name="http_upgrade_path">HTTPUpgrade 路径</string>
-    <string name="update_current_subscription">更新当前组订阅</string>
-    <string name="group_not_subscription">组类型不是订阅</string>
     <string name="allow_insecure_on_request_sum">更新订阅的时候允许不安全的连接</string>
     <string name="global_allow_insecure">总是跳过 TLS 证书验证</string>
     <string name="scan_vpn_app">探测 VPN 应用</string>
@@ -554,4 +552,6 @@
     <string name="ntp_server_address">NTP 服务器地址</string>
     <string name="ntp_server_port">NTP 服务器端口</string>
     <string name="ntp_sync_interval">NTP 同步间隔</string>
+    <string name="update_current_subscription">更新当前组订阅</string>
+    <string name="group_not_subscription">组类型不是订阅</string>
 </resources>
