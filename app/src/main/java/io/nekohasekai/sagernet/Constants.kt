@@ -116,6 +116,7 @@ object Key {
     const val SERVER_ENCRYPTION = "serverEncryption"
     const val SERVER_ALPN = "serverALPN"
     const val SERVER_CERTIFICATES = "serverCertificates"
+    const val SERVER_PINNED_CERTIFICATE_CHAIN = "serverPinnedCertificateChain"
     const val SERVER_MTU = "serverMTU"
 
     const val MUX_STATE = "muxState"
@@ -187,7 +188,6 @@ object Key {
 
     //
 
-    const val NEKO_PLUGIN_MANAGED = "nekoPlugins"
     const val APP_TLS_VERSION = "appTLSVersion"
     const val CLASH_API_LISTEN = "clashAPIListen"
     const val ENABLED_CAZILLA = "enabledCazilla"
@@ -237,4 +237,13 @@ object Action {
 
     // const val SWITCH_WAKE_LOCK = "io.nekohasekai.sagernet.SWITCH_WAKELOCK"
     const val RESET_UPSTREAM_CONNECTIONS = "moe.nb4a.RESET_UPSTREAM_CONNECTIONS"
+}
+
+object TrafficSortMode {
+    const val START = 0
+    const val ID = 1
+    const val SRC = 2
+    const val DST = 3
+    const val UPLOAD = 4
+    const val DOWNLOAD = 5
 }

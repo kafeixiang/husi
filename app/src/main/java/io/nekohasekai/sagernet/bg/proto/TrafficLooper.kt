@@ -6,15 +6,18 @@ import io.nekohasekai.sagernet.bg.BaseService
 import io.nekohasekai.sagernet.bg.SagerConnection
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProfileManager
-import io.nekohasekai.sagernet.fmt.TAG_BYPASS
+import io.nekohasekai.sagernet.fmt.TAG_DIRECT
 import io.nekohasekai.sagernet.fmt.TAG_PROXY
 import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
-class TrafficLooper
-    (
-    val data: BaseService.Data, private val sc: CoroutineScope
+class TrafficLooper(
+    val data: BaseService.Data, private val sc: CoroutineScope,
 ) {
 
     private var job: Job? = null
@@ -90,7 +93,7 @@ class TrafficLooper
         var proxy: ProxyInstance?
 
         // for display
-        val itemBypass = TrafficUpdater.TrafficLooperData(tag = TAG_BYPASS)
+        val itemBypass = TrafficUpdater.TrafficLooperData(tag = TAG_DIRECT)
 
         while (sc.isActive) {
             proxy = data.proxy
@@ -104,7 +107,7 @@ class TrafficLooper
                 idMap.clear()
                 idMap[-1] = itemBypass
                 //
-                val tags = hashSetOf(TAG_PROXY, TAG_BYPASS)
+                val tags = hashSetOf(TAG_PROXY, TAG_DIRECT)
                 proxy.config.trafficMap.forEach { (tag, ents) ->
                     tags.add(tag)
                     for (ent in ents) {
@@ -172,6 +175,7 @@ class TrafficLooper
                                 )
                             }
                         }
+
                     }
                 }
             }

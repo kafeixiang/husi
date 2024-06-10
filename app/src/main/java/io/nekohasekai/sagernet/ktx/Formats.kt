@@ -6,6 +6,7 @@ import io.nekohasekai.sagernet.fmt.Serializable
 import io.nekohasekai.sagernet.fmt.http.parseHttp
 import io.nekohasekai.sagernet.fmt.hysteria.parseHysteria1
 import io.nekohasekai.sagernet.fmt.hysteria.parseHysteria2
+import io.nekohasekai.sagernet.fmt.juicity.parseJuicity
 import io.nekohasekai.sagernet.fmt.naive.parseNaive
 import io.nekohasekai.sagernet.fmt.parseUniversal
 import io.nekohasekai.sagernet.fmt.shadowsocks.parseShadowsocks
@@ -14,10 +15,6 @@ import io.nekohasekai.sagernet.fmt.trojan.parseTrojan
 import io.nekohasekai.sagernet.fmt.trojan_go.parseTrojanGo
 import io.nekohasekai.sagernet.fmt.tuic.parseTuic
 import io.nekohasekai.sagernet.fmt.v2ray.parseV2Ray
-import libcore.Libcore
-import moe.matsuri.nb4a.plugin.NekoPluginManager
-import moe.matsuri.nb4a.proxy.neko.NekoJSInterface
-import moe.matsuri.nb4a.proxy.neko.parseShareLink
 import moe.matsuri.nb4a.utils.JavaUtil.gson
 import moe.matsuri.nb4a.utils.Util
 import org.json.JSONArray
@@ -87,8 +84,7 @@ fun JSONObject.getBool(name: String): Boolean? {
 }
 
 
-// 重名了喵
-fun JSONObject.getIntNya(name: String): Int? {
+fun JSONObject.getIntOrNull(name: String): Int? {
     return try {
         getInt(name)
     } catch (ignored: Exception) {
@@ -217,23 +213,15 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
                 }
             }
 
-            else -> { // Neko plugins
-                NekoPluginManager.getProtocols().forEach { obj ->
-                    obj.protocolConfig.optJSONArray("links")?.forEach { _, any ->
-                        if (any is String && startsWith(any)) {
-                            runCatching {
-                                entities.add(
-                                    parseShareLink(
-                                        obj.plgId, obj.protocolId, this@parseLink
-                                    )
-                                )
-                            }.onFailure {
-                                Logs.w(it)
-                            }
-                        }
-                    }
+            "juicity" -> {
+                Logs.d("Try parse Juicity link: $this")
+                runCatching {
+                    entities.add(parseJuicity(this))
+                }.onFailure {
+                    Logs.w(it)
                 }
             }
+
         }
     }
 
@@ -253,7 +241,6 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
             }
         }
     }
-    NekoJSInterface.Default.destroyAllJsi()
     return if (entities.size > entitiesByLine.size) entities else entitiesByLine
 }
 

@@ -24,6 +24,7 @@ import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.http.HttpBean
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
+import io.nekohasekai.sagernet.fmt.juicity.JuicityBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.ShadowsocksBean
 import io.nekohasekai.sagernet.fmt.socks.SOCKSBean
 import io.nekohasekai.sagernet.fmt.trojan.TrojanBean
@@ -31,7 +32,6 @@ import io.nekohasekai.sagernet.fmt.trojan_go.TrojanGoBean
 import io.nekohasekai.sagernet.fmt.tuic.TuicBean
 import io.nekohasekai.sagernet.fmt.v2ray.VMessBean
 import io.nekohasekai.sagernet.fmt.v2ray.isTLS
-import moe.matsuri.nb4a.proxy.neko.NekoBean
 import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean
 
 interface ValidateResult
@@ -39,7 +39,6 @@ object ResultSecure : ValidateResult
 object ResultLocal : ValidateResult
 class ResultDeprecated(@RawRes val textRes: Int) : ValidateResult
 class ResultInsecure(@RawRes val textRes: Int) : ValidateResult
-class ResultInsecureText(val text: String) : ValidateResult
 
 val ssSecureList = "(gcm|poly1305)".toRegex()
 
@@ -95,9 +94,8 @@ fun AbstractBean.isInsecure(): ValidateResult {
             if (version < 3) return ResultDeprecated(R.raw.shadowtls_legacy)
         }
 
-        is NekoBean -> {
-            val hint = sharedStorage.optString("insecureHint")
-            if (hint.isNotBlank()) return ResultInsecureText(hint)
+        is JuicityBean -> {
+            if (allowInsecure) return ResultInsecure(R.raw.insecure)
         }
     }
 

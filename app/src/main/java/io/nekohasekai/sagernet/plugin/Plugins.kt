@@ -10,10 +10,8 @@ import io.nekohasekai.sagernet.utils.PackageCache
 object Plugins {
     const val AUTHORITIES_PREFIX_SEKAI_EXE = "io.nekohasekai.sagernet.plugin."
     const val AUTHORITIES_PREFIX_NEKO_EXE = "moe.matsuri.exe."
-    const val AUTHORITIES_PREFIX_NEKO_PLUGIN = "moe.matsuri.plugin."
     const val AUTHORITIES_PREFIX_HUSI_EXE = "fr.husi.plugin."
-    // Package name and authorities is becoming confused......
-    const val AUTHORITIES_PREFIX_DYHKWONG = "com.github.dyhkwong.plugin."
+    const val AUTHORITIES_PREFIX_DYHKWONG = "com.github.dyhkwong."
 
     const val ACTION_NATIVE_PLUGIN = "io.nekohasekai.sagernet.plugin.ACTION_NATIVE_PLUGIN"
 
@@ -27,7 +25,6 @@ object Plugins {
                 || auth.startsWith(AUTHORITIES_PREFIX_DYHKWONG)
                 || auth.startsWith(AUTHORITIES_PREFIX_NEKO_EXE)
                 || auth.startsWith(AUTHORITIES_PREFIX_SEKAI_EXE)
-                || auth.startsWith(AUTHORITIES_PREFIX_NEKO_PLUGIN)
     }
 
     fun preferExePrefix(): String {
@@ -38,6 +35,7 @@ object Plugins {
         return when {
             pkgName.startsWith(AUTHORITIES_PREFIX_HUSI_EXE) -> SagerNet.application.getString(R.string.app_name)
             pkgName.startsWith(AUTHORITIES_PREFIX_SEKAI_EXE) -> "SagerNet"
+            pkgName.startsWith(AUTHORITIES_PREFIX_DYHKWONG) -> "dyhkwong"
             pkgName.startsWith(AUTHORITIES_PREFIX_NEKO_EXE) -> "Matsuri"
             else -> "Unknown"
         }

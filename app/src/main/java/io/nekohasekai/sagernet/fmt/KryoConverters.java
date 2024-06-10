@@ -8,6 +8,7 @@ import io.nekohasekai.sagernet.database.SubscriptionBean;
 import io.nekohasekai.sagernet.fmt.http.HttpBean;
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean;
 import io.nekohasekai.sagernet.fmt.internal.ChainBean;
+import io.nekohasekai.sagernet.fmt.juicity.JuicityBean;
 import io.nekohasekai.sagernet.fmt.mieru.MieruBean;
 import io.nekohasekai.sagernet.fmt.naive.NaiveBean;
 import io.nekohasekai.sagernet.fmt.shadowsocks.ShadowsocksBean;
@@ -21,7 +22,6 @@ import io.nekohasekai.sagernet.fmt.wireguard.WireGuardBean;
 import io.nekohasekai.sagernet.ktx.KryosKt;
 import io.nekohasekai.sagernet.ktx.Logs;
 import moe.matsuri.nb4a.proxy.config.ConfigBean;
-import moe.matsuri.nb4a.proxy.neko.NekoBean;
 import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean;
 import moe.matsuri.nb4a.utils.JavaUtil;
 
@@ -135,6 +135,12 @@ public class KryoConverters {
     }
 
     @TypeConverter
+    public static JuicityBean juicityDeserialize(byte[] bytes) {
+        if (JavaUtil.isEmpty(bytes)) return null;
+        return deserialize(new JuicityBean(), bytes);
+    }
+
+    @TypeConverter
     public static ShadowTLSBean shadowTLSDeserialize(byte[] bytes) {
         if (JavaUtil.isEmpty(bytes)) return null;
         return deserialize(new ShadowTLSBean(), bytes);
@@ -144,12 +150,6 @@ public class KryoConverters {
     public static ChainBean chainDeserialize(byte[] bytes) {
         if (JavaUtil.isEmpty(bytes)) return null;
         return deserialize(new ChainBean(), bytes);
-    }
-
-    @TypeConverter
-    public static NekoBean nekoDeserialize(byte[] bytes) {
-        if (JavaUtil.isEmpty(bytes)) return null;
-        return deserialize(new NekoBean(), bytes);
     }
 
     @TypeConverter

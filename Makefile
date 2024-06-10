@@ -1,13 +1,10 @@
-.PHONY: update libcore dashboard apk apk_debug assets lint_go test_go
+.PHONY: update libcore apk apk_debug assets lint_go test_go
 
 libcore:
 	./run lib core
 
-dashboard:
-	./run lib dashboard
-
 apk:
-	BUILD_PLUGIN ./gradlew app:assembleFossRelease
+	BUILD_PLUGIN=none ./gradlew app:assembleFossRelease
 
 apk_debug:
 	BUILD_PLUGIN=none ./gradlew app:assembleFossDebug
@@ -15,13 +12,10 @@ apk_debug:
 assets:
 	./run lib assets
 
-build: libcore dashboard assets apk
+build: libcore assets apk
 
 update:
 	./run lib update
-
-hysteria2:
-	./gradlew :plugin:hysteria2:assembleFossRelease
 
 lint_go:
 	cd libcore/ && GOOS=android golangci-lint run ./...
@@ -40,3 +34,9 @@ fmt_go_install:
 
 test_go:
 	cd libcore/ && go test -v -count=1 ./...
+
+hysteria2:
+	./gradlew :plugin:hysteria2:assembleFossRelease
+
+juicity:
+	./gradlew :plugin:juicity:assembleFossRelease

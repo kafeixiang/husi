@@ -170,8 +170,8 @@ fun JSONObject.parseHysteria1Json(): HysteriaBean {
         alpn = getStr("alpn")
         allowInsecure = getBool("insecure")
 
-        streamReceiveWindow = getIntNya("recv_window_conn")
-        connectionReceiveWindow = getIntNya("recv_window")
+        streamReceiveWindow = getIntOrNull("recv_window_conn")
+        connectionReceiveWindow = getIntOrNull("recv_window")
         disableMtuDiscovery = getBool("disable_mtu_discovery")
     }
 }
@@ -235,9 +235,8 @@ fun HysteriaBean.buildHysteriaConfig(port: Int, cacheFile: (() -> File)?): Strin
             put("lazy", true)
 
             put("quic", JSONObject().apply {
-                    // TODO constant protect path
                     put("sockopts", JSONObject().apply {
-                            put("fdControlUnixSocket", "protect_path")
+                            put("fdControlUnixSocket", Libcore.ProtectPath)
                         }
                     )
                 }

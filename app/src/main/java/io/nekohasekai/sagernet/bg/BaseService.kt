@@ -4,7 +4,11 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.*
+import android.os.Build
+import android.os.IBinder
+import android.os.PowerManager
+import android.os.RemoteCallbackList
+import android.os.RemoteException
 import android.widget.Toast
 import io.nekohasekai.sagernet.Action
 import io.nekohasekai.sagernet.BootReceiver
@@ -15,9 +19,21 @@ import io.nekohasekai.sagernet.aidl.ISagerNetServiceCallback
 import io.nekohasekai.sagernet.bg.proto.ProxyInstance
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.SagerDatabase
-import io.nekohasekai.sagernet.ktx.*
+import io.nekohasekai.sagernet.ktx.Logs
+import io.nekohasekai.sagernet.ktx.broadcastReceiver
+import io.nekohasekai.sagernet.ktx.hasPermission
+import io.nekohasekai.sagernet.ktx.readableMessage
+import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
+import io.nekohasekai.sagernet.ktx.runOnMainDispatcher
 import io.nekohasekai.sagernet.plugin.PluginManager
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import libcore.Libcore
@@ -52,7 +68,6 @@ class BaseService {
 
         val receiver = broadcastReceiver { ctx, intent ->
             when (intent.action) {
-                Intent.ACTION_SHUTDOWN -> service.persistStats()
                 Action.RELOAD -> service.reload()
                 // Action.SWITCH_WAKE_LOCK -> runOnDefaultDispatcher { service.switchWakeLock() }
                 PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED -> {
@@ -149,6 +164,18 @@ class BaseService {
             }
         }
 
+        override fun setConnection(enable: Boolean) {
+            if (enable) {
+                data?.proxy?.connectionLooper?.start()
+            } else {
+                data?.proxy?.connectionLooper?.stop()
+            }
+        }
+
+        override fun closeConnection(id: String) {
+            data?.proxy?.box?.closeConnection(id)
+        }
+
         fun stateChanged(s: State, msg: String?) = launch {
             val profileName = profileName
             broadcast { it.stateChanged(s.ordinal, profileName, msg) }
@@ -205,10 +232,7 @@ class BaseService {
             val ent = SagerDatabase.proxyDao.getById(DataStore.selectedProxy) ?: return false
             val tmpBox = ProxyInstance(ent)
             tmpBox.buildConfigTmp()
-            if (tmpBox.lastSelectorGroupId == data.proxy?.lastSelectorGroupId) {
-                return true
-            }
-            return false
+            return tmpBox.lastSelectorGroupId == data.proxy?.lastSelectorGroupId
         }
 
         suspend fun startProcesses() {
@@ -285,10 +309,6 @@ class BaseService {
             }
         }
 
-        open fun persistStats() {
-            // TODO NEW save app stats?
-        }
-
         // networks
         var upstreamInterfaceName: String?
 
@@ -298,16 +318,6 @@ class BaseService {
 
         var wakeLock: PowerManager.WakeLock?
         fun acquireWakeLock()
-        suspend fun switchWakeLock() {
-            wakeLock?.apply {
-                release()
-                wakeLock = null
-                data.notification?.postNotificationWakeLockStatus(false)
-            } ?: apply {
-                acquireWakeLock()
-                data.notification?.postNotificationWakeLockStatus(true)
-            }
-        }
 
         suspend fun lateInit() {
             wakeLock?.apply {

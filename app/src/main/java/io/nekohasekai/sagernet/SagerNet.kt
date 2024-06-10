@@ -7,7 +7,6 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.inputmethodservice.InputMethodService
 import android.net.ConnectivityManager
 import android.net.wifi.WifiManager
 import android.os.Build
@@ -33,7 +32,6 @@ import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
 import libcore.Libcore
 import io.nekohasekai.sagernet.bg.NativeInterface
 import moe.matsuri.nb4a.utils.JavaUtil
-import moe.matsuri.nb4a.utils.cleanWebview
 import androidx.work.Configuration as WorkConfiguration
 
 class SagerNet : Application(),
@@ -64,7 +62,6 @@ class SagerNet : Application(),
 
             runOnDefaultDispatcher {
                 PackageCache.register()
-                cleanWebview()
             }
         }
 
@@ -154,6 +151,7 @@ class SagerNet : Application(),
         val power by lazy { application.getSystemService<PowerManager>()!! }
         val wifiManager by lazy { application.getSystemService<WifiManager>()!! }
         val inputMethodManager by lazy { application.getSystemService<InputMethodManager>()!! }
+        val clipboardManager by lazy { application.getSystemService<ClipboardManager>()!! }
 
         fun getClipboardText(): String {
             return clipboard.primaryClip?.takeIf { it.itemCount > 0 }
