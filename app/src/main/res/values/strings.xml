@@ -613,9 +613,6 @@
     <string name="ntp_server_address">NTP Server Address</string>
     <string name="ntp_server_port">NTP Server Port</string>
     <string name="ntp_sync_interval">NTP Sync Interval</string>
- bf
-</resources>
-
     <string name="start_time">Started at</string>
     <string name="outbound_rule">Outbound rule</string>
     <string name="detail">Detail</string>
@@ -633,4 +630,3 @@
     <string name="by_download">By Download</string>
     <string name="pinned_peer_certificate_chain_sha256">Pinned certificate chain hash</string>
 </resources>
- dev
