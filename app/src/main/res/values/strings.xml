@@ -564,6 +564,8 @@
     <string name="inbound_password">Inbound password</string>
     <string name="http_upgrade_host">HTTPUpgrade Host</string>
     <string name="http_upgrade_path">HTTPUpgrade Path</string>
+    <string name="update_current_subscription">Update current Group\'s subscription</string>
+    <string name="group_not_subscription">Group type is not subscription</string>
     <string name="allow_insecure_on_request_sum">Disable certificate checking when updating
         subscriptions
     </string>
@@ -611,6 +613,9 @@
     <string name="ntp_server_address">NTP Server Address</string>
     <string name="ntp_server_port">NTP Server Port</string>
     <string name="ntp_sync_interval">NTP Sync Interval</string>
+ bf
+</resources>
+
     <string name="start_time">Started at</string>
     <string name="outbound_rule">Outbound rule</string>
     <string name="detail">Detail</string>
@@ -628,3 +633,4 @@
     <string name="by_download">By Download</string>
     <string name="pinned_peer_certificate_chain_sha256">Pinned certificate chain hash</string>
 </resources>
+ dev

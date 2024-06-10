@@ -119,8 +119,19 @@
                 <menu>
                     <group android:checkableBehavior="single">
                         <item
+ bf
+                                android:id="@+id/action_update_subscription"
+                                android:title="@string/update_current_subscription" />
+                        <item
+                                android:id="@+id/action_clear_traffic_statistics"
+                                android:title="@string/clear_traffic_statistics" />
+                        <item
+                                android:id="@+id/action_remove_duplicate"
+                                android:title="@string/remove_duplicate" />
+
                                 android:id="@+id/action_order_origin"
                                 android:title="@string/group_order_origin" />
+ dev
                         <item
                                 android:id="@+id/action_order_by_name"
                                 android:title="@string/group_order_by_name" />

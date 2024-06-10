@@ -44,6 +44,7 @@ import io.nekohasekai.sagernet.databinding.LayoutProgressListBinding
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.toUniversalLink
 import io.nekohasekai.sagernet.fmt.v2ray.toV2rayN
+import io.nekohasekai.sagernet.group.GroupUpdater
 import io.nekohasekai.sagernet.group.RawUpdater
 import io.nekohasekai.sagernet.ktx.*
 import io.nekohasekai.sagernet.plugin.PluginManager
@@ -395,6 +396,53 @@ class ConfigurationFragment @JvmOverloads constructor(
                 startActivity(Intent(requireActivity(), ChainSettingsActivity::class.java))
             }
 
+ bf
+            R.id.action_new_neko -> {
+                val context = requireContext()
+                lateinit var dialog: AlertDialog
+                val linearLayout = LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+
+                    NekoPluginManager.getProtocols().forEach { obj ->
+                        LayoutAppsItemBinding.inflate(layoutInflater, this, true).apply {
+                            itemcheck.isGone = true
+                            button.isGone = false
+                            itemicon.setImageDrawable(
+                                PackageCache.installedApps[obj.plgId]?.loadIcon(
+                                    context.packageManager
+                                )
+                            )
+                            title.text = obj.protocolId
+                            desc.text = obj.plgId
+                            button.setOnClickListener {
+                                dialog.dismiss()
+                                val intent = Intent(context, NekoSettingActivity::class.java)
+                                intent.putExtra("plgId", obj.plgId)
+                                intent.putExtra("protocolId", obj.protocolId)
+                                startActivity(intent)
+                            }
+                        }
+                    }
+                }
+                dialog = MaterialAlertDialogBuilder(context).setTitle(R.string.neko_plugin)
+                    .setView(linearLayout)
+                    .show()
+            }
+
+            R.id.action_update_subscription -> {
+                val group = DataStore.currentGroup()
+                if (group.type != GroupType.SUBSCRIPTION) {
+                    snackbar(R.string.group_not_subscription).show()
+                    Logs.e("onMenuItemClick: Group(${group.displayName()}) is not subscription")
+                } else {
+                    runOnLifecycleDispatcher {
+                        GroupUpdater.startUpdate(group, true)
+                    }
+                }
+            }
+
+
+ dev
             R.id.action_clear_traffic_statistics -> {
                 runOnDefaultDispatcher {
                     val profiles = SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId())
