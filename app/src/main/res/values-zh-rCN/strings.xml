@@ -548,9 +548,6 @@
     <string name="ntp_server_address">NTP 服务器地址</string>
     <string name="ntp_server_port">NTP 服务器端口</string>
     <string name="ntp_sync_interval">NTP 同步间隔</string>
- bf
-</resources>
-
     <string name="start_time">开始于</string>
     <string name="outbound_rule">出站规则</string>
     <string name="detail">详细</string>
@@ -568,4 +565,3 @@
     <string name="by_download">根据下行</string>
     <string name="pinned_peer_certificate_chain_sha256">固定证书链散列</string>
 </resources>
- dev
