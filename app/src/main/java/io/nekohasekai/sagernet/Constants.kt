@@ -222,6 +222,10 @@ object DNSMode {
     const val LEAK = 1
     const val PRECISE = 2
     const val FAKE_DNS = 3
+
+    fun isLeakMode(dnsMode: Int): Boolean {
+        return dnsMode == LEAK || dnsMode == PRECISE
+    }
 }
 
 object MuxState {
