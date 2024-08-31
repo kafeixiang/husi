@@ -121,7 +121,8 @@ object Key {
     const val SERVER_MUX = "serverMux"
     const val SERVER_BRUTAL = "serverBrutal"
     const val SERVER_MUX_TYPE = "serverMuxType"
-    const val SERVER_MUX_CONCURRENCY = "serverMuxConcurrency"
+    const val SERVER_MUX_STRATEGY = "serverMuxStrategy"
+    const val SERVER_MUX_NUMBER = "serverMuxNumber"
     const val SERVER_MUX_PADDING = "serverMuxPadding"
 
     const val SERVER_VMESS_EXPERIMENTS_CATEGORY = "serverVMessExperimentsCategory"
@@ -151,6 +152,7 @@ object Key {
 
     const val SERVER_PRIVATE_KEY = "serverPrivateKey"
     const val SERVER_INSECURE_CONCURRENCY = "serverInsecureConcurrency"
+    const val SERVER_NO_POST_QUANTUM = "serverNoPostQuantum"
 
     const val SERVER_UDP_RELAY_MODE = "serverUDPRelayMode"
     const val SERVER_CONGESTION_CONTROLLER = "serverCongestionController"
@@ -171,6 +173,7 @@ object Key {
     const val ROUTE_SSID = "routeSSID"
     const val ROUTE_BSSID = "routeBSSID"
     const val ROUTE_CLIENT = "routeClient"
+    const val CLASH_MODE = "routeClashMode"
 
     const val GROUP_NAME = "groupName"
     const val GROUP_TYPE = "groupType"
@@ -242,6 +245,12 @@ object MuxType {
     const val YAMUX = 2
 }
 
+object MuxStrategy {
+    const val MAX_CONNECTIONS = 0
+    const val MIN_STREAMS = 1
+    const val MAX_STREAMS = 2
+}
+
 object Action {
     const val SERVICE = "io.nekohasekai.sagernet.SERVICE"
     const val CLOSE = "io.nekohasekai.sagernet.CLOSE"
@@ -266,4 +275,8 @@ object RuleProvider {
     const val LOYALSOLDIER = 1
     const val CHOCOLATE4U = 2
     const val CUSTOM = 3
+
+    fun hasUnstableBranch(provider: Int): Boolean {
+        return provider in OFFICIAL..LOYALSOLDIER
+    }
 }

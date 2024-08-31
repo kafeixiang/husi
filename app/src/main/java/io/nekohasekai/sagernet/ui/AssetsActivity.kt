@@ -18,6 +18,7 @@ import io.nekohasekai.sagernet.databinding.LayoutAssetItemBinding
 import io.nekohasekai.sagernet.databinding.LayoutAssetsBinding
 import io.nekohasekai.sagernet.ktx.FixedLinearLayoutManager
 import io.nekohasekai.sagernet.ktx.Logs
+import io.nekohasekai.sagernet.ktx.USER_AGENT
 import io.nekohasekai.sagernet.ktx.getColorAttr
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.readableMessage
@@ -325,6 +326,7 @@ class AssetsActivity : ThemedActivity() {
         private fun fetchVersion(repo: String): String {
             val response = client.newRequest().apply {
                 setURL("https://api.github.com/repos/$repo/releases/latest")
+                setUserAgent(USER_AGENT)
             }.execute()
             return JSONObject(response.contentString).optString("tag_name")
         }
@@ -335,6 +337,7 @@ class AssetsActivity : ThemedActivity() {
             if (unstableBranch && repo.endsWith("sing-geosite")) branchName += "-unstable"
             val response = client.newRequest().apply {
                 setURL("https://codeload.github.com/$repo/tar.gz/refs/heads/${branchName}")
+                setUserAgent(USER_AGENT)
             }.execute()
 
             val cacheFile = File(
@@ -366,18 +369,15 @@ class AssetsActivity : ThemedActivity() {
             File(filesDir, "geosite.version.txt")
         )
         val provider: RulesFetcher = if (DataStore.rulesProvider != RuleProvider.CUSTOM) {
-            var unstableBranch = false
             GithubRuleFetcher(
                 versionFileList,
                 updateProgress,
                 when (DataStore.rulesProvider) {
                     RuleProvider.OFFICIAL -> {
-                        unstableBranch = true
                         listOf("SagerNet/sing-geoip", "SagerNet/sing-geosite")
                     }
 
                     RuleProvider.LOYALSOLDIER -> {
-                        unstableBranch = true
                         listOf("xchacha20-poly1305/sing-geoip", "xchacha20-poly1305/sing-geosite")
                     }
 
@@ -387,7 +387,7 @@ class AssetsActivity : ThemedActivity() {
                 },
                 client,
                 geoDir.absolutePath,
-                unstableBranch,
+                RuleProvider.hasUnstableBranch(DataStore.rulesProvider),
             )
         } else {
             object : RulesFetcher {
@@ -402,6 +402,7 @@ class AssetsActivity : ThemedActivity() {
                     for ((i, link) in links.withIndex()) {
                         val response = client.newRequest().apply {
                             setURL(link)
+                            setUserAgent(USER_AGENT)
                         }.execute()
 
                         val cacheFile = File(cacheDir.parentFile, cacheDir.name + i + ".tmp")

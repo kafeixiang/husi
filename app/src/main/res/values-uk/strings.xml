@@ -242,7 +242,7 @@
     <string name="front_proxy">Зовнішній проксі</string>
     <string name="landing_proxy">Кінцевий проксі</string>
     <string name="protocol_version">Версія протоколу</string>
-    <string name="test_concurrency">Тестування паралелізму</string>
+    <string name="test_concurrency">Число паралельних підключень</string>
     <string name="mux_type">Протокол мультиплексування</string>
     <string name="sniff_routing">Перехоплювати результат для Маршрутизації</string>
     <string name="allow_insecure_on_request_sum">Вимкнути перевірку сертифікатів під час оновлення підписок</string>
@@ -284,7 +284,6 @@
     <string name="traffic_sniffing">Увімкнути аналіз трафіка</string>
     <string name="enable_mux">Увімкнути мультиплексор</string>
     <string name="mux_sum">Протокол MUX призначений для зменьшення затримки з\'єднання TCP, а не для збільшення пропускної здатності. Використання MUX для перегляду відео, завантаження файлів або перевірки швидкості зазвичай контрпродуктивно. Якщо сервер не підтримує MUX, ви не зможете отримати доступ до Інтернету.</string>
-    <string name="mux_concurrency">Кількість одночасних підключень Mux</string>
     <string name="tcp_keep_alive_interval">Інтервал доставки пакетів TCP keep-alive</string>
     <string name="on">Увімкнено</string>
     <string name="proxied_apps_summary">Налаштувати режим VPN для обраних застосунків</string>
@@ -549,4 +548,14 @@
     <string name="done">Готово</string>
     <string name="custom_plugin_prefix">Користувацький префікс плагіна</string>
     <string name="custom_plugin_prefix_summary">Будь ласка, переконайтеся, що ви повністю довіряєте постачальнику плагіна.</string>
+    <string name="traffic_status">Статистика</string>
+    <string name="traffic_connections">З\'єднання</string>
+    <string name="status_memory">Пам\'ять</string>
+    <string name="status_status">Статус</string>
+    <string name="mux_min_streams">Мінімальна кількість потоків</string>
+    <string name="mux_max_streams">Максимальна кількість потоків</string>
+    <string name="disable_post_quantum">Вимкнути постквантове узгодження ключів</string>
+    <string name="mux_number">Номер Mux</string>
+    <string name="mux_strategy">Статегія Mux</string>
+    <string name="mux_max_connections">Максимум з\'єднань</string>
 </resources>

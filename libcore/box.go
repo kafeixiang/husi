@@ -8,6 +8,7 @@ import (
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/common/conntrack"
 	C "github.com/sagernet/sing-box/constant"
+	"github.com/sagernet/sing-box/experimental/clashapi"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	_ "github.com/sagernet/sing-box/include"
 	"github.com/sagernet/sing-box/log"
@@ -48,6 +49,9 @@ type BoxInstance struct {
 
 	selector         *outbound.Selector
 	selectorCallback selectorCallback
+
+	clashModeHook     chan struct{}
+	clashModeCallback func(mode string)
 
 	pauseManager pause.Manager
 	servicePauseFields
@@ -103,13 +107,18 @@ func NewBoxInstance(config string, platformInterface PlatformInterface) (b *BoxI
 		pauseManager: service.FromContext[pause.Manager](ctx),
 	}
 
-	// selector
 	if !forTest {
+		// selector
 		if proxy, haveProxyOutbound := b.Box.Router().Outbound("proxy"); haveProxyOutbound {
 			if selector, isSelector := proxy.(*outbound.Selector); isSelector {
 				b.selector = selector
 				b.selectorCallback = platformInterface.SelectorCallback
 			}
+		}
+
+		// Clash
+		if clash := b.Box.Router().ClashServer(); clash != nil {
+			b.clashModeCallback = platformInterface.ClashModeCallback
 		}
 	}
 
@@ -119,25 +128,34 @@ func NewBoxInstance(config string, platformInterface PlatformInterface) (b *BoxI
 func (b *BoxInstance) Start() (err error) {
 	defer catchPanic("box.Start", func(panicErr error) { err = panicErr })
 
-	if b.state.Load() == boxStateNeverStarted {
-		b.state.Store(boxStateRunning)
-		defer func(b *BoxInstance, callback selectorCallback) {
-			if b.selector != nil {
-				boxCancel := b.cancel
-				ctx, cancelContext := context.WithCancel(context.Background())
-				b.cancel = func() {
-					boxCancel()
-					cancelContext()
-				}
-				go b.listenSelectorChange(ctx, callback)
-			}
-		}(b, b.selectorCallback)
-		return b.Box.Start()
+	if b.state.Load() != boxStateNeverStarted {
+		return E.New("box already started")
 	}
-	return E.New("box already started")
+
+	b.state.Store(boxStateRunning)
+	err = b.Box.Start()
+	if err != nil {
+		return err
+	}
+
+	if b.selector != nil {
+		oldCancel := b.cancel
+		ctx, cancel := context.WithCancel(context.Background())
+		b.cancel = func() {
+			oldCancel()
+			cancel()
+		}
+		go b.listenSelectorChange(ctx, b.selectorCallback)
+	}
+
+	return nil
 }
 
 func (b *BoxInstance) Close() (err error) {
+	return b.CloseTimeout(C.FatalStopTimeout)
+}
+
+func (b *BoxInstance) CloseTimeout(timeout time.Duration) (err error) {
 	defer catchPanic("BoxInstance.Close", func(panicErr error) { err = panicErr })
 
 	// no double close
@@ -148,10 +166,19 @@ func (b *BoxInstance) Close() (err error) {
 	if b.protectCloser != nil {
 		_ = b.protectCloser.Close()
 	}
+	if b.clashModeHook != nil {
+		select {
+		case <-b.clashModeHook:
+			// closed
+		default:
+			b.Router().ClashServer().(*clashapi.Server).SetModeUpdateHook(nil)
+			close(b.clashModeHook)
+		}
+	}
 
 	// close box
 	done := make(chan struct{})
-	ctx, cancel := context.WithTimeout(context.Background(), C.FatalStopTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	start := time.Now()
 	go func(done chan<- struct{}) {
@@ -194,7 +221,5 @@ func (b *BoxInstance) SelectOutbound(tag string) (ok bool) {
 }
 
 func serveProtect(protectFunc protect.Protect) io.Closer {
-	return protect.ServerProtect(ProtectPath, func(fd int) error {
-		return protectFunc(fd)
-	})
+	return protect.ServerProtect(ProtectPath, protectFunc)
 }

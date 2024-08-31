@@ -4,8 +4,10 @@ import android.widget.Toast
 import io.nekohasekai.sagernet.DNSMode
 import io.nekohasekai.sagernet.IPv6Mode
 import io.nekohasekai.sagernet.Key
+import io.nekohasekai.sagernet.MuxStrategy
 import io.nekohasekai.sagernet.MuxType
 import io.nekohasekai.sagernet.R
+import io.nekohasekai.sagernet.RuleProvider
 import io.nekohasekai.sagernet.SagerNet
 import io.nekohasekai.sagernet.TunImplementation
 import io.nekohasekai.sagernet.bg.VpnService
@@ -33,6 +35,8 @@ import io.nekohasekai.sagernet.ktx.isIpAddress
 import io.nekohasekai.sagernet.ktx.mkPort
 import io.nekohasekai.sagernet.utils.PackageCache
 import libcore.Libcore
+import moe.matsuri.nb4a.IP_PRIVATE
+import moe.matsuri.nb4a.Listable
 import moe.matsuri.nb4a.SingBoxOptions.BrutalOptions
 import moe.matsuri.nb4a.SingBoxOptions.CacheFileOptions
 import moe.matsuri.nb4a.SingBoxOptions.ClashAPIOptions
@@ -59,14 +63,16 @@ import moe.matsuri.nb4a.SingBoxOptions.Rule_Default
 import moe.matsuri.nb4a.SingBoxOptions.V2RayAPIOptions
 import moe.matsuri.nb4a.SingBoxOptions.V2RayStatsServiceOptions
 import moe.matsuri.nb4a.checkEmpty
+import moe.matsuri.nb4a.makeRuleSetRulesLocal
+import moe.matsuri.nb4a.makeRuleSetRulesRemote
 import moe.matsuri.nb4a.makeSingBoxRule
-import moe.matsuri.nb4a.makeSingBoxRuleSet
 import moe.matsuri.nb4a.proxy.config.ConfigBean
 import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean
 import moe.matsuri.nb4a.proxy.shadowtls.buildSingBoxOutboundShadowTLSBean
 import moe.matsuri.nb4a.utils.JavaUtil.gson
 import moe.matsuri.nb4a.utils.Util
 import moe.matsuri.nb4a.utils.listByLineOrComma
+import moe.matsuri.nb4a.utils.toListable
 
 // Inbound
 const val TAG_MIXED = "mixed-in"
@@ -87,6 +93,12 @@ const val TAG_DNS_BLOCK = "dns-block"
 const val TAG_DNS_LOCAL = "dns-local"
 const val TAG_DNS_FAKE = "dns-fake"
 
+// Clash mode
+// Use lower case to adapt with some dashboard
+const val CLASH_GLOBAL = "global"
+const val CLASH_RULE = "rule"
+const val CLASH_DIRECT = "direct"
+
 const val LOCALHOST4 = "127.0.0.1"
 
 // Note: You shouldn't set strategy and detour for "local"
@@ -96,8 +108,6 @@ val FAKE_DNS_QUERY_TYPE: List<String> = listOf("A", "AAAA")
 
 val ERR_NO_REMOTE_DNS by lazy { Exception("No remote DNS, check your settings!") }
 val ERR_NO_DIRECT_DNS by lazy { Exception("No direct DNS, check your settings!") }
-
-val externalAssets: String by lazy { SagerNet.application.externalAssets.absolutePath }
 
 class ConfigBuildResult(
     var config: String,
@@ -218,13 +228,14 @@ fun buildConfig(
                 listen = "$LOCALHOST4:0" // Never really listen
                 stats = V2RayStatsServiceOptions().also {
                     it.enabled = true
-                    it.outbounds = tagMap.values.toList() + TAG_PROXY + TAG_DIRECT
+                    it.outbounds = (tagMap.values.toList() + TAG_PROXY + TAG_DIRECT).toListable()
                 }
             }
             clash_api = ClashAPIOptions().apply {
                 external_controller = DataStore.clashAPIListen.ifBlank {
                     "$LOCALHOST4:${mkPort()}"
                 }
+                default_mode = CLASH_RULE
             }
             cache_file = CacheFileOptions().apply {
                 enabled = true
@@ -259,8 +270,8 @@ fun buildConfig(
         }
 
         dns = DNSOptions().apply {
-            servers = mutableListOf()
-            rules = mutableListOf()
+            servers = Listable()
+            rules = Listable()
             independent_cache = true
         }
 
@@ -295,15 +306,15 @@ fun buildConfig(
                 sniff_override_destination = needSniffOverride
                 when (ipv6Mode) {
                     IPv6Mode.DISABLE -> {
-                        address = listOf(VpnService.PRIVATE_VLAN4_CLIENT + "/28")
+                        address = Listable(VpnService.PRIVATE_VLAN4_CLIENT + "/28")
                     }
 
                     IPv6Mode.ONLY -> {
-                        address = listOf(VpnService.PRIVATE_VLAN6_CLIENT + "/126")
+                        address = Listable(VpnService.PRIVATE_VLAN6_CLIENT + "/126")
                     }
 
                     else -> {
-                        address = listOf(
+                        address = Listable(
                             VpnService.PRIVATE_VLAN4_CLIENT + "/28",
                             VpnService.PRIVATE_VLAN6_CLIENT + "/126",
                         )
@@ -319,7 +330,7 @@ fun buildConfig(
                 sniff = needSniff
                 sniff_override_destination = needSniffOverride
                 if (DataStore.inboundUsername.isNotBlank() || DataStore.inboundPassword.isNotBlank()) {
-                    users = listOf(
+                    users = Listable(
                         User().apply {
                             username = DataStore.inboundUsername
                             password = DataStore.inboundPassword
@@ -334,8 +345,8 @@ fun buildConfig(
         // init routing object
         route = RouteOptions().apply {
             auto_detect_interface = true
-            rules = mutableListOf()
-            rule_set = mutableListOf()
+            rules = Listable()
+            rule_set = Listable()
         }
 
         // returns outbound tag
@@ -402,7 +413,7 @@ fun buildConfig(
                     // chain route/proxy rules
                     if (pastEntity!!.needExternal()) {
                         route.rules.add(Rule_Default().apply {
-                            inbound = listOf(pastInboundTag)
+                            inbound = Listable(pastInboundTag)
                             outbound = tagOut
                         })
                     } else {
@@ -488,8 +499,16 @@ fun buildConfig(
                                         up_mbps = -1 // need kernel module
                                         down_mbps = DataStore.downloadSpeed
                                     }
-                                } else {
-                                    max_streams = bean.serverMuxConcurrency
+                                } else when (bean.serverMuxStrategy) {
+                                    MuxStrategy.MAX_CONNECTIONS -> {
+                                        max_connections = bean.serverMuxNumber
+                                    }
+
+                                    MuxStrategy.MIN_STREAMS -> min_streams = bean.serverMuxNumber
+
+                                    MuxStrategy.MAX_STREAMS -> max_streams = bean.serverMuxNumber
+
+                                    else -> throw IllegalStateException()
                                 }
                             }.asMap()
                         }
@@ -548,7 +567,7 @@ fun buildConfig(
                         // no chain rule and not outbound, so need to set to direct
                         if (index == profileList.lastIndex) {
                             route.rules.add(Rule_Default().apply {
-                                inbound = listOf(tag)
+                                inbound = Listable(tag)
                                 outbound = TAG_DIRECT
                             })
                         }
@@ -575,7 +594,7 @@ fun buildConfig(
                 type = "selector"
                 tag = TAG_PROXY
                 default_ = tagMap[proxy.id]
-                outbounds = tagMap.values.toList()
+                outbounds = tagMap.values.toListable()
                 interrupt_exist_connections = DataStore.interruptSelector
             }.asMap())
         } else {
@@ -600,7 +619,7 @@ fun buildConfig(
                     ).show()
                 }
                 PackageCache[it]?.takeIf { uid -> uid >= 1000 }
-            }.toHashSet().filterNotNull()
+            }.toHashSet().filterNotNull().toListable()
 
             val ruleObj = Rule_Default().apply {
                 if (uidList.isNotEmpty()) {
@@ -610,7 +629,7 @@ fun buildConfig(
                 if (rule.ruleSet.isNotBlank()) {
                     rule_set = rule.ruleSet.listByLineOrComma().filterNot {
                         it.startsWith(PREFIX_IP_DNS)
-                    }
+                    }.toListable()
                 }
                 var domainList: List<String> = listOf()
                 if (rule.domains.isNotBlank()) {
@@ -621,8 +640,8 @@ fun buildConfig(
                     makeSingBoxRule(rule.ip.listByLineOrComma(), true)
                 }
                 if (rule.port.isNotBlank()) {
-                    port = mutableListOf<Int>()
-                    port_range = mutableListOf<String>()
+                    port = Listable()
+                    port_range = Listable()
                     rule.port.listByLineOrComma().map {
                         if (it.contains(":")) {
                             port_range.add(it)
@@ -632,8 +651,8 @@ fun buildConfig(
                     }
                 }
                 if (rule.sourcePort.isNotBlank()) {
-                    source_port = mutableListOf<Int>()
-                    source_port_range = mutableListOf<String>()
+                    source_port = Listable()
+                    source_port_range = Listable()
                     rule.sourcePort.listByLineOrComma().map {
                         if (it.contains(":")) {
                             source_port_range.add(it)
@@ -643,22 +662,33 @@ fun buildConfig(
                     }
                 }
                 if (rule.network.isNotBlank()) {
-                    network = listOf(rule.network)
+                    network = Listable(rule.network)
                 }
                 if (rule.source.isNotBlank()) {
-                    source_ip_cidr = rule.source.listByLineOrComma()
+                    val sourceIPs = Listable<String>()
+                    for (source in rule.source.listByLineOrComma()) {
+                        if (source.startsWith(IP_PRIVATE)) {
+                            source_ip_is_private = true
+                        } else {
+                            sourceIPs += source
+                        }
+                    }
+                    if (sourceIPs.isNotEmpty()) source_ip_cidr = sourceIPs
                 }
                 if (rule.protocol.isNotBlank()) {
-                    protocol = rule.protocol.listByLineOrComma()
+                    protocol = rule.protocol.listByLineOrComma().toListable()
                 }
                 if (rule.ssid.isNotBlank()) {
-                    wifi_ssid = rule.ssid.listByLineOrComma()
+                    wifi_ssid = rule.ssid.listByLineOrComma().toListable()
                 }
                 if (rule.bssid.isNotBlank()) {
-                    wifi_bssid = rule.bssid.listByLineOrComma()
+                    wifi_bssid = rule.bssid.listByLineOrComma().toListable()
                 }
                 if (rule.clientType.isNotBlank()) {
-                    client = rule.clientType.listByLineOrComma()
+                    client = rule.clientType.listByLineOrComma().toListable()
+                }
+                if (rule.clashMode.isNotBlank()) {
+                    clash_mode = rule.clashMode
                 }
 
                 fun makeDnsRuleObj(): DNSRule_Default {
@@ -683,8 +713,8 @@ fun buildConfig(
                     0L -> {
                         if (useFakeDns) userDNSRuleList += makeDnsRuleObj().apply {
                             server = TAG_DNS_FAKE
-                            inbound = listOf(TAG_TUN)
-                            query_type = FAKE_DNS_QUERY_TYPE
+                            inbound = Listable(TAG_TUN)
+                            query_type = Listable(FAKE_DNS_QUERY_TYPE)
                         }
                         userDNSRuleList += makeDnsRuleObj().apply {
                             server = TAG_DNS_REMOTE
@@ -720,12 +750,57 @@ fun buildConfig(
             }
         }
 
-        for (rule in extraRules) {
-            if (rule.ruleSet.isNotBlank()) {
-                route.makeSingBoxRuleSet(rule.ruleSet.listByLineOrComma(), "$externalAssets/geo")
+        val ruleSetResource by lazy { SagerNet.application.externalAssets.absolutePath + "/geo" }
+        var geositeLink: String? = null
+        var geoipLink: String? = null
+        if (forExport) {
+            // "https://raw.githubusercontent.com/SagerNet/sing-geosite/rule-set/geosite-cn.srs"
+            val pathPrefix = "https://raw.githubusercontent.com"
+            val provider = DataStore.rulesProvider
+            
+            val normalBranch = "rule-set"
+            val geoipBranch = normalBranch
+            val geositeBranch = if (RuleProvider.hasUnstableBranch(provider)) {
+                "rule-set-unstable"
+            } else {
+                normalBranch
+            }
+            
+            when (provider) {
+                RuleProvider.OFFICIAL -> {
+                    geositeLink = "$pathPrefix/SagerNet/sing-geosite/$geositeBranch"
+                    geoipLink = "$pathPrefix/SagerNet/sing-geoip/$geoipBranch"
+                }
+
+                RuleProvider.LOYALSOLDIER -> {
+                    geositeLink = "$pathPrefix/xchacha20-poly1305/sing-geosite/$geositeBranch"
+                    geoipLink = "$pathPrefix/xchacha20-poly1305/sing-geoip/$geoipBranch"
+                }
+
+                RuleProvider.CHOCOLATE4U -> {
+                    geositeLink = "$pathPrefix/Chocolate4U/sing-geosite/$geositeBranch"
+                    geoipLink = "$pathPrefix/Chocolate4U/sing-geoip/$geoipBranch"
+                }
+
+                RuleProvider.CUSTOM -> {} // Can't generate.
             }
         }
-        route.rule_set = route.rule_set.distinctBy { it.tag }
+        val useRemote = geositeLink != null
+        for (rule in extraRules) if (rule.ruleSet.isNotBlank()) {
+            if (useRemote) {
+                route.makeRuleSetRulesRemote(
+                    rule.ruleSet.listByLineOrComma(),
+                    geositeLink!!,
+                    geoipLink!!,
+                )
+            } else {
+                route.makeRuleSetRulesLocal(
+                    rule.ruleSet.listByLineOrComma(),
+                    ruleSetResource,
+                )
+            }
+        }
+        route.rule_set = route.rule_set.distinctBy { it.tag }.toListable()
 
         outbounds.add(Outbound().apply {
             tag = TAG_DIRECT
@@ -841,23 +916,34 @@ fun buildConfig(
 
         if (forTest) {
             // Always use system DNS for urlTest
-            dns.servers = listOf(
+            dns.servers = Listable(
                 DNSServerOptions().apply {
                     address = LOCAL_DNS_SERVER
                     tag = TAG_DNS_LOCAL
                 }
             )
-            dns.rules = listOf()
+            dns.rules = Listable()
         } else {
+            // clash mode
+            route.rules.add(0, Rule_Default().apply {
+                clash_mode = CLASH_GLOBAL
+                outbound = TAG_PROXY
+            })
+            route.rules.add(0, Rule_Default().apply {
+                clash_mode = CLASH_DIRECT
+                outbound = TAG_DIRECT
+            })
+
             // built-in DNS rules
             route.rules.add(0, Rule_Default().apply {
-                inbound = listOf(TAG_DNS_IN)
+                inbound = Listable(TAG_DNS_IN)
                 outbound = TAG_DNS_OUT
             })
             route.rules.add(0, Rule_Default().apply {
-                port = listOf(53)
+                port = Listable(53)
                 outbound = TAG_DNS_OUT
             })
+
             if (DataStore.bypassLanInCore) {
                 route.rules.add(Rule_Default().apply {
                     outbound = TAG_DIRECT
@@ -866,10 +952,11 @@ fun buildConfig(
             }
             // block mcast
             route.rules.add(Rule_Default().apply {
-                ip_cidr = listOf("224.0.0.0/3", "ff00::/8")
-                source_ip_cidr = listOf("224.0.0.0/3", "ff00::/8")
+                ip_cidr = Listable("224.0.0.0/3", "ff00::/8")
+                source_ip_cidr = Listable("224.0.0.0/3", "ff00::/8")
                 outbound = TAG_BLOCK
             })
+
             // FakeDNS obj
             if (useFakeDns) {
                 dns.fakeip = DNSFakeIPOptions().apply {
@@ -882,15 +969,25 @@ fun buildConfig(
                     tag = "dns-fake"
                 })
                 dns.rules.add(DNSRule_Default().apply {
-                    inbound = listOf(TAG_TUN)
+                    inbound = Listable(TAG_TUN)
                     server = TAG_DNS_FAKE
                     disable_cache = true
-                    query_type = FAKE_DNS_QUERY_TYPE
+                    query_type = Listable(FAKE_DNS_QUERY_TYPE)
                 })
             }
+
+            // clash mode
+            dns.rules.add(0, DNSRule_Default().apply {
+                clash_mode = CLASH_GLOBAL
+                server = TAG_DNS_REMOTE
+            })
+            dns.rules.add(0, DNSRule_Default().apply {
+                clash_mode = CLASH_DIRECT
+                server = TAG_DNS_DIRECT
+            })
             // force bypass (always top DNS rule)
             dns.rules.add(0, DNSRule_Default().apply {
-                outbound = listOf(TAG_ANY)
+                outbound = Listable(TAG_ANY)
                 server = TAG_DNS_DIRECT
             })
             if (domainListDNSDirectForce.isNotEmpty()) {

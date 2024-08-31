@@ -41,13 +41,13 @@ fun SingBoxOptions.DNSRule_Default.makeSingBoxRule(
 ) {
     val shouldApplyIPRule = dnsMode == DNSMode.LEAK || dnsMode == DNSMode.PRECISE
 
-    domain = mutableListOf<String>()
-    domain_suffix = mutableListOf<String>()
-    domain_regex = mutableListOf<String>()
-    domain_keyword = mutableListOf<String>()
-    rule_set = mutableListOf<String>()
-    wifi_ssid = mutableListOf<String>()
-    wifi_bssid = mutableListOf<String>()
+    domain = Listable()
+    domain_suffix = Listable()
+    domain_regex = Listable()
+    domain_keyword = Listable()
+    rule_set = Listable()
+    wifi_ssid = Listable()
+    wifi_bssid = Listable()
 
     for (rule in ruleSetList) {
         if (rule.startsWith("geosite-")) {
@@ -116,14 +116,14 @@ fun SingBoxOptions.DNSRule_Default.checkEmpty(): Boolean {
 
 fun SingBoxOptions.Rule_Default.makeSingBoxRule(rules: List<String>, isIP: Boolean) {
     if (isIP) {
-        ip_cidr = mutableListOf<String>()
+        ip_cidr = Listable()
     } else {
-        domain = mutableListOf<String>()
-        domain_suffix = mutableListOf<String>()
-        domain_regex = mutableListOf<String>()
-        domain_keyword = mutableListOf<String>()
+        domain = Listable()
+        domain_suffix = Listable()
+        domain_regex = Listable()
+        domain_keyword = Listable()
     }
-    if (rule_set == null) rule_set = mutableListOf<String>()
+    if (rule_set == null) rule_set = Listable()
 
     for (rule in rules) {
         if (isIP) {
@@ -167,6 +167,7 @@ fun SingBoxOptions.Rule_Default.checkEmpty(): Boolean {
     if (ip_cidr?.isNotEmpty() == true) return false
     if (rule_set?.isNotEmpty() == true) return false
     if (ip_is_private == true) return false
+    if (source_ip_is_private == true) return false
 
     if (domain?.isNotEmpty() == true) return false
     if (domain_suffix?.isNotEmpty() == true) return false
@@ -182,15 +183,41 @@ fun SingBoxOptions.Rule_Default.checkEmpty(): Boolean {
     return true
 }
 
-fun SingBoxOptions.RouteOptions.makeSingBoxRuleSet(names: List<String>, geoPath: String) {
-    if (rule_set == null) rule_set = mutableListOf<SingBoxOptions.RuleSet>()
+const val RULE_SET_FORMAT_BINARY = "binary"
+const val RULE_SET_TYPE_REMOTE = "remote"
+const val RULE_SET_TYPE_LOCAL = "local"
+
+fun SingBoxOptions.RouteOptions.makeRuleSetRulesLocal(names: List<String>, resourcePath: String) {
+    if (rule_set == null) rule_set = Listable()
     for (name in names) {
         val newName = name.removePrefix(PREFIX_IP_DNS)
         rule_set.plusAssign(SingBoxOptions.RuleSet_Local().apply {
             tag = newName
-            type = "local"
-            format = "binary"
-            path = "$geoPath/$newName.srs"
+            type = RULE_SET_TYPE_LOCAL
+            format = RULE_SET_FORMAT_BINARY
+            path = "$resourcePath/$newName.srs"
+        })
+    }
+}
+
+fun SingBoxOptions.RouteOptions.makeRuleSetRulesRemote(
+    names: List<String>,
+    domainURL: String,
+    ipURL: String,
+) {
+    if (rule_set == null) rule_set = Listable()
+    for (name in names) {
+        val newName = name.removePrefix(PREFIX_IP_DNS)
+        rule_set.plusAssign(SingBoxOptions.RuleSet_Remote().apply {
+            tag = newName
+            type = RULE_SET_TYPE_REMOTE
+            format = RULE_SET_FORMAT_BINARY
+            val isIP = newName.startsWith("geoip-")
+            url = if (isIP) {
+                "${ipURL}/${newName}.srs"
+            } else {
+                "${domainURL}/${newName}.srs"
+            }
         })
     }
 }

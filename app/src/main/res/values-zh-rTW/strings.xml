@@ -235,7 +235,6 @@
     <string name="domain_strategy">網域解析策略</string>
     <string name="traffic_sniffing">啟用流量嗅探</string>
     <string name="enable_mux">啟用多工器</string>
-    <string name="mux_concurrency">多工器同時連線數目</string>
     <string name="tcp_keep_alive_interval">TCP 保持連線傳送間隔</string>
     <string name="service_failed">失敗：</string>
     <string name="select_profile">選擇設定檔</string>
@@ -568,4 +567,23 @@
     <string name="outbound">出站</string>
     <string name="chain">鏈</string>
     <string name="close">關閉</string>
+    <string name="custom_rule_provider">自定義規則提供者</string>
+    <string name="pin_log">固定日誌</string>
+    <string name="interrupt_selector">(Selector) 切換配置時中斷所有連接</string>
+    <string name="speed_test">測速</string>
+    <string name="client_type">客戶端型別</string>
+    <string name="traffic_status">狀態</string>
+    <string name="traffic_connections">連接</string>
+    <string name="status_memory">執行記憶體</string>
+    <string name="status_status">狀態</string>
+    <string name="done">完成</string>
+    <string name="custom_plugin_prefix">自訂插件前綴</string>
+    <string name="custom_plugin_prefix_summary">請確保您完全信任插件提供者。</string>
+    <string name="padding">填充</string>
+    <string name="disable_post_quantum">禁用後量子密鑰協商</string>
+    <string name="mux_strategy">多路復用策略</string>
+    <string name="mux_number">複用器數量</string>
+    <string name="mux_max_connections">最大連線數</string>
+    <string name="mux_min_streams">最小流數</string>
+    <string name="mux_max_streams">最大流數</string>
 </resources>

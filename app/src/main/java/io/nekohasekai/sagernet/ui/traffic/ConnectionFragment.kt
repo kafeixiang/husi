@@ -1,4 +1,4 @@
-package io.nekohasekai.sagernet.ui
+package io.nekohasekai.sagernet.ui.traffic
 
 import android.os.Bundle
 import android.view.MenuItem
@@ -8,6 +8,8 @@ import androidx.core.view.isVisible
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.aidl.Connection
 import io.nekohasekai.sagernet.databinding.LayoutConnectionBinding
+import io.nekohasekai.sagernet.ui.MainActivity
+import io.nekohasekai.sagernet.ui.ToolbarFragment
 import libcore.Libcore
 
 class ConnectionFragment(private val conn: Connection) :
@@ -43,9 +45,11 @@ class ConnectionFragment(private val conn: Connection) :
         binding.connInbound.text = conn.inbound
         binding.connSource.text = conn.src
         binding.connDestination.text = conn.dst
-        if (conn.host.isNotBlank()) binding.connHost.apply {
-            isVisible = true
-            text = conn.host
+        if (conn.host.isNotBlank()) {
+            binding.connHostLayout.isVisible = true
+            binding.connHost.text = conn.host
+        } else {
+            binding.connHostLayout.isVisible = false
         }
         binding.connRule.text = conn.matchedRule
         binding.connOutbound.text = conn.outbound
