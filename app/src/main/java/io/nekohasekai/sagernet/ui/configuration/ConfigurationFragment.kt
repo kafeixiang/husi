@@ -1,5 +1,6 @@
 package io.nekohasekai.sagernet.ui.configuration
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -21,6 +22,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
@@ -83,6 +85,7 @@ import io.nekohasekai.sagernet.plugin.PluginManager
 import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.ui.ToolbarFragment
 import io.nekohasekai.sagernet.ui.profile.ChainSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.DirectSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.HttpSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.HysteriaSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.JuicitySettingsActivity
@@ -91,7 +94,6 @@ import io.nekohasekai.sagernet.ui.profile.NaiveSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.SSHSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.ShadowsocksSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.SocksSettingsActivity
-import io.nekohasekai.sagernet.ui.profile.TrojanGoSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.TrojanSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.TuicSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.VMessSettingsActivity
@@ -108,6 +110,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import libcore.Libcore
 import moe.matsuri.nb4a.Protocols
+import moe.matsuri.nb4a.proxy.config.ConfigBean
 import moe.matsuri.nb4a.proxy.config.ConfigSettingActivity
 import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSSettingsActivity
 import moe.matsuri.nb4a.utils.blur
@@ -167,6 +170,7 @@ class ConfigurationFragment @JvmOverloads constructor(
 
     override fun onQueryTextSubmit(query: String): Boolean = false
 
+    @SuppressLint("DetachAndAttachSameFragment")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -427,10 +431,6 @@ class ConfigurationFragment @JvmOverloads constructor(
                 startActivity(Intent(requireActivity(), TrojanSettingsActivity::class.java))
             }
 
-            R.id.action_new_trojan_go -> {
-                startActivity(Intent(requireActivity(), TrojanGoSettingsActivity::class.java))
-            }
-
             R.id.action_new_mieru -> {
                 startActivity(Intent(requireActivity(), MieruSettingsActivity::class.java))
             }
@@ -449,6 +449,10 @@ class ConfigurationFragment @JvmOverloads constructor(
 
             R.id.action_new_juicity -> {
                 startActivity(Intent(requireActivity(), JuicitySettingsActivity::class.java))
+            }
+
+            R.id.action_new_direct -> {
+                startActivity(Intent(requireActivity(), DirectSettingsActivity::class.java))
             }
 
             R.id.action_new_ssh -> {
@@ -1062,6 +1066,7 @@ class ConfigurationFragment @JvmOverloads constructor(
         override fun onViewStateRestored(savedInstanceState: Bundle?) {
             super.onViewStateRestored(savedInstanceState)
 
+            @Suppress("DEPRECATION")
             savedInstanceState?.getParcelable<ProxyGroup>("proxyGroup")?.also {
                 proxyGroup = it
                 onViewCreated(requireView(), null)
@@ -1636,36 +1641,35 @@ class ConfigurationFragment @JvmOverloads constructor(
                         val popup = PopupMenu(requireContext(), anchor)
                         popup.menuInflater.inflate(R.menu.profile_share_menu, popup.menu)
 
-                        when {
+                        if (proxyEntity.type != ProxyEntity.TYPE_VMESS) {
+                            popup.menu
+                                .findItem(R.id.action_group_qr).subMenu
+                                ?.removeItem(R.id.action_v2rayn_qr)
+                            popup.menu
+                                .findItem(R.id.action_group_clipboard).subMenu
+                                ?.removeItem(R.id.action_v2rayn_clipboard)
 
-                            proxyEntity.type != ProxyEntity.TYPE_VMESS -> {
-                                popup.menu.findItem(R.id.action_group_qr)
-                                    .subMenu?.removeItem(R.id.action_v2rayn_qr)
-                                popup.menu.findItem(R.id.action_group_clipboard)
-                                    .subMenu?.removeItem(R.id.action_v2rayn_clipboard)
+                            if (!proxyEntity.haveStandardLink()) {
+                                popup.menu
+                                    .findItem(R.id.action_group_qr).subMenu
+                                    ?.removeItem(R.id.action_standard_qr)
 
-                                if (!proxyEntity.haveStandardLink()) {
-                                    popup.menu.findItem(R.id.action_group_qr)
-                                        .subMenu?.removeItem(
-                                            R.id
-                                                .action_standard_qr
-                                        )
-
-                                    popup.menu.findItem(
-                                        R.id
-                                            .action_group_clipboard
-                                    )
-                                        .subMenu?.removeItem(
-                                            R.id.action_standard_clipboard
-                                        )
-                                }
+                                popup.menu
+                                    .findItem(R.id.action_group_clipboard).subMenu
+                                    ?.removeItem(R.id.action_standard_clipboard)
                             }
+                        }
 
-                            !proxyEntity.haveLink() -> {
-                                popup.menu.removeItem(R.id.action_group_qr)
-                                popup.menu.removeItem(R.id.action_group_clipboard)
-                            }
+                        if (!proxyEntity.haveLink()) {
+                            popup.menu.removeItem(R.id.action_group_qr)
+                            popup.menu.removeItem(R.id.action_group_clipboard)
+                        }
 
+                        val bean = proxyEntity.requireBean()
+                        if (proxyEntity.mustUsePlugin()
+                            || (bean as? ConfigBean)?.type == ConfigBean.TYPE_CONFIG
+                        ) {
+                            popup.menu.removeItem(R.id.action_group_outbound)
                         }
 
                         popup.setOnMenuItemClickListener(this@ConfigurationHolder)
@@ -1778,6 +1782,8 @@ class ConfigurationFragment @JvmOverloads constructor(
                                 (parentFragment as ConfigurationFragment).exportConfig, cfg.second
                             )
                         }
+
+                        R.id.action_outbound_export_clipboard -> export(entity.exportOutbound())
                     }
                 } catch (e: Exception) {
                     Logs.w(e)
@@ -1791,7 +1797,7 @@ class ConfigurationFragment @JvmOverloads constructor(
     }
 
     private val exportConfig =
-        registerForActivityResult(ActivityResultContracts.CreateDocument()) { data ->
+        registerForActivityResult(CreateDocument("application/json")) { data ->
             if (data != null) {
                 runOnDefaultDispatcher {
                     try {

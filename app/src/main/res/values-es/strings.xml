@@ -510,8 +510,6 @@
     <string name="vpn_core_type_unknown">Desconocido</string>
     <string name="cazilla">Utilizar programa de certificados CA de Mozilla</string>
     <string name="dns_mode">Modo DNS</string>
-    <string name="dns_mode_leak">Consulta precisa (fuga de DNS)</string>
-    <string name="dns_mode_precise">Consulta precisa a baja velocidad</string>
     <string name="landing_proxy">Proxy de aterrizaje</string>
     <string name="show_group_in_notification">Mostrar nombre del grupo en notificación</string>
     <string name="mux_type">Protocolo Mux</string>
@@ -598,4 +596,6 @@
     <string name="mux_min_streams">Minutos de transmisión</string>
     <string name="mux_max_streams">Máximo de transmisiones</string>
     <string name="mux_number">Número Mux</string>
+    <string name="override_address">Anular dirección</string>
+    <string name="override_port">Anular puerto</string>
 </resources>

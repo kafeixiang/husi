@@ -85,9 +85,7 @@ func buildClass(opt any, belongs string) string {
 	// log.Trace("Builder cap: ", builder.Cap(), " Length: ", builder.Len())
 
 	// builder.String() returns an unsafe point of buf, so copy a new string here.
-	newBuf := make([]byte, builder.Len())
-	copy(newBuf, *builderBuf)
-	return string(newBuf)
+	return string(*builderBuf)
 }
 
 func buildContent(valueType reflect.Type) string {
@@ -161,7 +159,7 @@ func className(valueType reflect.Type) string {
 			// Go json save []uint8 or []byte as base64 string
 			return javaString
 		}
-		return "Listable<" + className(elem) + ">"
+		return "List<" + className(elem) + ">"
 	case reflect.Map:
 		return "Map<" + className(valueType.Key()) + ", " + className(valueType.Elem()) + ">"
 	case reflect.Struct:

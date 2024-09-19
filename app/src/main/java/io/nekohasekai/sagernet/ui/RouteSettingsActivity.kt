@@ -41,7 +41,6 @@ import io.nekohasekai.sagernet.widget.ListListener
 import io.nekohasekai.sagernet.widget.OutboundPreference
 import kotlinx.parcelize.Parcelize
 
-@Suppress("UNCHECKED_CAST")
 class RouteSettingsActivity(
     @LayoutRes resId: Int = R.layout.layout_settings_activity,
 ) : ThemedActivity(resId),
@@ -58,7 +57,6 @@ class RouteSettingsActivity(
 
     fun RuleEntity.init() {
         DataStore.routeName = name
-        DataStore.routeRuleSet = ruleSet
         DataStore.routeDomain = domains
         DataStore.routeIP = ip
         DataStore.routePort = port
@@ -72,9 +70,9 @@ class RouteSettingsActivity(
         DataStore.routeClient = clientType
         DataStore.routeClashMode = clashMode
         DataStore.routeOutbound = when (outbound) {
-            0L -> 0
-            -1L -> 1
-            -2L -> 2
+            RuleEntity.OUTBOUND_PROXY -> 0
+            RuleEntity.OUTBOUND_DIRECT -> 1
+            RuleEntity.OUTBOUND_BLOCK -> 2
             else -> 3
         }
         DataStore.routePackages = packages.joinToString("\n")
@@ -82,7 +80,6 @@ class RouteSettingsActivity(
 
     fun RuleEntity.serialize() {
         name = DataStore.routeName
-        ruleSet = DataStore.routeRuleSet
         domains = DataStore.routeDomain
         ip = DataStore.routeIP
         port = DataStore.routePort
@@ -95,9 +92,9 @@ class RouteSettingsActivity(
         clientType = DataStore.routeClient
         clashMode = DataStore.routeClashMode
         outbound = when (DataStore.routeOutbound) {
-            0 -> 0L
-            1 -> -1L
-            2 -> -2L
+            0 -> RuleEntity.OUTBOUND_PROXY
+            1 -> RuleEntity.OUTBOUND_DIRECT
+            2 -> RuleEntity.OUTBOUND_BLOCK
             else -> DataStore.routeOutboundRule
         }
         if (DataStore.routePackages.isNotBlank()) {
@@ -112,7 +109,6 @@ class RouteSettingsActivity(
     fun needSave(): Boolean {
         if (!DataStore.dirty) return false
         if (DataStore.routePackages.isBlank() &&
-            DataStore.routeRuleSet.isBlank() &&
             DataStore.routeDomain.isBlank() &&
             DataStore.routeIP.isBlank() &&
             DataStore.routePort.isBlank() &&
@@ -310,10 +306,14 @@ class RouteSettingsActivity(
 
     override fun onOptionsItemSelected(item: MenuItem) = child.onOptionsItemSelected(item)
 
+    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
     override fun onBackPressed() {
         if (needSave()) {
             UnsavedChangesDialogFragment().apply { key() }.show(supportFragmentManager, null)
-        } else super.onBackPressed()
+        } else {
+            @Suppress("DEPRECATION")
+            super.onBackPressed()
+        }
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -362,6 +362,7 @@ class RouteSettingsActivity(
             }
         }
 
+        @Deprecated("Deprecated in Java")
         override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
             R.id.action_delete -> {
                 if (DataStore.editingId == 0L) {

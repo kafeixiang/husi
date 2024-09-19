@@ -41,7 +41,7 @@ fun parseShadowsocks(rawUrl: String): ShadowsocksBean {
             null
         }
         // not base64 user info
-        if (pass != null) {
+        if (!pass.isNullOrEmpty()) {
             return ShadowsocksBean().apply {
                 serverAddress = url.host
                 serverPort = url.ports.toIntOrNull() ?: 8388
@@ -126,7 +126,7 @@ fun JSONObject.parseShadowsocks(): ShadowsocksBean {
 
 fun buildSingBoxOutboundShadowsocksBean(bean: ShadowsocksBean): SingBoxOptions.Outbound_ShadowsocksOptions {
     return SingBoxOptions.Outbound_ShadowsocksOptions().apply {
-        type = "shadowsocks"
+        type = bean.outboundType()
         server = bean.serverAddress
         server_port = bean.serverPort
         password = bean.password

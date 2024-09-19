@@ -36,7 +36,6 @@ import kotlinx.coroutines.*
 import moe.matsuri.nb4a.utils.NGUtil
 import moe.matsuri.nb4a.utils.findGroup
 import java.io.FileDescriptor
-import java.net.HttpURLConnection
 import java.net.InetAddress
 import java.net.Socket
 import java.net.URLEncoder
@@ -45,11 +44,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.Continuation
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
+import com.google.gson.annotations.SerializedName
+import moe.matsuri.nb4a.SingBoxOptions
 
 
 inline fun <T> Iterable<T>.forEachTry(action: (T) -> Unit) {
@@ -64,7 +63,7 @@ inline fun <T> Iterable<T>.forEachTry(action: (T) -> Unit) {
     }
 }
 
-val Throwable.readableMessage
+val Throwable.readableMessage: String
     get() = localizedMessage.takeIf { !it.isNullOrBlank() } ?: javaClass.simpleName
 
 /**
@@ -76,21 +75,6 @@ val Socket.fileDescriptor get() = socketGetFileDescriptor.invoke(this) as FileDe
 
 private val getInt = FileDescriptor::class.java.getDeclaredMethod("getInt$")
 val FileDescriptor.int get() = getInt.invoke(this) as Int
-
-suspend fun <T> HttpURLConnection.useCancellable(block: suspend HttpURLConnection.() -> T): T {
-    return suspendCancellableCoroutine { cont ->
-        cont.invokeOnCancellation {
-            if (Build.VERSION.SDK_INT >= 26) disconnect() else GlobalScope.launch(Dispatchers.IO) { disconnect() }
-        }
-        GlobalScope.launch(Dispatchers.IO) {
-            try {
-                cont.resume(block())
-            } catch (e: Throwable) {
-                cont.resumeWithException(e)
-            }
-        }
-    }
-}
 
 fun parsePort(str: String?, default: Int, min: Int = 1025): Int {
     val value = str?.toIntOrNull() ?: default
@@ -284,6 +268,35 @@ fun <T> Continuation<T>.tryResumeWithException(exception: Throwable) {
         resumeWith(Result.failure(exception))
     } catch (ignored: IllegalStateException) {
     }
+}
+
+fun <T : Any> T.asMap(): MutableMap<String, Any> {
+    val map = mutableMapOf<String, Any>()
+    val clazz = this::class.java
+
+    // Traverse the class hierarchy
+    var currentClass: Class<*> = clazz
+    while (currentClass != Any::class.java) {
+        for (field in currentClass.declaredFields) {
+            field.isAccessible = true
+
+            // Get SerializedName annotation or fallback to field name
+            val serializedName = field.getAnnotation(SerializedName::class.java)?.value ?: field.name
+
+            val mappedValue = when (val value = field.get(this)) {
+                // Listable
+                is List<*> -> {
+                    if (value.size == 1) value.first() else value
+                }
+                else -> value
+            } ?: continue
+
+            map[serializedName] = mappedValue
+        }
+        currentClass = currentClass.superclass
+    }
+
+    return map
 }
 
 operator fun <F> KProperty0<F>.getValue(thisRef: Any?, property: KProperty<*>): F = get()
