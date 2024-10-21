@@ -104,7 +104,6 @@ jobs:
           # export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
           ./run init action gradle
           ./gradlew clean app:assembleFossRelease
-
           APK=$(find app/build/outputs/apk -name '*arm64-v8a*.apk')
           APK=$(dirname $APK)
           rm $APK/output-metadata.json
