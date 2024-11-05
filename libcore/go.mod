@@ -11,7 +11,7 @@ require (
 	github.com/sagernet/sing-box v1.11.0-alpha.4
 	github.com/sagernet/sing-dns v0.3.0-rc.2
 	github.com/sagernet/sing-tun v0.4.0-rc.4
-	github.com/xchacha20-poly1305/TLS-scribe v0.6.1
+	github.com/xchacha20-poly1305/TLS-scribe v0.8.0
 	github.com/xchacha20-poly1305/cazilla v0.3.3
 	github.com/xchacha20-poly1305/libping v0.7.1
 	golang.org/x/crypto v0.28.0
@@ -32,7 +32,7 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/caddyserver/certmagic v0.20.0 // indirect
-	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cloudflare/circl v1.4.0 // indirect
 	github.com/cretz/bine v0.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-chi/chi/v5 v5.1.0 // indirect
@@ -85,7 +85,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
+	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948 // indirect
 	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
