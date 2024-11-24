@@ -7,11 +7,11 @@ require (
 	github.com/gofrs/uuid/v5 v5.3.0
 	github.com/miekg/dns v1.1.62
 	github.com/sagernet/gomobile v0.1.4
-	github.com/sagernet/sing v0.5.0-rc.2
+	github.com/sagernet/sing v0.5.0
 	github.com/sagernet/sing-box v1.11.0-alpha.4
 	github.com/sagernet/sing-dns v0.3.0-rc.2
 	github.com/sagernet/sing-tun v0.4.0-rc.4
-	github.com/xchacha20-poly1305/TLS-scribe v0.6.1
+	github.com/xchacha20-poly1305/TLS-scribe v0.8.0
 	github.com/xchacha20-poly1305/cazilla v0.3.3
 	github.com/xchacha20-poly1305/libping v0.7.1
 	golang.org/x/crypto v0.28.0
