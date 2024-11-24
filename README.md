@@ -35,11 +35,16 @@ cd husi/
 
 Environment:
 
-* Go But should apply patch
+* In some version need to apply patch.
 
-  Go1.22.5: Apply [this patch](./libcore/patches/cgo_go1225.diff) to `${GOROOT}/src/runtime/cgocall.go`
+  <details>
+    <summary>Unfold</summary>
 
-  Go1.23: Apply [this patch](https://github.com/golang/go/commit/76a8409eb81eda553363783dcdd9d6224368ae0e.patch) to `${GOROOT}`
+  1.23.5: Apply [this patch](./libcore/patches/cgo_go1225.diff) to `${GOROOT}/src/runtime/cgocall.go`
+
+  1.23.x: Apply [this patch](https://github.com/golang/go/commit/76a8409eb81eda553363783dcdd9d6224368ae0e.patch) to `${GOROOT}`
+
+  </details>
 
 * Openjdk-21 (Later is OK, too.)
 
