@@ -32,7 +32,7 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/caddyserver/certmagic v0.20.0 // indirect
-	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/cloudflare/circl v1.4.0 // indirect
 	github.com/cretz/bine v0.2.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-chi/chi/v5 v5.1.0 // indirect
@@ -67,10 +67,10 @@ require (
 	github.com/sagernet/gvisor v0.0.0-20240428053021-e691de28565f // indirect
 	github.com/sagernet/netlink v0.0.0-20240612041022-b9a21c07ac6a // indirect
 	github.com/sagernet/nftables v0.3.0-beta.4 // indirect
-	github.com/sagernet/quic-go v0.48.0-beta.1 // indirect
+	github.com/sagernet/quic-go v0.48.1-beta.1 // indirect
 	github.com/sagernet/reality v0.0.0-20230406110435-ee17307e7691 // indirect
 	github.com/sagernet/sing-mux v0.2.0 // indirect
-	github.com/sagernet/sing-quic v0.3.0-rc.1 // indirect
+	github.com/sagernet/sing-quic v0.3.0-rc.2 // indirect
 	github.com/sagernet/sing-shadowsocks v0.2.7 // indirect
 	github.com/sagernet/sing-shadowsocks2 v0.2.0 // indirect
 	github.com/sagernet/sing-shadowtls v0.1.4 // indirect
@@ -85,7 +85,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
-	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
+	golang.org/x/exp v0.0.0-20240823005443-9b4947da3948 // indirect
 	golang.org/x/mod v0.20.0 // indirect
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
