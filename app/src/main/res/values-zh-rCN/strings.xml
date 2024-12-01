@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">虎兕</string>
-    <string name="app_name_long">匪兕匪虎 率彼旷野</string>
+    <string name="app_name">HUSI</string>
+    <string name="app_name_long">HUSI</string>
     <string name="app_desc">适用于 Android 的代理工具, 使用 Kotlin 编写。</string>
     <string name="project">项目</string>
     <string name="github">源代码</string>
@@ -589,3 +589,4 @@
     <string name="clash_mode">Clash 模式</string>
     <string name="sniff_timeout">嗅探超时</string>
 </resources>
+
