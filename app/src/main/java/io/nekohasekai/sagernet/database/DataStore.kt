@@ -99,6 +99,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var trafficSniffing by configurationStore.stringToInt(Key.TRAFFIC_SNIFFING) { SniffPolicy.ENABLED }
     var sniffTimeout by configurationStore.string(Key.SNIFF_TIMEOUT)
     var resolveDestination by configurationStore.boolean(Key.RESOLVE_DESTINATION)
+    var udpDisableUnmapping by configurationStore.boolean(Key.UDP_DISABLE_UNMAPPING) { true }
 
     //    var tcpKeepAliveInterval by configurationStore.stringToInt(Key.TCP_KEEP_ALIVE_INTERVAL) { 15 }
     var mtu by configurationStore.stringToInt(Key.MTU) { 9000 }
@@ -275,7 +276,9 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var routeSSID by profileCacheStore.string(Key.ROUTE_SSID)
     var routeBSSID by profileCacheStore.string(Key.ROUTE_BSSID)
     var routeClient by profileCacheStore.string(Key.ROUTE_CLIENT)
-    var routeClashMode by profileCacheStore.string(Key.CLASH_MODE)
+    var routeClashMode by profileCacheStore.string(Key.ROUTE_CLASH_MODE)
+    var routeNetworkType by profileCacheStore.string(Key.ROUTE_NETWORK_TYPE)
+    var routeNetworkIsExpensive by profileCacheStore.boolean(Key.ROUTE_NETWORK_IS_EXPENSIVE)
 
     var frontProxy by profileCacheStore.long(Key.GROUP_FRONT_PROXY + "Long")
     var landingProxy by profileCacheStore.long(Key.GROUP_LANDING_PROXY + "Long")

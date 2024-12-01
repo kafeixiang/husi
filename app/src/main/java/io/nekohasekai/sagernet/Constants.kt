@@ -42,6 +42,7 @@ object Key {
     const val TRAFFIC_SNIFFING = "trafficSniffing"
     const val SNIFF_TIMEOUT = "sniffTimeout"
     const val RESOLVE_DESTINATION = "resolveDestination"
+    const val UDP_DISABLE_UNMAPPING = "udpDisableUnmapping"
 
     const val BYPASS_LAN = "bypassLan"
     const val BYPASS_LAN_IN_CORE = "bypassLanInCore"
@@ -174,7 +175,9 @@ object Key {
     const val ROUTE_SSID = "routeSSID"
     const val ROUTE_BSSID = "routeBSSID"
     const val ROUTE_CLIENT = "routeClient"
-    const val CLASH_MODE = "routeClashMode"
+    const val ROUTE_CLASH_MODE = "routeClashMode"
+    const val ROUTE_NETWORK_TYPE = "routeNetworkType"
+    const val ROUTE_NETWORK_IS_EXPENSIVE = "routeNetworkIsExpensive"
 
     const val GROUP_NAME = "groupName"
     const val GROUP_TYPE = "groupType"
