@@ -592,5 +592,5 @@
     <string name="network_type">网络类型</string>
     <string name="network_cellular">移动数据</string>
     <string name="network_ethernet">以太网</string>
-    <string name="network_expensive">昂贵的网络</string>
+    <string name="network_expensive">高资费网络</string>
 </resources>
