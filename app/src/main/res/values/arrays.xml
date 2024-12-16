@@ -244,21 +244,9 @@
         <item>@string/route_profile</item>
     </string-array>
 
-    <string-array name="outbound_value">
-        <item>0</item>
-        <item>1</item>
-        <item>2</item>
-        <item>3</item>
-    </string-array>
-
-    <string-array name="front_proxy_entry">
+    <string-array name="extra_proxy_entry">
         <item>@string/ssh_auth_type_none</item>
         <item>@string/route_profile</item>
-    </string-array>
-
-    <string-array name="front_proxy_value">
-        <item>0</item>
-        <item>3</item>
     </string-array>
 
     <string-array name="networks_value">
@@ -523,13 +511,6 @@
     <string-array name="plugin_providers">
         <item>sing-box</item>
         <item>@string/plugin</item>
-    </string-array>
-
-    <string-array name="ntp_intervals">
-        <item>5m</item>
-        <item>10m</item>
-        <item>30m</item>
-        <item>60m</item>
     </string-array>
 
     <string-array name="subscription_types">

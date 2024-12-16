@@ -441,7 +441,6 @@
     <string name="http_upgrade_host">HTTPUpgrade Host</string>
     <string name="http_upgrade_path">HTTPUpgrade Path</string>
     <string name="scan_vpn_app">Пошук VPN-застосунків</string>
-    <string name="global_allow_insecure">Завжди дозволювати небезпечні</string>
     <string name="vpn_app_type">Тип застосунку</string>
     <string name="scan_vpn_app_introduce">Показати встановлені на присторії VPN-застосунки та їх тип.</string>
     <string name="vpn_core_type">Тип ядра</string>
@@ -559,4 +558,8 @@
     <string name="override_port">Перевизначити порт</string>
     <string name="allow_apps_bypass_vpn">Дозволити застосункам ігнорувати VPN</string>
     <string name="clash_mode">Режим Clash</string>
+    <string name="sniff_timeout">Таймаут перехоплення</string>
+    <string name="network_type">Тип мережі</string>
+    <string name="network_ethernet">Дротове підключення</string>
+    <string name="network_cellular">Стільниковий зв\'язок</string>
 </resources>

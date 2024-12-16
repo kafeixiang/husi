@@ -1,4 +1,10 @@
+GOROOT = $(shell go env GOROOT)
+GO_PATCH_1230 = "https://github.com/golang/go/commit/76a8409eb81eda553363783dcdd9d6224368ae0e.patch"
+GO_PATCH_1234 = "https://github.com/golang/go/commit/59b7d40774b29bd1da1aa624f13233111aff4ad2.patch"
+
 .PHONY: update libcore apk apk_debug assets lint_go test_go plugin generate_option
+
+build: libcore assets apk
 
 libcore:
 	./run lib core
@@ -11,8 +17,6 @@ apk_debug:
 
 assets:
 	./run lib assets
-
-build: libcore assets apk
 
 update:
 	./run lib update
@@ -40,3 +44,9 @@ plugin:
 
 generate_option:
 	cd ./libcore/cmd/boxoption && go run . | xclip -selection clipboard
+
+patch_go1230:
+	curl $(GO_PATCH_1230)| sudo patch --verbose -p 1 -d $(GOROOT)
+
+patch_go1234:
+	curl $(GO_PATCH_1234) | sudo patch --verbose -p 1 -d $(GOROOT)

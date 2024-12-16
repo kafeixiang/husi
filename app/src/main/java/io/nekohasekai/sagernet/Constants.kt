@@ -42,7 +42,6 @@ object Key {
     const val TRAFFIC_SNIFFING = "trafficSniffing"
     const val SNIFF_TIMEOUT = "sniffTimeout"
     const val RESOLVE_DESTINATION = "resolveDestination"
-    const val UDP_DISABLE_UNMAPPING = "udpDisableUnmapping"
 
     const val BYPASS_LAN = "bypassLan"
     const val BYPASS_LAN_IN_CORE = "bypassLanInCore"
@@ -79,7 +78,6 @@ object Key {
     const val NTP_INTERVAL = "ntpInterval"
 
     // Protocol Settings
-    const val GLOBAL_ALLOW_INSECURE = "globalAllowInsecure"
     const val UPLOAD_SPEED = "uploadSpeed"
     const val DOWNLOAD_SPEED = "downloadSpeed"
     const val PROVIDER_HYSTERIA2 = "providerHysteria2"

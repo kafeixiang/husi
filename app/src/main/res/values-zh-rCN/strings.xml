@@ -370,9 +370,7 @@
     <string name="group_order_origin">原始</string>
     <string name="group_order_by_name">以名称</string>
     <string name="group_order_by_delay">以延时</string>
-    <string name="plugin_exists_but_on_shit_system">配置 %s 需要插件
-        %s，但你的专有设备供应商（通常也是监视资本主义巨头和恶意软件制造商）篡改了你的安卓系统，使该插件无法使用。
-    </string>
+    <string name="plugin_exists_but_on_shit_system">配置 %s 需要插件 %s，但你的专有设备供应商（通常也是监视资本主义巨头和恶意软件制造商）篡改了你的 Android 系统，使该插件无法使用。</string>
     <string name="shadowsocks_plugin_v2ray">V2Ray （Shadowsocks Android 插件）</string>
     <string name="shadowsocks_plugin_simple_obfs">Simple Obfs （Shadowsocks Android 插件）</string>
     <string name="menu_traffic">流量</string>
@@ -501,7 +499,6 @@
     <string name="inbound_password">入站密码</string>
     <string name="http_upgrade_host">HTTPUpgrade 主机</string>
     <string name="http_upgrade_path">HTTPUpgrade 路径</string>
-    <string name="global_allow_insecure">总是跳过 TLS 证书验证</string>
     <string name="scan_vpn_app">探测 VPN 应用</string>
     <string name="scan_vpn_app_introduce">检测设备上安装的 VPN 以及它的类型。</string>
     <string name="vpn_app_type">应用类型</string>
@@ -588,9 +585,8 @@
     <string name="allow_apps_bypass_vpn">允许应用绕过 VPN</string>
     <string name="clash_mode">Clash 模式</string>
     <string name="sniff_timeout">嗅探超时</string>
-    <string name="udp_disable_unmapping">为 UDP 禁用未映射的域</string>
     <string name="network_type">网络类型</string>
     <string name="network_cellular">移动数据</string>
     <string name="network_ethernet">以太网</string>
-    <string name="network_expensive">昂贵的网络</string>
+    <string name="network_expensive">高资费网络</string>
 </resources>

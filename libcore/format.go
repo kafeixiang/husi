@@ -12,6 +12,7 @@ import (
 	"github.com/sagernet/sing-box/option"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/json"
+	"github.com/sagernet/sing/service"
 )
 
 // FormatBytes formats the bytes length to humanize.
@@ -34,11 +35,11 @@ func parseConfig(ctx context.Context, configContent string) (option.Options, err
 }
 
 // FormatConfig formats json.
-func FormatConfig(configContent string) (string, error) {
+func FormatConfig(configContent string) (*StringWrapper, error) {
 	ctx := box.Context(context.Background(), include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry())
 	configMap, err := json.UnmarshalExtendedContext[map[string]any](ctx, []byte(configContent))
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	var buffer bytes.Buffer
@@ -46,21 +47,29 @@ func FormatConfig(configContent string) (string, error) {
 	encoder.SetIndent("", "  ")
 	err = encoder.Encode(configMap)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return buffer.String(), nil
+	return wrapString(buffer.String()), nil
 }
 
-// CheckConfig checks configContent whether can run as sing-box configuration.
+// CheckConfig checks whether configContent can run as sing-box configuration.
 func CheckConfig(configContent string) error {
 	ctx := box.Context(context.Background(), include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry())
 	options, err := parseConfig(ctx, configContent)
 	if err != nil {
 		return E.Cause(err, "parse config")
 	}
+
+	if options.Route != nil {
+		// AutoDetectInterface will be automatically enabled by platform interface,
+		// while platformInterfaceStub not including it. (tun.ErrNetlinkBanned)
+		options.Route.AutoDetectInterface = false
+	}
+
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	service.MustRegister[platformInterfaceStub](ctx, platformInterfaceStub{})
 	instance, err := box.New(box.Options{
 		Options: options,
 		Context: ctx,

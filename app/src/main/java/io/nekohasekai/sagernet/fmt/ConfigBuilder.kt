@@ -22,6 +22,7 @@ import io.nekohasekai.sagernet.fmt.direct.buildSingBoxOutboundDirectBean
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
 import io.nekohasekai.sagernet.fmt.hysteria.buildSingBoxOutboundHysteriaBean
 import io.nekohasekai.sagernet.fmt.internal.ChainBean
+import io.nekohasekai.sagernet.fmt.juicity.JuicityBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.ShadowsocksBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.buildSingBoxOutboundShadowsocksBean
 import io.nekohasekai.sagernet.fmt.socks.SOCKSBean
@@ -35,6 +36,7 @@ import io.nekohasekai.sagernet.fmt.v2ray.buildSingBoxOutboundStandardV2RayBean
 import io.nekohasekai.sagernet.fmt.wireguard.WireGuardBean
 import io.nekohasekai.sagernet.fmt.wireguard.buildSingBoxEndpointWireGuardBean
 import io.nekohasekai.sagernet.ktx.asMap
+import io.nekohasekai.sagernet.ktx.blankAsNull
 import io.nekohasekai.sagernet.ktx.isIpAddress
 import io.nekohasekai.sagernet.ktx.mkPort
 import io.nekohasekai.sagernet.utils.PackageCache
@@ -201,7 +203,7 @@ fun buildConfig(
     val needSniffOverride = DataStore.trafficSniffing == SniffPolicy.OVERRIDE // TODO re-add
     val externalIndexMap = ArrayList<IndexEntity>()
     val ipv6Mode = if (forTest) IPv6Mode.ENABLE else DataStore.ipv6Mode
-    var udpDisableUnmapping = DataStore.udpDisableUnmapping
+    var hasJuicity = false
 
     fun genDomainStrategy(noAsIs: Boolean): String {
         return when {
@@ -286,7 +288,7 @@ fun buildConfig(
 
         if (!forTest) {
             if (isVPN) inbounds.add(Inbound_TunOptions().apply {
-                type = "tun"
+                type = SingBoxOptions.TYPE_TUN
                 tag = TAG_TUN
                 stack = when (DataStore.tunImplementation) {
                     TunImplementation.GVISOR -> "gvisor"
@@ -314,7 +316,7 @@ fun buildConfig(
                 }
             })
             inbounds.add(Inbound_HTTPMixedOptions().apply {
-                type = "mixed"
+                type = SingBoxOptions.TYPE_MIXED
                 tag = TAG_MIXED
                 listen = bind
                 listen_port = DataStore.mixedPort
@@ -431,10 +433,7 @@ fun buildConfig(
                         server = LOCALHOST4
                         server_port = localPort
                     }.asMap()
-
-                    // https://github.com/juicity/juicity/issues/140
-                    // We can't ensure that each plugin can handle packet in a right way.
-                    udpDisableUnmapping = true
+                    if (bean is JuicityBean) hasJuicity = true
                 } else { // internal outbound
                     currentOutbound = when (bean) {
                         is ConfigBean -> gson.fromJson(bean.config, currentOutbound.javaClass)
@@ -522,8 +521,11 @@ fun buildConfig(
                         }
                     }
                     // domain_strategy
-                    this["domain_strategy"] =
-                        if (forTest) "" else defaultServerDomainStrategy
+                    this["domain_strategy"] = if (forTest) {
+                        ""
+                    } else {
+                        defaultServerDomainStrategy
+                    }
 
                     // custom JSON merge
                     if (bean.customOutboundJson.isNotBlank()) {
@@ -801,10 +803,7 @@ fun buildConfig(
                 address_resolver = TAG_DNS_DIRECT
                 strategy = autoDnsDomainStrategy(SingBoxOptionsUtil.domainStrategy(tag))
                 detour = TAG_PROXY
-
-                if (DataStore.ednsClientSubnet.isNotBlank()) {
-                    client_subnet = DataStore.ednsClientSubnet
-                }
+                client_subnet = DataStore.ednsClientSubnet.blankAsNull()
             })
         }
 
@@ -818,10 +817,7 @@ fun buildConfig(
                     address_resolver = TAG_DNS_LOCAL
                 }
                 strategy = autoDnsDomainStrategy(SingBoxOptionsUtil.domainStrategy(tag))
-
-                if (DataStore.ednsClientSubnet.isNotBlank()) {
-                    client_subnet = DataStore.ednsClientSubnet
-                }
+                client_subnet = DataStore.ednsClientSubnet.blankAsNull()
             })
         }
 
@@ -939,16 +935,16 @@ fun buildConfig(
                 })
             }
 
-            if (udpDisableUnmapping) route.rules.add(0, Rule_Default().apply {
-                action = SingBoxOptions.ACTION_ROUTE_OPTIONS
-                udp_disable_domain_unmapping = true
+            // https://github.com/juicity/juicity/issues/140
+            // FIXME: improve this workaround or remove it when juicity fix it.
+            if (!forTest && hasJuicity && useFakeDns) route.rules.add(0, Rule_Default().apply {
+                action = SingBoxOptions.ACTION_RESOLVE
+                network = listOf("udp")
             })
-            if (needSniff) {
-                route.rules.add(0, Rule_Default().apply {
-                    action = SingBoxOptions.ACTION_SNIFF
-                    if (DataStore.sniffTimeout.isNotBlank()) timeout = DataStore.sniffTimeout
-                })
-            }
+            if (needSniff) route.rules.add(0, Rule_Default().apply {
+                action = SingBoxOptions.ACTION_SNIFF
+                timeout = DataStore.sniffTimeout.blankAsNull()
+            })
         }
         if (!forTest) dns.final_ = TAG_DNS_REMOTE
 

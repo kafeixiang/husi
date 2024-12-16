@@ -99,7 +99,6 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var trafficSniffing by configurationStore.stringToInt(Key.TRAFFIC_SNIFFING) { SniffPolicy.ENABLED }
     var sniffTimeout by configurationStore.string(Key.SNIFF_TIMEOUT)
     var resolveDestination by configurationStore.boolean(Key.RESOLVE_DESTINATION)
-    var udpDisableUnmapping by configurationStore.boolean(Key.UDP_DISABLE_UNMAPPING) { true }
 
     //    var tcpKeepAliveInterval by configurationStore.stringToInt(Key.TCP_KEEP_ALIVE_INTERVAL) { 15 }
     var mtu by configurationStore.stringToInt(Key.MTU) { 9000 }
@@ -193,7 +192,6 @@ object DataStore : OnPreferenceDataStoreChangeListener {
 
     // protocol
 
-    var globalAllowInsecure by configurationStore.boolean(Key.GLOBAL_ALLOW_INSECURE) { false }
     var uploadSpeed by configurationStore.stringToInt(Key.UPLOAD_SPEED) { 0 }
     var downloadSpeed by configurationStore.stringToInt(Key.DOWNLOAD_SPEED) { 0 }
     var customPluginPrefix by configurationStore.string(Key.CUSTOM_PLUGIN_PREFIX)
