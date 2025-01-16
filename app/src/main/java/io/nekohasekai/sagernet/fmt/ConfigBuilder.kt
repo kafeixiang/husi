@@ -221,25 +221,11 @@ fun buildConfig(
     return MyOptions().apply {
         if (!forTest) experimental = ExperimentalOptions().apply {
             if (!forExport) {
-                v2ray_api = V2RayAPIOptions().apply {
-                    listen = "$LOCALHOST4:0" // Never really listen
-                    stats = V2RayStatsServiceOptions().also {
-                        it.enabled = true
-                        it.outbounds = tagMap.values.toMutableList().also { list ->
-                            list.add(TAG_PROXY)
-                            list.add(TAG_DIRECT)
-                        }
-                    }
-                }
                 if (isExpert) DataStore.debugListen.blankAsNull()?.let {
                     debug = SingBoxOptions.DebugOptions().apply {
                         listen = it
                     }
                 }
-            }
-            clash_api = ClashAPIOptions().apply {
-                external_controller = DataStore.clashAPIListen.blankAsNull()
-                default_mode = RuleEntity.MODE_RULE
             }
             cache_file = CacheFileOptions().apply {
                 enabled = true
@@ -334,7 +320,7 @@ fun buildConfig(
 
         // init routing object
         route = RouteOptions().apply {
-            if (!forTest) auto_detect_interface = true
+            auto_detect_interface = true
             rules = mutableListOf()
             rule_set = mutableListOf()
         }
@@ -462,10 +448,6 @@ fun buildConfig(
                     currentOutbound.apply {
 //                        val keepAliveInterval = DataStore.tcpKeepAliveInterval
 //                        val needKeepAliveInterval = keepAliveInterval !in intArrayOf(0, 15)
-
-                        if (outboundProtect) {
-                            this["protect_path"] = Libcore.ProtectPath
-                        }
 
                         if (!muxApplied && proxyEntity.needCoreMux()) {
                             muxApplied = true

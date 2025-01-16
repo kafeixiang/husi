@@ -121,9 +121,11 @@ object RawUpdater : GroupUpdater() {
 
                 val json = gson.fromJson(text, Map::class.java)
 
-                val proxyList = listable<Map<String, Any>>(json["outbounds"])
+                var proxyList = json["outbounds"] as? List<Map<String, Any>>
                     ?: error(app.getString(R.string.no_proxies_found_in_file))
-                listable<Map<String, Any>>(json["endpoints"])?.mapNotNullTo(proxyList) { it }
+                (json["endpoints"] as? List<Map<String, Any>>)?.let {
+                    proxyList += it
+                }
                 for (proxy in proxyList) when (proxy["type"].toString()) {
                     "socks" -> proxies.add(SOCKSBean().apply {
                         applyFromMap(proxy) { opt ->
@@ -339,6 +341,7 @@ object RawUpdater : GroupUpdater() {
                     "hysteria" -> proxies.add(HysteriaBean().apply {
                         protocolVersion = HysteriaBean.PROTOCOL_VERSION_1
                         for (opt in proxy) {
+                            if (opt.value == null) continue
                             when (opt.key) {
                                 "tag" -> name = opt.value.toString()
                                 "server" -> serverAddress = opt.value.toString()
@@ -385,6 +388,7 @@ object RawUpdater : GroupUpdater() {
                     "hysteria2" -> proxies.add(HysteriaBean().apply {
                         protocolVersion = HysteriaBean.PROTOCOL_VERSION_2
                         for (opt in proxy) {
+                            if (opt.value == null) continue
                             when (opt.key) {
                                 "tag" -> name = opt.value.toString()
                                 "server" -> serverAddress = opt.value.toString()
@@ -550,10 +554,11 @@ object RawUpdater : GroupUpdater() {
     }
 
     private fun AbstractBean.applyFromMap(
-        opts: Map<String, Any?>,
-        block: (Map.Entry<String, Any?>) -> Unit,
+        opts: Map<String, Any>,
+        block: (Map.Entry<String, Any>) -> Unit,
     ) {
         for (opt in opts) {
+            if (opt.value == null) continue // could be null, do not delete it.
             when (opt.key) {
                 "tag" -> name = opt.value.toString()
                 "server" -> serverAddress = opt.value.toString()
