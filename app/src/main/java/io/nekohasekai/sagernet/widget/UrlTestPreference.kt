@@ -1,4 +1,4 @@
-package moe.matsuri.nb4a.ui
+package io.nekohasekai.sagernet.widget
 
 import android.content.Context
 import android.util.AttributeSet
@@ -7,8 +7,8 @@ import android.widget.LinearLayout
 import androidx.core.content.res.TypedArrayUtils
 import androidx.core.view.isVisible
 import androidx.preference.EditTextPreference
-import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.database.DataStore
+import io.nekohasekai.sagernet.R
 
 class UrlTestPreference
 @JvmOverloads
