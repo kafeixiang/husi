@@ -109,6 +109,7 @@ jobs:
         run: |
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
           # export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
+          ./run init action gradle
           ./gradlew clean app:assembleFossDebug
           # ./gradlew clean app:assembleFossRelease
 
