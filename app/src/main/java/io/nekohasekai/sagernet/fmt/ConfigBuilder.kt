@@ -5,10 +5,10 @@ import io.nekohasekai.sagernet.IPv6Mode
 import io.nekohasekai.sagernet.Key
 import io.nekohasekai.sagernet.MuxStrategy
 import io.nekohasekai.sagernet.MuxType
+import io.nekohasekai.sagernet.NetworkInterfaceStrategy
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.RuleProvider
 import io.nekohasekai.sagernet.SagerNet
-import io.nekohasekai.sagernet.SniffPolicy
 import io.nekohasekai.sagernet.TunImplementation
 import io.nekohasekai.sagernet.bg.VpnService
 import io.nekohasekai.sagernet.database.DataStore
@@ -39,6 +39,7 @@ import io.nekohasekai.sagernet.ktx.asMap
 import io.nekohasekai.sagernet.ktx.blankAsNull
 import io.nekohasekai.sagernet.ktx.isExpert
 import io.nekohasekai.sagernet.ktx.isIpAddress
+import io.nekohasekai.sagernet.ktx.mapX
 import io.nekohasekai.sagernet.ktx.mkPort
 import io.nekohasekai.sagernet.logLevelString
 import io.nekohasekai.sagernet.utils.PackageCache
@@ -47,7 +48,6 @@ import moe.matsuri.nb4a.RuleItem
 import moe.matsuri.nb4a.SingBoxOptions
 import moe.matsuri.nb4a.SingBoxOptions.BrutalOptions
 import moe.matsuri.nb4a.SingBoxOptions.CacheFileOptions
-import moe.matsuri.nb4a.SingBoxOptions.ClashAPIOptions
 import moe.matsuri.nb4a.SingBoxOptions.DNSFakeIPOptions
 import moe.matsuri.nb4a.SingBoxOptions.DNSOptions
 import moe.matsuri.nb4a.SingBoxOptions.DNSServerOptions
@@ -55,7 +55,6 @@ import moe.matsuri.nb4a.SingBoxOptions.ExperimentalOptions
 import moe.matsuri.nb4a.SingBoxOptions.LogOptions
 import moe.matsuri.nb4a.SingBoxOptions.MyOptions
 import moe.matsuri.nb4a.SingBoxOptions.NTPOptions
-import moe.matsuri.nb4a.SingBoxOptions.Outbound
 import moe.matsuri.nb4a.SingBoxOptions.RouteOptions
 import moe.matsuri.nb4a.SingBoxOptions.User
 import moe.matsuri.nb4a.SingBoxOptionsUtil
@@ -64,12 +63,11 @@ import moe.matsuri.nb4a.SingBoxOptions.Inbound_DirectOptions
 import moe.matsuri.nb4a.SingBoxOptions.Inbound_HTTPMixedOptions
 import moe.matsuri.nb4a.SingBoxOptions.Inbound_TunOptions
 import moe.matsuri.nb4a.SingBoxOptions.OutboundMultiplexOptions
+import moe.matsuri.nb4a.SingBoxOptions.Outbound_DirectOptions
 import moe.matsuri.nb4a.SingBoxOptions.Outbound_SelectorOptions
 import moe.matsuri.nb4a.SingBoxOptions.Outbound_SOCKSOptions
 import moe.matsuri.nb4a.SingBoxOptions.Rule_Default
 import moe.matsuri.nb4a.SingBoxOptions.Rule_Logical
-import moe.matsuri.nb4a.SingBoxOptions.V2RayAPIOptions
-import moe.matsuri.nb4a.SingBoxOptions.V2RayStatsServiceOptions
 import moe.matsuri.nb4a.buildRuleSets
 import moe.matsuri.nb4a.checkEmpty
 import moe.matsuri.nb4a.isEndpoint
@@ -202,10 +200,11 @@ fun buildConfig(
         .mapNotNull { dns -> dns.trim().takeIf { it.isNotBlank() && !it.startsWith("#") } }
     val enableDnsRouting = DataStore.enableDnsRouting
     val useFakeDns by lazy { DataStore.enableFakeDns && !forTest }
-    val needSniff = DataStore.trafficSniffing > SniffPolicy.DISABLED
-    val needSniffOverride = DataStore.trafficSniffing == SniffPolicy.OVERRIDE // TODO re-add
+    val enableSniff = DataStore.enableSniff
     val externalIndexMap = ArrayList<IndexEntity>()
     val ipv6Mode = if (forTest) IPv6Mode.ENABLE else DataStore.ipv6Mode
+    val networkInterfaceStrategy = DataStore.networkInterfaceType
+    val networkPreferredInterfaces = DataStore.networkPreferredInterfaces.toList()
     var hasJuicity = false
 
     fun genDomainStrategy(noAsIs: Boolean): String {
@@ -221,25 +220,11 @@ fun buildConfig(
     return MyOptions().apply {
         if (!forTest) experimental = ExperimentalOptions().apply {
             if (!forExport) {
-                v2ray_api = V2RayAPIOptions().apply {
-                    listen = "$LOCALHOST4:0" // Never really listen
-                    stats = V2RayStatsServiceOptions().also {
-                        it.enabled = true
-                        it.outbounds = tagMap.values.toMutableList().also { list ->
-                            list.add(TAG_PROXY)
-                            list.add(TAG_DIRECT)
-                        }
-                    }
-                }
                 if (isExpert) DataStore.debugListen.blankAsNull()?.let {
                     debug = SingBoxOptions.DebugOptions().apply {
                         listen = it
                     }
                 }
-            }
-            clash_api = ClashAPIOptions().apply {
-                external_controller = DataStore.clashAPIListen.blankAsNull()
-                default_mode = RuleEntity.MODE_RULE
             }
             cache_file = CacheFileOptions().apply {
                 enabled = true
@@ -334,7 +319,7 @@ fun buildConfig(
 
         // init routing object
         route = RouteOptions().apply {
-            if (!forTest) auto_detect_interface = true
+            auto_detect_interface = true
             rules = mutableListOf()
             rule_set = mutableListOf()
         }
@@ -366,10 +351,6 @@ fun buildConfig(
 
             profileList.forEachIndexed { index, proxyEntity ->
                 val bean = proxyEntity.requireBean()
-
-                // For: test but not interrupt VPN service
-                val outboundProtect =
-                    forTest && !proxyEntity.needExternal() && DataStore.serviceState.started
 
                 // tagOut: v2ray outbound tag for a profile
                 // profile2 (in) (global)   tag g-(id)
@@ -463,8 +444,12 @@ fun buildConfig(
 //                        val keepAliveInterval = DataStore.tcpKeepAliveInterval
 //                        val needKeepAliveInterval = keepAliveInterval !in intArrayOf(0, 15)
 
-                        if (outboundProtect) {
-                            this["protect_path"] = Libcore.ProtectPath
+                        if (!forTest) {
+                            if (networkPreferredInterfaces.isNotEmpty()) {
+                                this["network_type"] = networkPreferredInterfaces
+                                this["network_strategy"] =
+                                    mapNetworkInterfaceStrategy(networkInterfaceStrategy)
+                            }
                         }
 
                         if (!muxApplied && proxyEntity.needCoreMux()) {
@@ -580,7 +565,7 @@ fun buildConfig(
                 tagMap[it.id] = buildChain(it.id, it)
             }
             outbounds.add(0, Outbound_SelectorOptions().apply {
-                type = "selector"
+                type = SingBoxOptions.TYPE_SELECTOR
                 tag = TAG_PROXY
                 default_ = tagMap[proxy.id]
                 outbounds = tagMap.values.toList()
@@ -599,7 +584,7 @@ fun buildConfig(
             if (rule.packages.isNotEmpty()) {
                 PackageCache.awaitLoadSync()
             }
-            val uidList = rule.packages.map {
+            val uidList = rule.packages.mapX {
                 if (!isVPN) {
                     Toast.makeText(
                         SagerNet.application,
@@ -627,7 +612,7 @@ fun buildConfig(
                 if (rule.port.isNotBlank()) {
                     port = mutableListOf()
                     port_range = mutableListOf()
-                    rule.port.listByLineOrComma().map {
+                    rule.port.listByLineOrComma().mapX {
                         if (it.contains(":")) {
                             port_range.add(it)
                         } else {
@@ -638,7 +623,7 @@ fun buildConfig(
                 if (rule.sourcePort.isNotBlank()) {
                     source_port = mutableListOf()
                     source_port_range = mutableListOf()
-                    rule.sourcePort.listByLineOrComma().map {
+                    rule.sourcePort.listByLineOrComma().mapX {
                         if (it.contains(":")) {
                             source_port_range.add(it)
                         } else {
@@ -675,8 +660,8 @@ fun buildConfig(
                 if (rule.clashMode.isNotBlank()) {
                     clash_mode = rule.clashMode
                 }
-                if (rule.networkType.isNotBlank()) {
-                    network_type = rule.networkType
+                if (rule.networkType.isNotEmpty()) {
+                    network_type = rule.networkType.toList()
                 }
                 if (rule.networkIsExpensive) {
                     network_is_expensive = true
@@ -745,9 +730,16 @@ fun buildConfig(
             }
         }
 
-        outbounds.add(Outbound().apply {
+        outbounds.add(Outbound_DirectOptions().apply {
             tag = TAG_DIRECT
             type = SingBoxOptions.TYPE_DIRECT
+
+            if (!forTest) {
+                if (networkPreferredInterfaces.isNotEmpty()) {
+                    network_type = networkPreferredInterfaces
+                    network_strategy = mapNetworkInterfaceStrategy(networkInterfaceStrategy)
+                }
+            }
         }.asMap())
 
         if (!forTest) {
@@ -935,14 +927,16 @@ fun buildConfig(
 
             // https://github.com/juicity/juicity/issues/140
             // FIXME: improve this workaround or remove it when juicity fix it.
-            if (!forTest && hasJuicity && useFakeDns) route.rules.add(0, Rule_Default().apply {
+            if (hasJuicity && useFakeDns) route.rules.add(0, Rule_Default().apply {
                 action = SingBoxOptions.ACTION_RESOLVE
-                network = listOf("udp")
+                network = listOf(SingBoxOptions.NetworkUDP)
             })
-            if (needSniff) route.rules.add(0, Rule_Default().apply {
+            if (enableSniff) route.rules.add(0, Rule_Default().apply {
                 action = SingBoxOptions.ACTION_SNIFF
                 timeout = DataStore.sniffTimeout.blankAsNull()
             })
+
+            route.final_ = TAG_PROXY
         }
         if (!forTest) dns.final_ = TAG_DNS_REMOTE
 
@@ -1008,4 +1002,11 @@ fun MyOptions.partitionEndpoints() {
     val pair = outbounds.partition { isEndpoint(it["type"].toString()) }
     endpoints = pair.first
     outbounds = pair.second
+}
+
+fun mapNetworkInterfaceStrategy(strategy: Int): String = when (strategy) {
+    NetworkInterfaceStrategy.DEFAULT -> SingBoxOptions.STRATEGY_DEFAULT
+    NetworkInterfaceStrategy.HYBRID -> SingBoxOptions.STRATEGY_HYBRID
+    NetworkInterfaceStrategy.FALLBACK -> SingBoxOptions.STRATEGY_FALLBACK
+    else -> throw IllegalStateException()
 }

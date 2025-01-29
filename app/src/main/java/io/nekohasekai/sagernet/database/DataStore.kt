@@ -8,8 +8,8 @@ import io.nekohasekai.sagernet.IPv6Mode
 import io.nekohasekai.sagernet.Key
 import io.nekohasekai.sagernet.MuxStrategy
 import io.nekohasekai.sagernet.MuxType
+import io.nekohasekai.sagernet.NetworkInterfaceStrategy
 import io.nekohasekai.sagernet.SPEED_TEST_URL
-import io.nekohasekai.sagernet.SniffPolicy
 import io.nekohasekai.sagernet.TrafficSortMode
 import io.nekohasekai.sagernet.TunImplementation
 import io.nekohasekai.sagernet.bg.BaseService
@@ -22,6 +22,7 @@ import io.nekohasekai.sagernet.ktx.int
 import io.nekohasekai.sagernet.ktx.long
 import io.nekohasekai.sagernet.ktx.parsePort
 import io.nekohasekai.sagernet.ktx.string
+import io.nekohasekai.sagernet.ktx.stringSet
 import io.nekohasekai.sagernet.ktx.stringToInt
 import io.nekohasekai.sagernet.ktx.stringToIntIfExists
 import moe.matsuri.nb4a.TempDatabase
@@ -86,7 +87,6 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     }
 
     var appTLSVersion by configurationStore.string(Key.APP_TLS_VERSION)
-    var clashAPIListen by configurationStore.string(Key.CLASH_API_LISTEN)
     var showBottomBar by configurationStore.boolean(Key.SHOW_BOTTOM_BAR)
     var interruptSelector by configurationStore.boolean(Key.INTERRUPT_SELECTOR)
 
@@ -98,7 +98,11 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var debugListen by configurationStore.string(Key.DEBUG_LISTEN)
     var anchorSSID by configurationStore.string(Key.ANCHOR_SSID)
 
-    var trafficSniffing by configurationStore.stringToInt(Key.TRAFFIC_SNIFFING) { SniffPolicy.ENABLED }
+    var networkInterfaceType by configurationStore.stringToInt(Key.NETWORK_INTERFACE_STRATEGY) {
+        NetworkInterfaceStrategy.DEFAULT
+    }
+    var networkPreferredInterfaces by configurationStore.stringSet(Key.NETWORK_PREFERRED_INTERFACES)
+    var enableSniff by configurationStore.boolean(Key.ENABLE_SNIFF) { true }
     var sniffTimeout by configurationStore.string(Key.SNIFF_TIMEOUT)
     var resolveDestination by configurationStore.boolean(Key.RESOLVE_DESTINATION)
 
@@ -248,7 +252,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var serverStreamReceiveWindow by profileCacheStore.stringToIntIfExists(Key.SERVER_STREAM_RECEIVE_WINDOW)
     var serverConnectionReceiveWindow by profileCacheStore.stringToIntIfExists(Key.SERVER_CONNECTION_RECEIVE_WINDOW)
     var serverDisableMtuDiscovery by profileCacheStore.boolean(Key.SERVER_DISABLE_MTU_DISCOVERY)
-    var serverHopInterval by profileCacheStore.stringToInt(Key.SERVER_HOP_INTERVAL) { 10 }
+    var serverHopInterval by profileCacheStore.string(Key.SERVER_HOP_INTERVAL) { "10s" }
 
     var protocolVersion by profileCacheStore.stringToInt(Key.PROTOCOL_VERSION) { 2 } // default is SOCKS5
 
@@ -272,12 +276,12 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var routeProtocol by profileCacheStore.string(Key.ROUTE_PROTOCOL)
     var routeOutbound by profileCacheStore.stringToInt(Key.ROUTE_OUTBOUND)
     var routeOutboundRule by profileCacheStore.long(Key.ROUTE_OUTBOUND + "Long")
-    var routePackages by profileCacheStore.string(Key.ROUTE_PACKAGES)
+    var routePackages by profileCacheStore.stringSet(Key.ROUTE_PACKAGES)
     var routeSSID by profileCacheStore.string(Key.ROUTE_SSID)
     var routeBSSID by profileCacheStore.string(Key.ROUTE_BSSID)
     var routeClient by profileCacheStore.string(Key.ROUTE_CLIENT)
     var routeClashMode by profileCacheStore.string(Key.ROUTE_CLASH_MODE)
-    var routeNetworkType by profileCacheStore.string(Key.ROUTE_NETWORK_TYPE)
+    var routeNetworkType by profileCacheStore.stringSet(Key.ROUTE_NETWORK_TYPE)
     var routeNetworkIsExpensive by profileCacheStore.boolean(Key.ROUTE_NETWORK_IS_EXPENSIVE)
 
     var frontProxy by profileCacheStore.long(Key.GROUP_FRONT_PROXY + "Long")

@@ -17,15 +17,16 @@ constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = TypedArrayUtils.getAttr(
-        context, R.attr.editTextPreferenceStyle,
-        android.R.attr.editTextPreferenceStyle
+        context,
+        androidx.preference.R.attr.editTextPreferenceStyle,
+        android.R.attr.editTextPreferenceStyle,
     ),
     defStyleRes: Int = 0,
     var allowMultipleLines: Boolean = false,
 ) : EditTextPreference(context, attrs, defStyleAttr, defStyleRes) {
 
     init {
-        dialogLayoutResource = R.layout.layout_urltest_preference_dialog
+        dialogLayoutResource = R.layout.layout_edittext_dialog
 
         setOnBindEditTextListener {
             val linkLayout = it.rootView.findViewById<TextInputLayout>(R.id.input_layout)
@@ -36,7 +37,7 @@ constructor(
                     return
                 }
 
-                val lines = text.split("\n")
+                val lines = text.lines()
                 if (lines.size > 1 && !allowMultipleLines) {
                     linkLayout.isErrorEnabled = true
                     linkLayout.error = "Unexpected new line"
@@ -63,9 +64,7 @@ constructor(
 
             }
             validate()
-            it.addTextChangedListener {
-                validate()
-            }
+            it.addTextChangedListener { validate() }
         }
     }
 

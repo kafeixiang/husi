@@ -16,14 +16,15 @@ constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = TypedArrayUtils.getAttr(
-        context, R.attr.editTextPreferenceStyle,
-        android.R.attr.editTextPreferenceStyle
+        context,
+        androidx.preference.R.attr.editTextPreferenceStyle,
+        android.R.attr.editTextPreferenceStyle,
     ),
     defStyleRes: Int = 0,
 ) : EditTextPreference(context, attrs, defStyleAttr, defStyleRes) {
 
     init {
-        dialogLayoutResource = R.layout.layout_urltest_preference_dialog
+        dialogLayoutResource = R.layout.layout_edittext_dialog
 
         setOnBindEditTextListener {
             val inputLayout = it.rootView.findViewById<TextInputLayout>(R.id.input_layout)

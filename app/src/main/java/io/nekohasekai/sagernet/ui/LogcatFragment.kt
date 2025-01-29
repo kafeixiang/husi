@@ -16,7 +16,7 @@ import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
 import io.nekohasekai.sagernet.ktx.readableMessage
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
-import io.nekohasekai.sagernet.ktx.runOnMainDispatcher
+import io.nekohasekai.sagernet.ktx.runOnIoDispatcher
 import io.nekohasekai.sagernet.ktx.snackbar
 import io.nekohasekai.sagernet.utils.SendLog
 import io.nekohasekai.sfa.utils.ColorUtils
@@ -65,7 +65,7 @@ class LogcatFragment : ToolbarFragment(R.layout.layout_logcat),
         binding.logView.scrollToPosition(logAdapter.itemCount - 1)
 
         fileObserver.startWatching()
-        freshJob = runOnDefaultDispatcher {
+        freshJob = runOnIoDispatcher {
             updateLog(RandomAccessFile(SendLog.logFile, "r"))
         }
     }
@@ -172,7 +172,7 @@ class LogcatFragment : ToolbarFragment(R.layout.layout_logcat),
                 if (lines.isNotEmpty()) {
                     val startPosition = logAdapter.logList.size
                     logAdapter.logList.addAll(lines)
-                    runOnMainDispatcher {
+                    onMainDispatcher {
                         logAdapter.notifyItemRangeInserted(startPosition, lines.size)
                         if (!pinLog) binding.logView.scrollToPosition(logAdapter.itemCount - 1)
                     }

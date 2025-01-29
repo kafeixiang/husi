@@ -8,6 +8,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import androidx.core.app.ActivityCompat
 import androidx.preference.EditTextPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceCategory
 import androidx.preference.PreferenceFragmentCompat
@@ -18,7 +19,6 @@ import io.nekohasekai.sagernet.Key
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.RuleProvider
 import io.nekohasekai.sagernet.SagerNet
-import io.nekohasekai.sagernet.SniffPolicy
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.preference.EditTextPreferenceModifiers
 import io.nekohasekai.sagernet.ktx.FixedLinearLayoutManager
@@ -29,6 +29,7 @@ import io.nekohasekai.sagernet.ktx.needRestart
 import io.nekohasekai.sagernet.utils.Theme
 import io.nekohasekai.sagernet.widget.DurationPreference
 import io.nekohasekai.sagernet.widget.LinkOrContentPreference
+import io.nekohasekai.sagernet.widget.updateSummary
 import moe.matsuri.nb4a.ui.ColorPickerPreference
 import moe.matsuri.nb4a.ui.LongClickListPreference
 import rikka.preference.SimpleMenuPreference
@@ -66,7 +67,7 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
 
         lateinit var bypassLan: SwitchPreference
         lateinit var bypassLanInCore: SwitchPreference
-        lateinit var trafficSniff: SimpleMenuPreference
+        lateinit var enableSniff: SwitchPreference
         lateinit var sniffTimeout: DurationPreference
 
         lateinit var logLevel: LongClickListPreference
@@ -160,6 +161,16 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
 
                         Key.BYPASS_LAN -> bypassLan = preference as SwitchPreference
                         Key.BYPASS_LAN_IN_CORE -> bypassLanInCore = preference as SwitchPreference
+                        Key.NETWORK_PREFERRED_INTERFACES -> (preference as MultiSelectListPreference).let {
+                            it.updateSummary()
+                            it.setOnPreferenceChangeListener { _, newValue ->
+                                @Suppress("UNCHECKED_CAST")
+                                it.updateSummary(newValue as Set<String>)
+                                needReload()
+                                true
+                            }
+                        }
+
                         Key.RULES_PROVIDER -> ruleProvider = preference as SimpleMenuPreference
                         Key.CUSTOM_RULE_PROVIDER -> {
                             customRuleProvider = (preference as LinkOrContentPreference).also {
@@ -168,7 +179,7 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
                             }
                         }
 
-                        Key.TRAFFIC_SNIFFING -> trafficSniff = preference as SimpleMenuPreference
+                        Key.ENABLE_SNIFF -> enableSniff = preference as SwitchPreference
                         Key.SNIFF_TIMEOUT -> sniffTimeout = preference as DurationPreference
 
                         else -> preference.onPreferenceChangeListener = reloadListener
@@ -192,6 +203,7 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
                             preference.isVisible = isExpert
                             preference.onPreferenceChangeListener = reloadListener
                         }
+
                         else -> preference.onPreferenceChangeListener = reloadListener
                     }
                 }
@@ -287,10 +299,10 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
             true
         }
 
-        sniffTimeout.isEnabled = trafficSniff.value.toString() != SniffPolicy.DISABLED.toString()
+        sniffTimeout.isEnabled = enableSniff.isChecked
         sniffTimeout.onPreferenceChangeListener = reloadListener
-        trafficSniff.setOnPreferenceChangeListener { _, newValue ->
-            sniffTimeout.isEnabled = newValue.toString() != SniffPolicy.DISABLED.toString()
+        enableSniff.setOnPreferenceChangeListener { _, newValue ->
+            sniffTimeout.isEnabled = newValue as Boolean
             needReload()
             true
         }
@@ -317,6 +329,7 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
     }
 
     private fun EditTextPreference.setPortEdit() {
+        @Suppress("UsePropertyAccessSyntax") // Android studio bug
         setOnBindEditTextListener(EditTextPreferenceModifiers.Port)
         onPreferenceChangeListener = reloadListener
     }

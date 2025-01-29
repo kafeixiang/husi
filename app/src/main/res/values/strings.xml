@@ -320,7 +320,6 @@
     <string name="api_port">API Port</string>
     <string name="probe_interval">Balancer observation interval</string>
     <string name="standard">Standard</string>
-    <string name="v2rayn" translatable="false">V2RayN</string>
     <string name="available" translatable="false">%dms</string>
     <string name="unavailable">Unavailable</string>
     <string name="always_show_address">Always Show Address</string>
@@ -456,17 +455,7 @@
     <string name="wireguard_local_address">Local Address</string>
     <string name="wireguard_public_key">Peer Public Key</string>
     <string name="wireguard_psk">Peer Pre-Shared Key</string>
-    <string name="cloudflare_wrap" translatable="false">Cloudflare Warp</string>
-    <string name="warp_license">CloudFlare Warp is a free WireGuard VPN provider. By using it, you
-        agree to the TOS.
-    </string>
-    <string name="warp_generate">Generate Configuration</string>
-    <string name="generating">Generating…</string>
     <string name="tun_implementation">TUN Implementation</string>
-    <string name="destination_override">Override Destination</string>
-    <string name="destination_override_summary">Use the sniffed domain to overwrite the destination
-        address, not just for routing
-    </string>
     <string name="resolve_destination">Resolve Destination</string>
     <string name="resolve_destination_summary">If the destination address is a domain, it is then
         passed out based on the IPv6 strategy (conflicts with FakeDNS)
@@ -547,7 +536,6 @@
     <string name="test_concurrency">Test concurrency</string>
     <string name="mux_type">Mux protocol</string>
     <string name="sniff_routing">Sniff result for routing</string>
-    <string name="sniff_override">Sniff result for destination</string>
     <string name="resolve_server">Resolve the server address according to the IPv6 policy</string>
     <string name="get_cert_server_hint">Target server</string>
     <string name="get_cert">Get certificates</string>
@@ -660,4 +648,10 @@
     <string name="low">Low</string>
     <string name="middle">Middle</string>
     <string name="high">High</string>
+    <string name="pause">Pause</string>
+    <string name="network_interface_strategy">Network Interface Strategy</string>
+    <string name="network_interface_preference">Network Interface Preference</string>
+    <string name="network_interface_preference_detail">Enable multi network interfaces dialing</string>
+    <string name="hybrid">Hybrid</string>
+    <string name="fallback">Fallback</string>
 </resources>

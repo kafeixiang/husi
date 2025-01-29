@@ -4,27 +4,26 @@ import (
 	"context"
 	"time"
 
-	box "github.com/sagernet/sing-box"
+	"github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/conntrack"
 	C "github.com/sagernet/sing-box/constant"
-	"github.com/sagernet/sing-box/experimental/clashapi"
 	"github.com/sagernet/sing-box/experimental/deprecated"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/include"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/protocol/group"
+	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/atomic"
 	E "github.com/sagernet/sing/common/exceptions"
 	F "github.com/sagernet/sing/common/format"
 	"github.com/sagernet/sing/service"
 	"github.com/sagernet/sing/service/pause"
 
-	"libcore/protect"
-	"libcore/trackerchain"
-	"libcore/v2rayapilite"
-
 	"github.com/xchacha20-poly1305/anchor/anchorservice"
+
+	"libcore/combinedapi"
+	"libcore/protect"
 )
 
 func ResetAllConnections() {
@@ -50,10 +49,8 @@ type BoxInstance struct {
 
 	platformInterface PlatformInterface
 	selector          *group.Selector
-	protect           *protect.Protect
-	v2ray             *v2rayapilite.V2rayServer
-	clash             *clashapi.Server
-	clashModeHook     chan struct{}
+	protect           *protect.Service
+	api               *combinedapi.CombinedAPI
 	anchor            *anchorservice.Anchor
 
 	pauseManager pause.Manager
@@ -120,7 +117,7 @@ func NewBoxInstance(config string, platformInterface PlatformInterface) (b *BoxI
 		}
 
 		// Protect
-		b.protect, err = protect.New(ctx, log.StdLogger(), ProtectPath, func(fd int) error {
+		b.protect, err = protect.New(log.ContextWithNewID(ctx), logFactory.NewLogger("protect"), ProtectPath, func(fd int) error {
 			return platformInterface.AutoDetectInterfaceControl(int32(fd))
 		})
 		if err != nil {
@@ -128,14 +125,12 @@ func NewBoxInstance(config string, platformInterface PlatformInterface) (b *BoxI
 		}
 
 		// API
-		b.clash = service.FromContext[adapter.ClashServer](b.ctx).(*clashapi.Server)
-		b.v2ray = service.FromContext[adapter.V2RayServer](b.ctx).(*v2rayapilite.V2rayServer)
-		b.Router().SetTracker(trackerchain.New(b.v2ray.StatsService(), b.clash))
+		b.api = service.FromContext[adapter.ClashServer](b.ctx).(*combinedapi.CombinedAPI)
 
 		// Anchor
-		socksPort := publicMixedPort(options.Inbounds)
+		socksPort, dnsPort := sharedPublicPort(options.Inbounds)
 		if socksPort > 0 {
-			b.anchor, err = b.createAnchor(socksPort)
+			b.anchor, err = b.createAnchor(socksPort, dnsPort)
 			if err != nil {
 				log.WarnContext(b.ctx, "create anchor: ", err)
 			}
@@ -158,12 +153,8 @@ func (b *BoxInstance) Start() (err error) {
 	}
 
 	if b.protect != nil {
-		if err := b.protect.Start(); err != nil {
-			log.Warn(E.Cause(err))
-		}
-	}
-	if b.selector != nil {
-		go b.listenSelectorChange(b.ctx, b.platformInterface.SelectorCallback)
+		// Never return error
+		_ = b.protect.Start()
 	}
 	if b.anchor != nil {
 		err = b.anchor.Start()
@@ -187,49 +178,35 @@ func (b *BoxInstance) CloseTimeout(timeout time.Duration) (err error) {
 		return nil
 	}
 
-	if b.protect != nil {
-		_ = b.protect.Close()
-	}
-	if b.anchor != nil {
-		_ = b.anchor.Close()
-	}
+	_ = common.Close(
+		common.PtrOrNil(b.protect),
+		common.PtrOrNil(b.anchor),
+	)
 
-	if b.clashModeHook != nil {
-		select {
-		case <-b.clashModeHook:
-			// closed
-		default:
-			b.clash.SetModeUpdateHook(nil)
-			close(b.clashModeHook)
-		}
-	}
-
-	done := make(chan struct{})
+	done := make(chan error, 1)
 	start := time.Now()
-	go func(done chan<- struct{}) {
-		defer catchPanic("box.Close", func(panicErr error) { err = panicErr })
+	go func() {
+		defer catchPanic("box.Close", func(panicErr error) { done <- panicErr })
 		b.cancel()
-		_ = b.Box.Close()
-		close(done)
-	}(done)
+		done <- b.Box.Close()
+	}()
 	select {
 	case <-time.After(timeout):
 		return E.New("sing-box did not close in time")
-	case <-done:
-		if b.forTest {
-			return nil
+	case err = <-done:
+		if !b.forTest {
+			log.Info("sing-box closed in ", F.Seconds(time.Since(start).Seconds()), " s.")
 		}
-		log.Info("sing-box closed in ", F.Seconds(time.Since(start).Seconds()), " s.")
-		return nil
+		return
 	}
 }
 
 func (b *BoxInstance) NeedWIFIState() bool {
-	return b.Box.Router().NeedWIFIState()
+	return b.anchor != nil || b.Box.Router().NeedWIFIState()
 }
 
-func (b *BoxInstance) QueryStats(tag, direct string) int64 {
-	return b.v2ray.QueryStats("outbound>>>" + tag + ">>>traffic>>>" + direct)
+func (b *BoxInstance) QueryStats(tag string, isUpload bool) int64 {
+	return b.api.QueryStats(tag, isUpload)
 }
 
 func (b *BoxInstance) SelectOutbound(tag string) (ok bool) {

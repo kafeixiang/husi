@@ -33,6 +33,7 @@ import io.nekohasekai.sagernet.ktx.forEach
 import io.nekohasekai.sagernet.ktx.generateUserAgent
 import io.nekohasekai.sagernet.ktx.isIpAddress
 import io.nekohasekai.sagernet.ktx.isJsonObjectValid
+import io.nekohasekai.sagernet.ktx.mapX
 import io.nekohasekai.sagernet.ktx.parseProxies
 import io.nekohasekai.sagernet.ktx.toStringPretty
 import libcore.Libcore
@@ -121,9 +122,11 @@ object RawUpdater : GroupUpdater() {
 
                 val json = gson.fromJson(text, Map::class.java)
 
-                val proxyList = listable<Map<String, Any>>(json["outbounds"])
+                var proxyList = json["outbounds"] as? List<Map<String, Any>>
                     ?: error(app.getString(R.string.no_proxies_found_in_file))
-                listable<Map<String, Any>>(json["endpoints"])?.mapNotNullTo(proxyList) { it }
+                (json["endpoints"] as? List<Map<String, Any>>)?.let {
+                    proxyList += it
+                }
                 for (proxy in proxyList) when (proxy["type"].toString()) {
                     "socks" -> proxies.add(SOCKSBean().apply {
                         applyFromMap(proxy) { opt ->
@@ -232,7 +235,8 @@ object RawUpdater : GroupUpdater() {
 
                         bean.applyFromMap(proxy) { opt ->
                             when (opt.key) {
-                                "uuid" -> bean.uuid = opt.value.toString()
+                                "uuid" -> if (protocol != 2) bean.uuid = opt.value.toString()
+                                "password" -> (bean as? TrojanBean)?.password = opt.value.toString()
                                 "flow" -> if (protocol == 0) bean.encryption = opt.value.toString()
 
                                 "security" -> if (protocol == 1) bean.encryption =
@@ -325,7 +329,7 @@ object RawUpdater : GroupUpdater() {
                                     "reserved" -> reserved = when (val v = opt.value) {
                                         is String? -> v
 
-                                        is List<*>? -> v?.map {
+                                        is List<*>? -> v?.mapX {
                                             it.toString()
                                         }?.joinToString(",")
 
@@ -337,8 +341,9 @@ object RawUpdater : GroupUpdater() {
                     }
 
                     "hysteria" -> proxies.add(HysteriaBean().apply {
-                        protocolVersion = 1
+                        protocolVersion = HysteriaBean.PROTOCOL_VERSION_1
                         for (opt in proxy) {
+                            if (opt.value == null) continue
                             when (opt.key) {
                                 "tag" -> name = opt.value.toString()
                                 "server" -> serverAddress = opt.value.toString()
@@ -383,12 +388,15 @@ object RawUpdater : GroupUpdater() {
                     })
 
                     "hysteria2" -> proxies.add(HysteriaBean().apply {
-                        protocolVersion = 2
+                        protocolVersion = HysteriaBean.PROTOCOL_VERSION_2
                         for (opt in proxy) {
+                            if (opt.value == null) continue
                             when (opt.key) {
                                 "tag" -> name = opt.value.toString()
                                 "server" -> serverAddress = opt.value.toString()
                                 "server_port" -> serverPorts = opt.value.toString()
+                                "server_ports" -> listable<String>(opt.value)?.joinToString(",")
+                                "hop_interval" -> hopInterval = opt.value.toString()
                                 "obfs" -> for (obfsOpt in (opt.value as Map<String, Any>)) {
                                     when (obfsOpt.key) {
                                         "password" -> obfuscation = obfsOpt.value.toString()
@@ -508,7 +516,7 @@ object RawUpdater : GroupUpdater() {
         } else if (text.contains("[Interface]")) {
             // wireguard
             try {
-                proxies.addAll(parseWireGuard(text).map {
+                proxies.addAll(parseWireGuard(text).mapX {
                     if (fileName.isNotBlank()) it.name = fileName.removeSuffix(".conf")
                     it
                 })
@@ -521,7 +529,7 @@ object RawUpdater : GroupUpdater() {
         try {
             val json = JSONTokener(text).nextValue()
             return parseJSON(json)
-        } catch (ignored: Exception) {
+        } catch (_: Exception) {
         }
 
         try {
@@ -548,10 +556,11 @@ object RawUpdater : GroupUpdater() {
     }
 
     private fun AbstractBean.applyFromMap(
-        opts: Map<String, Any?>,
-        block: (Map.Entry<String, Any?>) -> Unit,
+        opts: Map<String, Any>,
+        block: (Map.Entry<String, Any>) -> Unit,
     ) {
         for (opt in opts) {
+            if (opt.value == null) continue // could be null, do not delete it.
             when (opt.key) {
                 "tag" -> name = opt.value.toString()
                 "server" -> serverAddress = opt.value.toString()
@@ -561,8 +570,8 @@ object RawUpdater : GroupUpdater() {
                     if (muxMap["enabled"] != true) continue
 
                     serverMux = true
-                    serverMuxPadding = muxMap["padding"]?.toString() == "true"
-                    muxMap["protocol"]?.toString()?.let {
+                    serverMuxPadding = muxMap["padding"] as? Boolean ?: false
+                    muxMap["protocol"]?.let {
                         serverMuxType = when (it) {
                             "smux" -> MuxType.SMUX
                             "yamux" -> MuxType.YAMUX
@@ -583,8 +592,8 @@ object RawUpdater : GroupUpdater() {
                         serverMuxNumber = it
                     }
 
-                    (muxMap["brutal"] as? Map<String, Any?>)?.get("enabled")?.toString()?.let {
-                        serverBrutal = it == "true"
+                    if ((muxMap["brutal"] as? Map<String, Any>)?.get("enabled") as? Boolean == true) {
+                        serverBrutal = true
                     }
                 }
 

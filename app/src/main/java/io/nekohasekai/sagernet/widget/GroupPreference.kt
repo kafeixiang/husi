@@ -2,20 +2,22 @@ package io.nekohasekai.sagernet.widget
 
 import android.content.Context
 import android.util.AttributeSet
-import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.database.SagerDatabase
+import io.nekohasekai.sagernet.ktx.mapX
 import rikka.preference.SimpleMenuPreference
 
 class GroupPreference
 @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyle: Int = R.attr.dropdownPreferenceStyle
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyle: Int = androidx.preference.R.attr.dropdownPreferenceStyle,
 ) : SimpleMenuPreference(context, attrs, defStyle, 0) {
 
     init {
         val groups = SagerDatabase.groupDao.allGroups()
 
-        entries = groups.map { it.displayName() }.toTypedArray()
-        entryValues = groups.map { "${it.id}" }.toTypedArray()
+        entries = groups.mapX { it.displayName() }.toTypedArray()
+        entryValues = groups.mapX { "${it.id}" }.toTypedArray()
     }
 
     override fun getSummary(): CharSequence? {

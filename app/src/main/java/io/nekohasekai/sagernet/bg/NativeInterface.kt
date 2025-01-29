@@ -8,16 +8,14 @@ import android.system.OsConstants
 import androidx.annotation.RequiresApi
 import io.nekohasekai.sagernet.SagerNet
 import io.nekohasekai.sagernet.database.DataStore
-import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.ktx.Logs
-import io.nekohasekai.sagernet.ktx.isExpert
-import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
+import io.nekohasekai.sagernet.ktx.toStringIterator
+import io.nekohasekai.sagernet.ktx.mapX
 import io.nekohasekai.sagernet.utils.PackageCache
 import libcore.InterfaceUpdateListener
 import libcore.Libcore
 import libcore.NetworkInterfaceIterator
 import libcore.PlatformInterface
-import libcore.StringIterator
 import libcore.WIFIState
 import libcore.NetworkInterface as LibcoreNetworkInterface
 import java.net.Inet6Address
@@ -29,30 +27,25 @@ class NativeInterface : PlatformInterface {
 
     //  libbox interface
 
+    override fun anchorSSID(): String = DataStore.anchorSSID
+
     override fun autoDetectInterfaceControl(fd: Int) {
         DataStore.vpnService?.protect(fd)
     }
 
-    override fun clashModeCallback(mode: String?) {
-        val data = DataStore.baseService?.data ?: return
-        runOnDefaultDispatcher {
-            data.binder.broadcast { work ->
-                work.clashModeUpdate(data.proxy?.box?.clashMode ?: return@broadcast)
-            }
-        }
-    }
-
-    override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener?) {
+    override fun startDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
         DefaultNetworkMonitor.setListener(listener)
     }
 
-    override fun closeDefaultInterfaceMonitor(listener: InterfaceUpdateListener?) {
+    override fun closeDefaultInterfaceMonitor(listener: InterfaceUpdateListener) {
         DefaultNetworkMonitor.setListener(null)
     }
 
-    override fun openTun(singTunOptionsJson: String, tunPlatformOptionsJson: String): Long {
-        if (DataStore.vpnService == null) throw Exception("no VpnService")
-        return DataStore.vpnService!!.startVpn(singTunOptionsJson, tunPlatformOptionsJson).toLong()
+    override fun deviceName(): String = Build.MODEL
+
+    override fun openTun(): Long {
+        if (DataStore.vpnService == null) throw NullPointerException("no vpnService")
+        return DataStore.vpnService!!.startVpn().toLong()
     }
 
     override fun useProcFS(): Boolean {
@@ -81,15 +74,6 @@ class NativeInterface : PlatformInterface {
         }
     }
 
-    override fun getDataStoreString(key: String): String? = try {
-        DataStore.javaClass.getField(key).let {
-            it.isAccessible = true
-            it.get(DataStore) as? String
-        }
-    } catch (_: Exception) {
-        null
-    }
-
     override fun packageNameByUid(uid: Int): String {
         PackageCache.awaitLoadSync()
 
@@ -105,40 +89,15 @@ class NativeInterface : PlatformInterface {
         error("unknown uid $uid")
     }
 
-    override fun uidByPackageName(packageName: String): Int {
-        PackageCache.awaitLoadSync()
-        return PackageCache[packageName] ?: 0
-    }
-
-    override fun selectorCallback(tag: String) {
-        DataStore.baseService?.apply {
-            runOnDefaultDispatcher {
-                val id = data.proxy!!.config.profileTagMap
-                    .filterValues { it == tag }.keys.firstOrNull() ?: -1
-                val ent = SagerDatabase.proxyDao.getById(id) ?: return@runOnDefaultDispatcher
-                // traffic & title
-                data.proxy?.apply {
-                    trafficLooper?.selectMain(id)
-                    displayProfileName = ServiceNotification.genTitle(ent)
-                    data.notification?.postNotificationTitle(displayProfileName)
-                }
-                // post binder
-                data.binder.broadcast { b ->
-                    b.cbSelectorUpdate(id)
-                }
-            }
-        }
-    }
-
     override fun readWIFIState(): WIFIState? {
         // TODO API 34
         @Suppress("DEPRECATION") val wifiInfo = SagerNet.wifi.connectionInfo ?: return null
         var ssid = wifiInfo.ssid
-        if (ssid == "<unknown ssid>") return WIFIState("", "")
+        if (ssid == "<unknown ssid>") return WifiState("", "")
         if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
             ssid = ssid.substring(1, ssid.length - 1)
         }
-        return WIFIState(ssid, wifiInfo.bssid)
+        return WifiState(ssid, wifiInfo.bssid)
     }
 
     override fun getInterfaces(): NetworkInterfaceIterator {
@@ -153,8 +112,9 @@ class NativeInterface : PlatformInterface {
             boxInterface.name = linkProperties.interfaceName
             val networkInterface =
                 networkInterfaces.find { it.name == boxInterface.name } ?: continue
-            boxInterface.dnsServer =
-                StringArray(linkProperties.dnsServers.mapNotNull { it.hostAddress }.iterator())
+            boxInterface.dnsServer = linkProperties.dnsServers.mapNotNull { it.hostAddress }.let {
+                it.toStringIterator(it.size)
+            }
             boxInterface.type = when {
                 networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> Libcore.InterfaceTypeWIFI
                 networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> Libcore.InterfaceTypeCellular
@@ -167,11 +127,9 @@ class NativeInterface : PlatformInterface {
             }.onFailure { e ->
                 Logs.e("failed to get mtu for interface ${boxInterface.name}", e)
             }
-            boxInterface.addresses = StringArray(
-                networkInterface.interfaceAddresses.map {
-                    it.toPrefix()
-                }.iterator()
-            )
+            boxInterface.addresses = networkInterface.interfaceAddresses.mapX { it.toPrefix() }.let {
+                it.toStringIterator(it.size)
+            }
             var dumpFlags = 0
             if (networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)) {
                 dumpFlags = OsConstants.IFF_UP or OsConstants.IFF_RUNNING
@@ -190,10 +148,13 @@ class NativeInterface : PlatformInterface {
                 !networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
             interfaces.add(boxInterface)
         }
-        return InterfaceArray(interfaces.iterator())
+        return InterfaceArray(interfaces.iterator(), interfaces.size)
     }
 
-    private class InterfaceArray(private val iterator: Iterator<LibcoreNetworkInterface>) :
+    private class InterfaceArray(
+        private val iterator: Iterator<LibcoreNetworkInterface>,
+        private val size: Int,
+    ) :
         NetworkInterfaceIterator {
 
         override fun hasNext(): Boolean {
@@ -204,22 +165,8 @@ class NativeInterface : PlatformInterface {
             return iterator.next()
         }
 
-    }
+        override fun length(): Int = size
 
-    private class StringArray(private val iterator: Iterator<String>) : StringIterator {
-
-        override fun hasNext(): Boolean {
-            return iterator.hasNext()
-        }
-
-        override fun next(): String {
-            return iterator.next()
-        }
-
-    }
-
-    override fun usePlatformInterfaceGetter(): Boolean {
-        return SDK_INT >= Build.VERSION_CODES.R // SDK 30 (Android 11)
     }
 
     private fun InterfaceAddress.toPrefix(): String {
@@ -228,5 +175,10 @@ class NativeInterface : PlatformInterface {
         } else {
             "${address.hostAddress}/${networkPrefixLength}"
         }
+    }
+
+    private class WifiState(var mSSID: String, var mBSSID: String) : WIFIState {
+        override fun getSSID(): String = mSSID
+        override fun getBSSID(): String = mBSSID
     }
 }

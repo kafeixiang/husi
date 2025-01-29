@@ -502,12 +502,6 @@
         <item>3</item>
     </string-array>
 
-    <string-array name="traffic_sniffing_values">
-        <item>@string/off</item>
-        <item>@string/sniff_routing</item>
-        <!--        <item>@string/sniff_override</item>-->
-    </string-array>
-
     <string-array name="plugin_providers">
         <item>sing-box</item>
         <item>@string/plugin</item>
@@ -520,7 +514,6 @@
     </string-array>
 
     <string-array name="network_type_entry">
-        <item>@string/not_set</item>
         <item>@string/network_wifi</item>
         <item>@string/network_cellular</item>
         <item>@string/network_ethernet</item>
@@ -528,7 +521,6 @@
     </string-array>
 
     <string-array name="network_type_value">
-        <item></item>
         <item>wifi</item>
         <item>cellular</item>
         <item>ethernet</item>
@@ -540,6 +532,15 @@
         <item>@string/low</item>
         <item>@string/middle</item>
         <item>@string/high</item>
+    </string-array>
+
+    <!-- For MultiSelectListPreference initialization -->
+    <string-array name="empty" />
+
+    <string-array name="network_interface_strategies">
+        <item>@string/keep_default</item>
+        <item>@string/hybrid</item>
+        <item>@string/fallback</item>
     </string-array>
 
 </resources>

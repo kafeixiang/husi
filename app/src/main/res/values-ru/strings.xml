@@ -428,15 +428,9 @@
     </string>
     <string name="app_statistics_disabled">Статистика трафика приложений отключена в настройках
     </string>
-    <string name="warp_generate">Создать конфигурацию</string>
-    <string name="generating">Создание…</string>
     <string name="tun_implementation">Реализация TUN</string>
     <string name="wireguard_local_address">Частный адрес</string>
-    <string name="destination_override">Переопределять адрес назначения</string>
     <string name="resolve_destination_summary">Если адрес назначения является доменом, то он передается в соответствии со стратегией IPv6 (конфликтует с FakeDNS)</string>
-    <string name="destination_override_summary">Использовать перехваченный домен для переопределения
-        адреса назначения, а не только для маршрутизации
-    </string>
     <string name="pcap_notice">Pcap файлы будут сохранены в %s</string>
     <string name="route_play_store">Правило Play Store для %s</string>
     <string name="route_opt_block_analysis">Блокировать аналитику</string>
@@ -459,7 +453,6 @@
     <string name="stun_test_summary">Определить поведение сопоставления адресов NAT и поведение
         фильтрации NAT в соответствии с RFC 5780 при помощи STUN.
     </string>
-    <string name="warp_license">[CloudFlare Warp](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/) - это бесплатный провайдер WireGuard VPN. Используя его, вы соглашаетесь с [условиями использования](https://www.cloudflare.com/application/terms/).</string>
     <string name="tools_network">Сеть</string>
     <string name="backup">Резервная копия</string>
     <string name="backup_rules">Правила маршрутизации</string>
@@ -493,7 +486,6 @@
     <string name="log_level_help">Удерживайте для настройки размера буфера.</string>
     <string name="mux_type">Протокол мультиплексирования</string>
     <string name="subscription_expire">Истекает: %s</string>
-    <string name="sniff_override">Перехватывать результат для Назначения</string>
     <string name="tuic_disable_sni">Отключить SNI</string>
     <string name="neko_plugin_internal_error">%s внутренняя ошибка</string>
     <string name="domain_strategy_for_direct">Стратегия домена для Прямого</string>
@@ -630,4 +622,7 @@
     <string name="sniff_timeout">Таймаут перехвата</string>
     <string name="network_ethernet">Проводное подключение</string>
     <string name="network_cellular">Сотовая связь</string>
+    <string name="network_interface_preference_detail">Включение набора с использованием нескольких сетевых интерфейсов</string>
+    <string name="network_interface_preference">Настройки сетевого интерфейса</string>
+    <string name="network_interface_strategy">Стратегия сетевого интерфейса</string>
 </resources>

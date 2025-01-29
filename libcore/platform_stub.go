@@ -2,14 +2,18 @@ package libcore
 
 import (
 	"context"
+	"net"
 	"net/netip"
 	"os"
 
+	"libcore/protect"
+
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/process"
+	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/option"
-	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/control"
 	"github.com/sagernet/sing/common/logger"
 	"github.com/sagernet/sing/common/x/list"
@@ -19,15 +23,17 @@ var _ platform.Interface = platformInterfaceStub{}
 
 type platformInterfaceStub struct{}
 
-func (p platformInterfaceStub) Initialize(_ adapter.NetworkManager) error {
-	return nil
+func (p platformInterfaceStub) Initialize(networkManager adapter.NetworkManager) error {
+	return networkManager.UpdateInterfaces()
 }
 
 func (p platformInterfaceStub) UsePlatformAutoDetectInterfaceControl() bool {
 	return true
 }
 
-func (p platformInterfaceStub) AutoDetectInterfaceControl(_ int) error {
+// AutoDetectInterfaceControl try to protect fd via ProtectPath.
+func (p platformInterfaceStub) AutoDetectInterfaceControl(fd int) error {
+	_ = protect.Protect(ProtectPath, []int{fd})
 	return nil
 }
 
@@ -44,7 +50,15 @@ func (p platformInterfaceStub) UsePlatformInterfaceGetter() bool {
 }
 
 func (p platformInterfaceStub) Interfaces() ([]adapter.NetworkInterface, error) {
-	return nil, os.ErrInvalid
+	return []adapter.NetworkInterface{
+		{
+			Interface:   *fakeInterface(),
+			Type:        C.InterfaceTypeOther,
+			DNSServers:  nil,
+			Expensive:   false,
+			Constrained: false,
+		},
+	}, nil
 }
 
 func (p platformInterfaceStub) UnderNetworkExtension() bool {
@@ -70,6 +84,10 @@ func (p platformInterfaceStub) SendNotification(_ *platform.Notification) error 
 	return nil
 }
 
+func (p platformInterfaceStub) UpdateRouteOptions(_ *tun.Options, _ option.TunPlatformOptions) error {
+	return os.ErrInvalid
+}
+
 var _ tun.DefaultInterfaceMonitor = interfaceMonitorStub{}
 
 type interfaceMonitorStub struct{}
@@ -83,7 +101,7 @@ func (i interfaceMonitorStub) Close() error {
 }
 
 func (i interfaceMonitorStub) DefaultInterface() *control.Interface {
-	return nil
+	return fakeInterface()
 }
 
 func (i interfaceMonitorStub) OverrideAndroidVPN() bool {
@@ -99,4 +117,15 @@ func (i interfaceMonitorStub) RegisterCallback(_ tun.DefaultInterfaceUpdateCallb
 }
 
 func (i interfaceMonitorStub) UnregisterCallback(_ *list.Element[tun.DefaultInterfaceUpdateCallback]) {
+}
+
+func fakeInterface() *control.Interface {
+	return &control.Interface{
+		Index:        0,
+		MTU:          1420,
+		Name:         "fake",
+		HardwareAddr: nil,
+		Flags:        net.FlagUp | net.FlagRunning,
+		// Addresses:    []netip.Prefix{netip.MustParsePrefix("::/0"), netip.MustParsePrefix("0.0.0.0/0")},
+	}
 }
