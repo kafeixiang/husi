@@ -81,6 +81,8 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
         lateinit var ruleProvider: SimpleMenuPreference
         lateinit var customRuleProvider: EditTextPreference
 
+        lateinit var appendHttpProxy: SwitchPreference
+        lateinit var httpProxyBypass: EditTextPreference
 
         preferenceScreen.forEach { preferenceCategory ->
             preferenceCategory as PreferenceCategory
@@ -204,6 +206,9 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
                             preference.onPreferenceChangeListener = reloadListener
                         }
 
+                        Key.APPEND_HTTP_PROXY -> appendHttpProxy = preference as SwitchPreference
+                        Key.HTTP_PROXY_BYPASS -> httpProxyBypass = preference as EditTextPreference
+
                         else -> preference.onPreferenceChangeListener = reloadListener
                     }
                 }
@@ -317,6 +322,25 @@ class SettingsPreferenceFragment : PreferenceFragmentCompat() {
 
         ruleProvider.setOnPreferenceChangeListener { _, newValue ->
             customRuleProvider.isVisible = (newValue as String) == RuleProvider.CUSTOM.toString()
+            true
+        }
+
+        httpProxyBypass.apply {
+            isEnabled = appendHttpProxy.isChecked
+            onPreferenceChangeListener = reloadListener
+
+            // Don't want to set a long default value in xml,
+            // But not set this will not show default value in editor.
+            // If you don't want to set bypass, just set a "#".
+            setOnBindEditTextListener {
+                it.setText(it.text.ifBlank {
+                    DataStore.DEFAULT_HTTP_BYPASS
+                })
+            }
+        }
+        appendHttpProxy.setOnPreferenceChangeListener { _, newValue ->
+            httpProxyBypass.isEnabled = newValue as Boolean
+            needReload()
             true
         }
 
