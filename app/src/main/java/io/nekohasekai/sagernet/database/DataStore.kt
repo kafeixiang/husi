@@ -3,6 +3,7 @@ package io.nekohasekai.sagernet.database
 import android.os.Binder
 import androidx.preference.PreferenceDataStore
 import io.nekohasekai.sagernet.CONNECTION_TEST_URL
+import io.nekohasekai.sagernet.DEFAULT_HTTP_BYPASS
 import io.nekohasekai.sagernet.GroupType
 import io.nekohasekai.sagernet.IPv6Mode
 import io.nekohasekai.sagernet.Key
@@ -172,6 +173,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     val persistAcrossReboot by configurationStore.boolean(Key.PERSIST_ACROSS_REBOOT) { false }
 
     var appendHttpProxy by configurationStore.boolean(Key.APPEND_HTTP_PROXY)
+    var httpProxyBypass by configurationStore.string(Key.HTTP_PROXY_BYPASS) { DEFAULT_HTTP_BYPASS }
     var connectionTestURL by configurationStore.string(Key.CONNECTION_TEST_URL) { CONNECTION_TEST_URL }
     var connectionTestConcurrent by configurationStore.int(Key.CONNECTION_TEST_CONCURRENT) { 5 }
     var connectionTestTimeout by configurationStore.int(Key.CONNECTION_TEST_TIMEOUT) { 3000 }
@@ -185,7 +187,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
 
     var trafficDescending by configurationStore.boolean("trafficDescending") { false }
     var trafficSortMode by configurationStore.int("trafficSortMode") { TrafficSortMode.START }
-    var enabledCazilla by configurationStore.boolean(Key.ENABLED_CAZILLA) { false }
+    var certProvider by configurationStore.stringToInt(Key.CERT_PROVIDER)
 
     var speedTestUrl by configurationStore.string("speedTestUrl") { SPEED_TEST_URL }
     var speedTestTimeout by configurationStore.int("speedTestTimeout") { 20000 }
@@ -202,15 +204,13 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var downloadSpeed by configurationStore.stringToInt(Key.DOWNLOAD_SPEED) { 0 }
     var customPluginPrefix by configurationStore.string(Key.CUSTOM_PLUGIN_PREFIX)
 
-    // old cache, DO NOT ADD
-
     var dirty by profileCacheStore.boolean(Key.PROFILE_DIRTY)
     var editingId by profileCacheStore.long(Key.PROFILE_ID)
     var editingGroup by profileCacheStore.long(Key.PROFILE_GROUP)
     var profileName by profileCacheStore.string(Key.PROFILE_NAME)
     var serverAddress by profileCacheStore.string(Key.SERVER_ADDRESS)
     var serverPort by profileCacheStore.stringToInt(Key.SERVER_PORT)
-    var serverPorts by profileCacheStore.string("serverPorts")
+    var serverPorts by profileCacheStore.string(Key.SERVER_PORTS)
     var serverUsername by profileCacheStore.string(Key.SERVER_USERNAME)
     var serverPassword by profileCacheStore.string(Key.SERVER_PASSWORD)
     var serverPassword1 by profileCacheStore.string(Key.SERVER_PASSWORD1)
@@ -234,6 +234,12 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var serverMTU by profileCacheStore.stringToInt(Key.SERVER_MTU)
     var serverHeaders by profileCacheStore.string(Key.SERVER_HEADERS)
     var serverAllowInsecure by profileCacheStore.boolean(Key.SERVER_ALLOW_INSECURE)
+    var serverReserved by profileCacheStore.string(Key.SERVER_RESERVED)
+    var localAddress by profileCacheStore.string(Key.LOCAL_ADDRESS)
+    var listenPort by profileCacheStore.stringToInt(Key.LISTEN_PORT)
+    var privateKey by profileCacheStore.string(Key.PRIVATE_KEY)
+    var publicKey by profileCacheStore.string(Key.PUBLIC_KEY)
+    var preSharedKey by profileCacheStore.string(Key.PRE_SHARED_KEY)
 
     var serverMux by profileCacheStore.boolean(Key.SERVER_MUX) { false }
     var serverBrutal by profileCacheStore.boolean(Key.SERVER_BRUTAL) { false }

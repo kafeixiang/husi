@@ -3,15 +3,11 @@ package libcore
 import (
 	"os"
 	"path/filepath"
-	"runtime/debug"
+	"runtime"
 	"strings"
 
 	"github.com/sagernet/sing-box/log"
 )
-
-func init() {
-	debug.SetTraceback("all")
-}
 
 const ProtectPath = "protect_path"
 
@@ -22,6 +18,7 @@ func Kill() {
 func InitCore(process, cachePath, internalAssets, externalAssets string,
 	maxLogSizeKb int32, logLevel int32,
 	useOfficialAssets bool,
+	debugMode bool,
 ) {
 	defer catchPanic("InitCore", func(panicErr error) { log.Error(panicErr) })
 	isBgProcess := strings.HasSuffix(process, ":bg")
@@ -29,6 +26,8 @@ func InitCore(process, cachePath, internalAssets, externalAssets string,
 	workDir := filepath.Join(cachePath, "../no_backup")
 	_ = os.MkdirAll(workDir, 0o755)
 	_ = os.Chdir(workDir)
+	externalAssetsPath = externalAssets
+	internalAssetsPath = internalAssets
 
 	// Set up log
 	if maxLogSizeKb < 50 {
@@ -36,16 +35,15 @@ func InitCore(process, cachePath, internalAssets, externalAssets string,
 	}
 	_ = setupLog(int64(maxLogSizeKb)*1024, filepath.Join(externalAssets, "stderr.log"), log.Level(logLevel), isBgProcess)
 
-	// Set up some component
-	go func() {
-		defer catchPanic("InitCore-go", func(panicErr error) { log.Error(panicErr) })
-
-		externalAssetsPath = externalAssets
-		internalAssetsPath = internalAssets
-
-		// bg
-		if isBgProcess {
-			extractAssets(useOfficialAssets)
+	if isBgProcess {
+		if debugMode {
+			runtime.SetMutexProfileFraction(1)
+			runtime.SetBlockProfileRate(1)
 		}
-	}()
+		go func() {
+			defer catchPanic("extractAssets", func(panicErr error) { log.Error(panicErr) })
+
+			extractAssets(useOfficialAssets)
+		}()
+	}
 }

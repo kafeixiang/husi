@@ -50,6 +50,9 @@ object Key {
 
     const val BYPASS_LAN = "bypassLan"
     const val BYPASS_LAN_IN_CORE = "bypassLanInCore"
+
+    const val APPEND_HTTP_PROXY = "appendHttpProxy"
+    const val HTTP_PROXY_BYPASS = "httpProxyBypass"
     const val INBOUND_USERNAME = "inboundUsername"
     const val INBOUND_PASSWORD = "inboundPassword"
     const val ANCHOR_SSID = "anchorSSID"
@@ -59,8 +62,6 @@ object Key {
     const val SPEED_INTERVAL = "speedInterval"
     const val SHOW_DIRECT_SPEED = "showDirectSpeed"
     const val LOCAL_DNS_PORT = "portLocalDns"
-
-    const val APPEND_HTTP_PROXY = "appendHttpProxy"
 
     const val CONNECTION_TEST_URL = "connectionTestURL"
     const val CONNECTION_TEST_CONCURRENT = "connectionTestConcurrent"
@@ -93,6 +94,10 @@ object Key {
     const val TUN_IMPLEMENTATION = "tunImplementation"
     const val PROFILE_TRAFFIC_STATISTICS = "profileTrafficStatistics"
 
+    const val APP_TLS_VERSION = "appTLSVersion"
+    const val CERT_PROVIDER = "certProvider"
+    const val INTERRUPT_SELECTOR = "interruptSelector"
+
     const val PROFILE_DIRTY = "profileDirty"
     const val PROFILE_ID = "profileId"
     const val PROFILE_NAME = "profileName"
@@ -104,6 +109,7 @@ object Key {
 
     const val SERVER_ADDRESS = "serverAddress"
     const val SERVER_PORT = "serverPort"
+    const val SERVER_PORTS = "serverPorts"
     const val SERVER_USERNAME = "serverUsername"
     const val SERVER_PASSWORD = "serverPassword"
     const val SERVER_METHOD = "serverMethod"
@@ -164,6 +170,13 @@ object Key {
     const val SERVER_DISABLE_SNI = "serverDisableSNI"
     const val SERVER_REDUCE_RTT = "serverReduceRTT"
 
+    const val SERVER_RESERVED = "serverReserved"
+    const val LOCAL_ADDRESS = "localAddress"
+    const val LISTEN_PORT = "listenPort"
+    const val PRIVATE_KEY = "privateKey"
+    const val PUBLIC_KEY = "publicKey"
+    const val PRE_SHARED_KEY = "preSharedKey"
+
     const val ROUTE_NAME = "routeName"
     const val ROUTE_DOMAIN = "routeDomain"
     const val ROUTE_IP = "routeIP"
@@ -200,11 +213,6 @@ object Key {
     const val SUBSCRIPTION_AUTO_UPDATE = "subscriptionAutoUpdate"
     const val SUBSCRIPTION_AUTO_UPDATE_DELAY = "subscriptionAutoUpdateDelay"
 
-    //
-
-    const val APP_TLS_VERSION = "appTLSVersion"
-    const val ENABLED_CAZILLA = "enabledCazilla"
-    const val INTERRUPT_SELECTOR = "interruptSelector"
 }
 
 fun logLevelString(level: Int): String = when (level) {
@@ -295,3 +303,31 @@ object NetworkInterfaceStrategy {
     const val HYBRID = 1
     const val FALLBACK = 2
 }
+
+object CertProvider {
+    const val SYSTEM = 0
+    const val MOZILLA = 1
+    const val SYSTEM_AND_USER = 2 // Put it last because Go may fix the bug one day.
+}
+
+// https://github.com/chen08209/FlClash/blob/6c27f2e2f1ac033e62f09b7b30b2710dd0d13bb4/lib/models/config.dart#L110-L128
+const val DEFAULT_HTTP_BYPASS = """# If you are annoyed with default value, just set a "#"
+# Chinese apps that can't work with http proxy
+*zhihu.com
+*zhimg.com
+*jd.com
+100ime-iat-api.xfyun.cn
+*360buyimg.com
+# local
+localhost
+*.local
+127.*
+10.*
+172.16.*
+172.17.*
+172.18.*
+172.19.*
+172.2*
+172.30.*
+172.31.*
+192.168.*"""
