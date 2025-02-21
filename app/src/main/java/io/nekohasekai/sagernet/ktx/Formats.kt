@@ -116,7 +116,7 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
     val entities = ArrayList<AbstractBean>()
     val entitiesByLine = ArrayList<AbstractBean>()
 
-    suspend fun String.parseLink(entities: ArrayList<AbstractBean>) {
+    suspend fun String.parseLink(entities: MutableList<AbstractBean>) {
         if (startsWith("sing-box://import-remote-profile?") || startsWith("husi://subscription?")) {
             throw SubscriptionFoundException(this)
         }
@@ -143,10 +143,10 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
 
             "http", "https" -> {
                 Logs.d("Try parse http link: $this")
-                runCatching {
+                try {
                     entities.add(parseHttp(this))
-                }.onFailure {
-                    Logs.w(it)
+                } catch (e: Exception) {
+                    Logs.w(e)
                 }
             }
 

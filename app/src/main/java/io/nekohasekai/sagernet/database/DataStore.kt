@@ -3,6 +3,7 @@ package io.nekohasekai.sagernet.database
 import android.os.Binder
 import androidx.preference.PreferenceDataStore
 import io.nekohasekai.sagernet.CONNECTION_TEST_URL
+import io.nekohasekai.sagernet.CertProvider
 import io.nekohasekai.sagernet.DEFAULT_HTTP_BYPASS
 import io.nekohasekai.sagernet.GroupType
 import io.nekohasekai.sagernet.IPv6Mode
@@ -26,7 +27,6 @@ import io.nekohasekai.sagernet.ktx.string
 import io.nekohasekai.sagernet.ktx.stringSet
 import io.nekohasekai.sagernet.ktx.stringToInt
 import io.nekohasekai.sagernet.ktx.stringToIntIfExists
-import moe.matsuri.nb4a.TempDatabase
 
 object DataStore : OnPreferenceDataStoreChangeListener {
 
@@ -118,7 +118,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
 
     var allowAccess by configurationStore.boolean(Key.ALLOW_ACCESS)
     var speedInterval by configurationStore.stringToInt(Key.SPEED_INTERVAL)
-    var showGroupInNotification by configurationStore.boolean("showGroupInNotification")
+    var showGroupInNotification by configurationStore.boolean(Key.SHOW_GROUP_IN_NOTIFICATION)
 
     var remoteDns by configurationStore.string(Key.REMOTE_DNS) { "tcp://dns.google" }
     var directDns by configurationStore.string(Key.DIRECT_DNS) { "local" }
@@ -184,13 +184,13 @@ object DataStore : OnPreferenceDataStoreChangeListener {
 
     var tunImplementation by configurationStore.stringToInt(Key.TUN_IMPLEMENTATION) { TunImplementation.MIXED }
     var profileTrafficStatistics by configurationStore.boolean(Key.PROFILE_TRAFFIC_STATISTICS) { true }
+    var certProvider by configurationStore.stringToInt(Key.CERT_PROVIDER) { CertProvider.MOZILLA }
 
-    var trafficDescending by configurationStore.boolean("trafficDescending") { false }
-    var trafficSortMode by configurationStore.int("trafficSortMode") { TrafficSortMode.START }
-    var certProvider by configurationStore.stringToInt(Key.CERT_PROVIDER)
+    var trafficDescending by configurationStore.boolean(Key.TRAFFIC_DESCENDING) { false }
+    var trafficSortMode by configurationStore.int(Key.TRAFFIC_SORT_MODE) { TrafficSortMode.START }
 
-    var speedTestUrl by configurationStore.string("speedTestUrl") { SPEED_TEST_URL }
-    var speedTestTimeout by configurationStore.int("speedTestTimeout") { 20000 }
+    var speedTestUrl by configurationStore.string(Key.SPEED_TEST_URL) { SPEED_TEST_URL }
+    var speedTestTimeout by configurationStore.int(Key.SPEED_TEST_TIMEOUT) { 20000 }
 
     // ntp
     var ntpEnable by configurationStore.boolean(Key.ENABLE_NTP) { false }
@@ -217,22 +217,29 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var serverMethod by profileCacheStore.string(Key.SERVER_METHOD)
     var overrideAddress by profileCacheStore.string(Key.OVERRIDE_ADDRESS)
     var overridePort by profileCacheStore.stringToInt(Key.OVERRIDE_PORT)
-
-    var sharedStorage by profileCacheStore.string("sharedStorage")
+    var pluginName by profileCacheStore.string(Key.PLUGIN_NAME)
+    var pluginConfig by profileCacheStore.string(Key.PLUGIN_CONFIG)
+    var udpOverTcp by profileCacheStore.boolean(Key.UDP_OVER_TCP)
 
     var serverProtocol by profileCacheStore.string(Key.SERVER_PROTOCOL)
     var serverObfs by profileCacheStore.string(Key.SERVER_OBFS)
 
-    var serverNetwork by profileCacheStore.string(Key.SERVER_NETWORK)
+    var serverNetwork by profileCacheStore.string(Key.SERVER_V2RAY_TRANSPORT)
     var serverHost by profileCacheStore.string(Key.SERVER_HOST)
     var serverPath by profileCacheStore.string(Key.SERVER_PATH)
+    var serverHeaders by profileCacheStore.string(Key.SERVER_HEADERS)
+    var serverWsMaxEarlyData by profileCacheStore.stringToInt(Key.SERVER_WS_MAX_EARLY_DATA)
+    var serverWsEarlyDataHeaderName by profileCacheStore.string(Key.SERVER_WS_EARLY_DATA_HEADER_NAME)
     var serverSNI by profileCacheStore.string(Key.SERVER_SNI)
+    var serverSecurity by profileCacheStore.string(Key.SERVER_SECURITY)
     var serverEncryption by profileCacheStore.string(Key.SERVER_ENCRYPTION)
     var serverALPN by profileCacheStore.string(Key.SERVER_ALPN)
     var serverCertificates by profileCacheStore.string(Key.SERVER_CERTIFICATES)
     var serverPinnedCertificateChain by profileCacheStore.string(Key.SERVER_PINNED_CERTIFICATE_CHAIN)
+    var serverUtlsFingerPrint by profileCacheStore.string(Key.SERVER_UTLS_FINGERPRINT)
+    var serverRealityPublicKey by profileCacheStore.string(Key.SERVER_REALITY_PUBLIC_KEY)
+    var serverRealityShortID by profileCacheStore.string(Key.SERVER_REALITY_SHORT_ID)
     var serverMTU by profileCacheStore.stringToInt(Key.SERVER_MTU)
-    var serverHeaders by profileCacheStore.string(Key.SERVER_HEADERS)
     var serverAllowInsecure by profileCacheStore.boolean(Key.SERVER_ALLOW_INSECURE)
     var serverReserved by profileCacheStore.string(Key.SERVER_RESERVED)
     var localAddress by profileCacheStore.string(Key.LOCAL_ADDRESS)
@@ -248,11 +255,13 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var serverMuxNumber by profileCacheStore.stringToInt(Key.SERVER_MUX_NUMBER) { 8 }
     var serverMuxPadding by profileCacheStore.boolean(Key.SERVER_MUX_PADDING) { false }
 
-    var authenticatedLength by profileCacheStore.boolean(Key.AUTHENTICATED_LENGTH)
+    var serverUserID by profileCacheStore.string(Key.SERVER_USER_ID)
+    var serverAlterID by profileCacheStore.stringToInt(Key.SERVER_ALTER_ID)
+    var serverPacketEncoding by profileCacheStore.stringToInt(Key.SERVER_PACKET_ENCODING)
+    var serverAuthenticatedLength by profileCacheStore.boolean(Key.SERVER_AUTHENTICATED_LENGTH)
 
-    // ECH
-    var ech by profileCacheStore.boolean(Key.ECH)
-    var echCfg by profileCacheStore.string(Key.ECH_CFG)
+    var serverECH by profileCacheStore.boolean(Key.SERVER_ECH)
+    var serverECHConfig by profileCacheStore.string(Key.SERVER_ECH_CONFIG)
 
     var serverAuthType by profileCacheStore.stringToInt(Key.SERVER_AUTH_TYPE)
     var serverStreamReceiveWindow by profileCacheStore.stringToIntIfExists(Key.SERVER_STREAM_RECEIVE_WINDOW)
@@ -314,7 +323,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var subscriptionAutoUpdate by profileCacheStore.boolean(Key.SUBSCRIPTION_AUTO_UPDATE)
     var subscriptionAutoUpdateDelay by profileCacheStore.stringToInt(Key.SUBSCRIPTION_AUTO_UPDATE_DELAY) { 360 }
 
-    var rulesFirstCreate by profileCacheStore.boolean("rulesFirstCreate")
+    var rulesFirstCreate by profileCacheStore.boolean(Key.RULES_FIRST_CREATE)
 
     override fun onPreferenceDataStoreChanged(store: PreferenceDataStore, key: String) {
     }
