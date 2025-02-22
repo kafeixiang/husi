@@ -59,7 +59,6 @@ fun Project.requireLocalProperties(): Properties {
 
         val base64 = System.getenv("LOCAL_PROPERTIES")
         if (!base64.isNullOrBlank()) {
-
             localProperties.load(Base64.getDecoder().decode(base64).inputStream())
         } else if (project.rootProject.file("local.properties").exists()) {
             localProperties.load(rootProject.file("local.properties").inputStream())
@@ -87,7 +86,7 @@ fun Project.requireTargetAbi(): String {
 @Suppress("UnstableApiUsage")
 fun Project.setupCommon() {
     android.apply {
-        buildToolsVersion = "35.0.0"
+        buildToolsVersion = "35.0.1"
         compileSdk = 35
         defaultConfig {
             minSdk = 21

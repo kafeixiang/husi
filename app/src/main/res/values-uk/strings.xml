@@ -31,13 +31,11 @@
     </string>
     <string name="ws_browser_forwarding">Переадресація браузера</string>
     <string name="cag_ws">Налаштування WebSocket</string>
-    <string name="require_http">Увімкнути вхідний HTTP-трафік</string>
     <string name="general_settings">Налаштування застосунку</string>
     <string name="inbound_settings">Вхідні налаштування</string>
     <string name="allow_access_sum">Прив\'язати вхідні сервери до 0.0.0.0</string>
     <string name="allow_access">Дозволити підключення з локальної мережі</string>
     <string name="cag_route">Налаштування маршруту</string>
-    <string name="port_http">Порт проксі HTTP</string>
     <string name="port_proxy">Порт проксі SOCKS5</string>
     <string name="service_mode_proxy">Тільки проксі</string>
     <string name="service_mode">Режим обслуговування</string>
@@ -218,7 +216,6 @@
     <string name="ssh_auth_type_none">Без автентифікації</string>
     <string name="ssh_public_key">Відкритий ключ</string>
     <string name="wireguard_local_address">Приватна адреса</string>
-    <string name="generating">Створення…</string>
     <string name="tun_implementation">Імплементація TUN</string>
     <string name="start">Старт</string>
     <string name="stun_attest_loading">Це може зайняти декілька хвилин…</string>
@@ -246,7 +243,6 @@
     <string name="sniff_routing">Перехоплювати результат для Маршрутизації</string>
     <string name="assets_update">Оновити геодані</string>
     <string name="sekai">nekohasekai</string>
-    <string name="cazilla">Використовувати програму сертифікації Mozilla CA</string>
     <plurals name="removed">
         <item quantity="one">Видалено</item>
         <item quantity="few">%d елемента видалено</item>
@@ -330,7 +326,6 @@
     <string name="proxy_cat">Налаштування сервера</string>
     <string name="ss_cat">Налаштування Shadowsocks</string>
     <string name="unsaved_changes_prompt">Зміни не збережно. Зберегти?</string>
-    <string name="yes">Так</string>
     <string name="no">Ні</string>
     <string name="need_reload">Перезавантажте проксі-сервіс, аби застосувати зміни</string>
     <string name="license">Ліцензія</string>
@@ -342,7 +337,6 @@
     <string name="disable">Вимкнути</string>
     <string name="enable_log">Увімкнути журнал</string>
     <string name="list">Список</string>
-    <string name="api_port">Порт API</string>
     <string name="probe_interval">Інтервал спостереження балансера</string>
     <string name="standard">Стандарт</string>
     <string name="connection_test">Тест підключення</string>
@@ -403,8 +397,6 @@
     <string name="app_statistics_disabled">Статистика трафіку застосунків вимкнена у налаштуваннях</string>
     <string name="wireguard_public_key">Відкритий ключ сервера</string>
     <string name="wireguard_psk">Пароль сервера</string>
-    <string name="warp_generate">Створити конфігурацію</string>
-    <string name="destination_override">Перевизначити адресу призначення</string>
     <string name="resolve_destination">Вирішити адресу призначення</string>
     <string name="pcap_notice">Pcap файли будуть збережені в %s</string>
     <string name="naive_insecure_concurrency">Небезпечний паралелізм</string>
@@ -434,7 +426,6 @@
     <string name="get_cert">Отримання сертифікатів</string>
     <string name="get_cert_success">Сертифікат отримано та скопійовано до буферу обміну.</string>
     <string name="ech_config">Конфігурація ECH</string>
-    <string name="sniff_override">Перехоплювати результат для Призначення</string>
     <string name="get_cert_summary">Отримати TLS сертифікати цільового сервера. Підтримка https та QUIC.</string>
     <string name="inbound_username">Ім\'я користувача SOCKS5</string>
     <string name="inbound_password">Пароль користувача SOCKS5</string>
@@ -453,12 +444,10 @@
     <string name="action_flash_off">Вимкнути спалах</string>
     <string name="blurred_address">Зробити адресу сервера розмитою</string>
     <string name="location_permission_description">Ваше правило маршрутизації містить правила маршрутизації Wi-Fi SSID або Wi-Fi BSSID. Для того, щоб вони працювали, husi використовує дозвіл на визначення місцерозташування у фоновому режимі, аби отримувати інформацію про підключену мережу Wi-Fi. Інформація буде використовуватися виключно для маршрутизації.</string>
-    <string name="ok">Ок</string>
     <string name="location_permission_title">Дозвіл геолокації</string>
     <string name="no_thanks">Ні, дякую</string>
     <string name="test_timeout">Таймаут (мс)</string>
     <string name="memory_limit">Ліміт пам\'яті</string>
-    <string name="cazilla_long">Можливо, це допоможе запобігти атаці з боку того, хто контролює центр сертифікації та може дозволити старому пристрою використовувати новий сертифікат.</string>
     <string name="ntp_category">Налаштування клієнта NTP</string>
     <string name="enable_ntp">Увімкнути NTP</string>
     <string name="ntp_sum">Увімкнути вбудований NTP-клієнт та використовувати час, що ним надається, замість системного</string>
@@ -479,8 +468,6 @@
     <string name="no_proxies_found_in_file">У файлі не знайдено проксі</string>
     <string name="copy_failed">Не вдалося скопіювати.</string>
     <string name="ooc_warning">Попередження</string>
-    <string name="warp_license">[CloudFlare Warp](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/) це безкоштовний провайдер WireGuard VPN. Використовуючи його, ви погоджуєтесь з [умовами користування](https://www.cloudflare.com/application/terms/).</string>
-    <string name="destination_override_summary">Використовувати перехвачений домен для перевизначення адреси призначення, а не тільки для маршрутизації</string>
     <string name="resolve_destination_summary">Якщо адреса призначення є доменом, то вона передається у відповідности до стратегії IPv6 (конфліктує з FakeDNS)</string>
     <string name="naive_insecure_concurrency_summary">Використовувати N паралельних з\'єднань для збільшення відмовостійкості в умовах ненадійної мережі. Більша кількість з\'єднань збільшує ризик виявлення тунелів та зменшує безпеку. Цей проект прагне максимального захисту від аналізу трафіку, тому використання його таким чином суперечить даній меті.
 \n
@@ -502,8 +489,6 @@
     <string name="show_group_in_notification">Показувати назву групи у сповіщенні</string>
     <string name="log_level_help">Утримуйте для нашалтування розміру буфера.</string>
     <string name="save">Зберегти</string>
-    <string name="set_panel_url">Змінити адрес панелі</string>
-    <string name="enable_clash_api">Адреса підключення Clash API</string>
     <string name="log_level">Тип журналу</string>
     <string name="get_cert_fail">Не вдалося отримати сертифікати!</string>
     <string name="experimental_authenticated_length">Зробити довжину кожного сегменту корисного навантаження незмінною. Цей експеримент потребує, аби клієнт та сервер обидва використовували однакову версію v2ray-core. Більше оновлень з часом.</string>

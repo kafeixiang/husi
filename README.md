@@ -36,17 +36,17 @@ cd husi/
 
 Environment:
 
-* In some version need to apply patch.
+* These versions need to apply patch.
 
   <details>
     <summary>Unfold</summary>
 
-  1.23.5: Apply [this patch](./libcore/patches/cgo_go1225.diff) to `${GOROOT}/src/runtime/cgocall.go`
+  1.22.5: Apply [this patch](./libcore/patches/cgo_go1225.diff) to `${GOROOT}/src/runtime/cgocall.go`
 
   1.23.0-1.23.3: Apply [this patch](https://github.com/golang/go/commit/76a8409eb81eda553363783dcdd9d6224368ae0e.patch)
   to`${GOROOT}`. `make patch_go1230`
 
-  1.23.4+: Apply [this patch](https://github.com/golang/go/commit/59b7d40774b29bd1da1aa624f13233111aff4ad2.patch) to `$(GOROOT)`. `make patch_go1234`
+  1.23.4: Apply [this patch](https://github.com/golang/go/commit/59b7d40774b29bd1da1aa624f13233111aff4ad2.patch) to `$(GOROOT)`. `make patch_go1234`
 
   </details>
 
@@ -69,7 +69,7 @@ If you don't want to build it, you can download then in [actions](https://github
 Environment:
 
 * jdk-21
-* ndk 27.2.12479018
+* ndk 28.0.13004108
 
 If the environment variables `$ANDROID_HOME` and `$ANDROID_NDK_HOME` are not set, you can run the script
 `buildScript/init/env_ndk.sh`:

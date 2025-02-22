@@ -9,7 +9,7 @@ import (
 	"github.com/sagernet/sing-box/common/process"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/option"
-	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/control"
 	"github.com/sagernet/sing/common/logger"
 	"github.com/sagernet/sing/common/x/list"
@@ -37,10 +37,6 @@ func (p platformInterfaceStub) OpenTun(_ *tun.Options, _ option.TunPlatformOptio
 
 func (p platformInterfaceStub) CreateDefaultInterfaceMonitor(_ logger.Logger) tun.DefaultInterfaceMonitor {
 	return interfaceMonitorStub{}
-}
-
-func (p platformInterfaceStub) UsePlatformInterfaceGetter() bool {
-	return true
 }
 
 func (p platformInterfaceStub) Interfaces() ([]adapter.NetworkInterface, error) {

@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.KryoException;
 import com.esotericsoftware.kryo.io.ByteBufferInput;
 import com.esotericsoftware.kryo.io.ByteBufferOutput;
 import io.nekohasekai.sagernet.database.SubscriptionBean;
+import io.nekohasekai.sagernet.fmt.anytls.AnyTLSBean;
 import io.nekohasekai.sagernet.fmt.direct.DirectBean;
 import io.nekohasekai.sagernet.fmt.http.HttpBean;
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean;
@@ -21,8 +22,8 @@ import io.nekohasekai.sagernet.fmt.v2ray.VMessBean;
 import io.nekohasekai.sagernet.fmt.wireguard.WireGuardBean;
 import io.nekohasekai.sagernet.ktx.KryosKt;
 import io.nekohasekai.sagernet.ktx.Logs;
-import moe.matsuri.nb4a.proxy.config.ConfigBean;
-import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean;
+import io.nekohasekai.sagernet.fmt.config.ConfigBean;
+import io.nekohasekai.sagernet.fmt.shadowtls.ShadowTLSBean;
 import moe.matsuri.nb4a.utils.JavaUtil;
 
 import java.io.ByteArrayInputStream;
@@ -138,6 +139,12 @@ public class KryoConverters {
     public static DirectBean directDeserialize(byte[] bytes) {
         if (JavaUtil.isEmpty(bytes)) return null;
         return deserialize(new DirectBean(), bytes);
+    }
+
+    @TypeConverter
+    public static AnyTLSBean anyTLSDeserialize(byte[] bytes) {
+        if (JavaUtil.isEmpty(bytes)) return null;
+        return deserialize(new AnyTLSBean(), bytes);
     }
 
     @TypeConverter

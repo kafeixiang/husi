@@ -7,11 +7,15 @@ import java.util.Map;
 
 public class SingBoxOptions {
 
+    public static final String NetworkTCP = "tcp";
+    public static final String NetworkUDP = "udp";
+
     public static final String RULE_SET_FORMAT_BINARY = "binary";
     public static final String RULE_SET_TYPE_REMOTE = "remote";
     public static final String RULE_SET_TYPE_LOCAL = "local";
 
     public static final String TYPE_TUN = "tun";
+    public static final String TYPE_SELECTOR = "selector";
     public static final String TYPE_MIXED = "mixed";
     public static final String TYPE_DIRECT = "direct";
     public static final String TYPE_HTTP = "http";
@@ -25,6 +29,8 @@ public class SingBoxOptions {
     public static final String TYPE_VMESS = "vmess";
     public static final String TYPE_VLESS = "vless";
     public static final String TYPE_WIREGUARD = "wireguard";
+    public static final String TYPE_SHADOWTLS = "shadowtls";
+    public static final String TYPE_ANYTLS = "anytls";
 
     public static final String TYPE_LOGICAL = "logical";
 
@@ -39,6 +45,10 @@ public class SingBoxOptions {
     public static final String LOGICAL_AND = "and";
 
     public static final String SNIFF_DNS = "dns";
+
+    public static final String STRATEGY_DEFAULT = "default";
+    public static final String STRATEGY_HYBRID = "hybrid";
+    public static final String STRATEGY_FALLBACK = "fallback";
 
     // base
 
@@ -71,7 +81,7 @@ public class SingBoxOptions {
     }
 
     // Classes have optional field
-    // Generated in line 194
+    // Generated in line + 145
 
     public static class Inbound extends SingBoxOption {
 
@@ -289,15 +299,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
     }
 
@@ -475,9 +483,9 @@ public class SingBoxOptions {
 
     public static class RouteOptions extends SingBoxOption {
 
-//        public GeoIPOptions geoip;
+        // public GeoIPOptions geoip;
 
-//        public GeositeOptions geosite;
+        // public GeositeOptions geosite;
 
         public List<Rule> rules;
 
@@ -496,11 +504,11 @@ public class SingBoxOptions {
 
         public Integer default_mark;
 
-        public Integer default_network_strategy;
+        public String default_network_strategy;
 
-        public String default_network_type;
+        public List<String> default_network_type;
 
-        public String default_fallback_network_type;
+        public List<String> default_fallback_network_type;
 
         public String default_fallback_delay;
 
@@ -644,11 +652,11 @@ public class SingBoxOptions {
 
         public String key_path;
 
-//        public InboundACMEOptions acme;
+        // public InboundACMEOptions acme;
 
-//        public InboundECHOptions ech;
+        // public InboundECHOptions ech;
 
-//        public InboundRealityOptions reality;
+        // public InboundRealityOptions reality;
 
     }
 
@@ -737,7 +745,7 @@ public class SingBoxOptions {
 
         public String clash_mode;
 
-        public String network_type;
+        public List<String> network_type;
 
         public Boolean network_is_expensive;
 
@@ -765,13 +773,15 @@ public class SingBoxOptions {
 
         public Integer override_port;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
         public Integer fallback_delay;
 
         public Boolean udp_disable_domain_unmapping;
 
         public Boolean udp_connect;
+
+        public String udp_timeout;
 
         public String detour;
 
@@ -797,9 +807,7 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public String fallback_network_type;
-
-        public String network_fallback_delay;
+        public List<String> fallback_network_type;
 
         public String method;
 
@@ -834,7 +842,7 @@ public class SingBoxOptions {
 
         public Integer override_port;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
         public Integer fallback_delay;
 
@@ -868,11 +876,9 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
-
-        public String network_fallback_delay;
+        public List<String> fallback_network_type;
 
         public String method;
 
@@ -949,7 +955,7 @@ public class SingBoxOptions {
 
         public String clash_mode;
 
-        public String network_type;
+        public List<String> network_type;
 
         public Boolean network_is_expensive;
 
@@ -1310,15 +1316,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         public String override_address;
 
@@ -1355,15 +1359,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1413,15 +1415,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1475,15 +1475,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1529,15 +1527,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1584,15 +1580,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1644,15 +1638,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1699,15 +1691,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1768,20 +1758,22 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
 
         public Integer server_port;
+
+        public List<String> server_ports;
+
+        public String hop_interval;
 
         public Integer up_mbps;
 
@@ -1827,15 +1819,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1890,15 +1880,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1949,15 +1937,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
         // Generate note: nested type ServerOptions
         public String server;
@@ -1984,6 +1970,57 @@ public class SingBoxOptions {
         public OutboundMultiplexOptions multiplex;
 
         public V2RayTransportOptions transport;
+
+    }
+
+    public static class Outbound_AnyTLSOptions extends Outbound {
+
+        // Generate note: nested type DialerOptions
+        public String detour;
+
+        public String bind_interface;
+
+        public String inet4_bind_address;
+
+        public String inet6_bind_address;
+
+        public String protect_path;
+
+        public Integer routing_mark;
+
+        public Boolean reuse_addr;
+
+        public String connect_timeout;
+
+        public Boolean tcp_fast_open;
+
+        public Boolean tcp_multi_path;
+
+        public Boolean udp_fragment;
+
+        public String domain_strategy;
+
+        public String network_strategy;
+
+        public List<String> network_type;
+
+        public List<String> fallback_network_type;
+
+        public String fallback_delay;
+
+        // Generate note: nested type ServerOptions
+        public String server;
+
+        public Integer server_port;
+
+        // Generate note: nested type OutboundTLSOptionsContainer
+        public OutboundTLSOptions tls;
+
+        public String password;
+
+        public String idle_session_check_interval;
+
+        public String idle_session_timeout;
 
     }
 
@@ -2032,15 +2069,13 @@ public class SingBoxOptions {
 
         public String domain_strategy;
 
-        public Integer network_strategy;
+        public String network_strategy;
 
-        public String network_type;
+        public List<String> network_type;
 
-        public String fallback_network_type;
+        public List<String> fallback_network_type;
 
         public String fallback_delay;
-
-        public String network_fallback_delay;
 
     }
 

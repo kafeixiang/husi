@@ -52,13 +52,11 @@
     </string>
     <string name="ws_browser_forwarding">Пересылка через браузер</string>
     <string name="cag_ws">Настройки WebSocket</string>
-    <string name="require_http">Включить входящий HTTP-трафик</string>
     <string name="general_settings">Настройки приложения</string>
     <string name="inbound_settings">Входящие настройки</string>
     <string name="allow_access_sum">Сервер будет слушать на адресе 0.0.0.0</string>
     <string name="allow_access">Разрешить подключения из локальной сети</string>
     <string name="cag_route">Настройки маршрута</string>
-    <string name="port_http">Порт прокси HTTP</string>
     <string name="service_mode_proxy">Только прокси</string>
     <string name="service_mode">Сервисный режим</string>
     <string name="group_duplicate">Дубликат:
@@ -202,7 +200,6 @@
     <string name="unavailable">Недоступен</string>
     <string name="standard">Стандарт</string>
     <string name="probe_interval">Интервал наблюдения балансировщика</string>
-    <string name="api_port">Порт API</string>
     <string name="random">Случайный</string>
     <string name="list">Список</string>
     <string name="enable_log_sum">В целях отладки</string>
@@ -210,7 +207,7 @@
     <string name="auto">Авто</string>
     <string name="disable">Отключить</string>
     <string name="enable">Включить</string>
-    <string name="follow_system">Использовать системную тему</string>
+    <string name="follow_system">Система</string>
     <string name="night_mode">Ночной режим</string>
     <string name="lines">%d строк</string>
     <string name="route_warn">Перед добавлением собственных правил убедитесь, что вы прочитали
@@ -220,7 +217,6 @@
     <string name="need_reload">Перезагрузите прокси-сервис, чтобы применить изменения</string>
     <string name="apply">Применить</string>
     <string name="no">Нет</string>
-    <string name="yes">Да</string>
     <string name="unsaved_changes_prompt">Есть несохраненные изменения. Сохранить\?</string>
     <string name="ss_cat">Настройки Shadowsocks</string>
     <string name="proxy_cat">Настройки сервера</string>
@@ -414,8 +410,8 @@
     <string name="hysteria_stream_receive_window">Окно приема потока QUIC</string>
     <string name="menu_traffic">Трафик</string>
     <string name="no_statistics">Статистики пока нет</string>
-    <string name="clear_logcat">Очистить Logcat</string>
-    <string name="menu_log">Логи</string>
+    <string name="clear_logcat">Очистить журнал</string>
+    <string name="menu_log">Журнал</string>
     <string name="menu_tools">Инструменты</string>
     <string name="translate_platform">Платформа локализации</string>
     <string name="ssh_private_key_passphrase">Парольная фраза закрытого ключа</string>
@@ -428,15 +424,9 @@
     </string>
     <string name="app_statistics_disabled">Статистика трафика приложений отключена в настройках
     </string>
-    <string name="warp_generate">Создать конфигурацию</string>
-    <string name="generating">Создание…</string>
     <string name="tun_implementation">Реализация TUN</string>
     <string name="wireguard_local_address">Частный адрес</string>
-    <string name="destination_override">Переопределять адрес назначения</string>
     <string name="resolve_destination_summary">Если адрес назначения является доменом, то он передается в соответствии со стратегией IPv6 (конфликтует с FakeDNS)</string>
-    <string name="destination_override_summary">Использовать перехваченный домен для переопределения
-        адреса назначения, а не только для маршрутизации
-    </string>
     <string name="pcap_notice">Pcap файлы будут сохранены в %s</string>
     <string name="route_play_store">Правило Play Store для %s</string>
     <string name="route_opt_block_analysis">Блокировать аналитику</string>
@@ -459,7 +449,6 @@
     <string name="stun_test_summary">Определить поведение сопоставления адресов NAT и поведение
         фильтрации NAT в соответствии с RFC 5780 при помощи STUN.
     </string>
-    <string name="warp_license">[CloudFlare Warp](https://developers.cloudflare.com/cloudflare-one/connections/connect-devices/warp/) - это бесплатный провайдер WireGuard VPN. Используя его, вы соглашаетесь с [условиями использования](https://www.cloudflare.com/application/terms/).</string>
     <string name="tools_network">Сеть</string>
     <string name="backup">Резервная копия</string>
     <string name="backup_rules">Правила маршрутизации</string>
@@ -493,15 +482,12 @@
     <string name="log_level_help">Удерживайте для настройки размера буфера.</string>
     <string name="mux_type">Протокол мультиплексирования</string>
     <string name="subscription_expire">Истекает: %s</string>
-    <string name="sniff_override">Перехватывать результат для Назначения</string>
     <string name="tuic_disable_sni">Отключить SNI</string>
     <string name="neko_plugin_internal_error">%s внутренняя ошибка</string>
     <string name="domain_strategy_for_direct">Стратегия домена для Прямого</string>
     <string name="domain_strategy_for_server">Стратегия домена для Адреса сервера</string>
     <string name="utls_fingerprint">Отпечаток uTLS</string>
-    <string name="set_panel_url">Изменить адрес панели</string>
     <string name="is_outbound_only">Сделать JSON исходящим</string>
-    <string name="enable_clash_api">Адрес подключения Clash API</string>
     <string name="need_restart">Перезапустите приложение для принятия изменений</string>
     <string name="share_subscription">Поделиться подпиской</string>
     <string name="protocol_version">Версия протокола</string>
@@ -536,7 +522,6 @@
     <string name="acquire_wake_lock">Включить WakeLock</string>
     <string name="domain_strategy_for_remote">Стратегия домена для Удаленного</string>
     <string name="resolve_server">Разрешить адрес сервера в соответствии с политикой IPv6</string>
-    <string name="cazilla">Использовать программу сертификации Mozilla CA</string>
     <string name="app_name">husi</string>
     <string name="tuic_congestion_controller">Контроллер перегруженности</string>
     <string name="custom_config_json">Пользовательская конфигурация JSON</string>
@@ -554,14 +539,12 @@
     <string name="hop_interval">Интервал переключения портов(второй)</string>
     <string name="test_timeout">Таймаут (мс)</string>
     <string name="get_cert_server_hint">Целевой сервер</string>
-    <string name="cazilla_long">Возможно, это позволит избежать атаки со стороны того, кто может контролировать центр сертификации и может позволить старому устройству использовать новый сертификат.</string>
     <string name="sekai">nekohasekai</string>
     <string name="no_thanks">Нет, спасибо</string>
     <string name="location_permission_description">Ваше правило маршрутизации содержит правила маршрутизации Wi-Fi SSID или Wi-Fi BSSID. Чтобы они работали, husi использует разрешение на определение местоположения в фоновом режиме, чтобы получать информацию о подключенной сети Wi-Fi. Информация будет использоваться только для целей маршрутизации.</string>
     <string name="location_permission_background_description">На Android 10 и выше требуется разрешение на определение местоположения в фоновом режиме. Выберите Разрешить все время, чтобы предоставить разрешение.</string>
     <string name="mux_preference">Настройки мультиплексирования</string>
     <string name="location_permission_title">Разрешение геолокации</string>
-    <string name="ok">Ок</string>
     <string name="hysteria2_provider">Провайдер Hysteria2</string>
     <string name="authenticated_length">Аутентифицированнная длина</string>
     <string name="insecure_warn">Советы по безопасности</string>
@@ -606,7 +589,7 @@
     <string name="close">Закрыть</string>
     <string name="client_type">Тип клиента</string>
     <string name="custom_rule_provider">Пользовательский поставщик ресурсов правил</string>
-    <string name="pin_log">Закрепить лог</string>
+    <string name="pin_log">Закрепить журнал</string>
     <string name="interrupt_selector">(Selector) Прервать все соединения при смене конфигурации</string>
     <string name="padding">Отступ</string>
     <string name="done">Готово</string>
@@ -630,4 +613,12 @@
     <string name="sniff_timeout">Таймаут перехвата</string>
     <string name="network_ethernet">Проводное подключение</string>
     <string name="network_cellular">Сотовая связь</string>
+    <string name="network_interface_preference_detail">Включение набора с использованием нескольких сетевых интерфейсов</string>
+    <string name="network_interface_preference">Настройки сетевого интерфейса</string>
+    <string name="network_interface_strategy">Стратегия сетевого интерфейса</string>
+    <string name="network_expensive">Платная сеть</string>
+    <string name="listen_port">Прослушиваемый порт</string>
+    <string name="certificate_authority">Центр сертификации</string>
+    <string name="system_and_user">Система и Пользователь</string>
+    <string name="http_proxy_bypass">Список обхода HTTP-прокси</string>
 </resources>

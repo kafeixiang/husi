@@ -4,22 +4,23 @@ import (
 	"context"
 	"net/netip"
 	"sync"
-	"syscall"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/common/process"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/experimental/libbox/platform"
 	"github.com/sagernet/sing-box/option"
-	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common"
 	"github.com/sagernet/sing/common/control"
 	E "github.com/sagernet/sing/common/exceptions"
-	"github.com/sagernet/sing/common/json"
 	"github.com/sagernet/sing/common/logger"
 	N "github.com/sagernet/sing/common/network"
 
 	"libcore/procfs"
+	"libcore/protect"
+
+	"golang.org/x/sys/unix"
 )
 
 type boxPlatformInterfaceWrapper struct {
@@ -29,19 +30,18 @@ type boxPlatformInterfaceWrapper struct {
 	myTunName              string
 	defaultInterfaceAccess sync.Mutex
 	defaultInterface       *control.Interface
-	isExpensive            bool
-	isConstrained          bool
+	forTest                bool
+
+	// Set by interface monitor, which can't provide these information on Android.
+	/*isExpensive            bool
+	isConstrained          bool*/
 }
 
 var _ platform.Interface = (*boxPlatformInterfaceWrapper)(nil)
 
-type WIFIState struct {
-	SSID  string
-	BSSID string
-}
-
-func NewWIFIState(wifiSSID string, wifiBSSID string) *WIFIState {
-	return &WIFIState{wifiSSID, wifiBSSID}
+type WIFIState interface {
+	GetSSID() string
+	GetBSSID() string
 }
 
 func (w *boxPlatformInterfaceWrapper) ReadWIFIState() adapter.WIFIState {
@@ -49,7 +49,10 @@ func (w *boxPlatformInterfaceWrapper) ReadWIFIState() adapter.WIFIState {
 	if wifiState == nil {
 		return adapter.WIFIState{}
 	}
-	return (adapter.WIFIState)(*wifiState)
+	return adapter.WIFIState{
+		SSID:  wifiState.GetSSID(),
+		BSSID: wifiState.GetBSSID(),
+	}
 }
 
 func (w *boxPlatformInterfaceWrapper) Initialize(networkManager adapter.NetworkManager) error {
@@ -63,7 +66,11 @@ func (w *boxPlatformInterfaceWrapper) UsePlatformAutoDetectInterfaceControl() bo
 
 func (w *boxPlatformInterfaceWrapper) AutoDetectInterfaceControl(fd int) error {
 	// "protect"
-	return w.iif.AutoDetectInterfaceControl(int32(fd))
+	ok := w.iif.AutoDetectInterfaceControl(int32(fd))
+	if !ok {
+		_ = protect.Protect(ProtectPath, fd)
+	}
+	return nil
 }
 
 func (w *boxPlatformInterfaceWrapper) OpenTun(options *tun.Options, platformOptions option.TunPlatformOptions) (tun.Tun, error) {
@@ -73,25 +80,19 @@ func (w *boxPlatformInterfaceWrapper) OpenTun(options *tun.Options, platformOpti
 	if len(options.IncludeAndroidUser) > 0 {
 		return nil, E.New("android: unsupported android_user option")
 	}
-	a, _ := json.Marshal(options)
-	b, _ := json.Marshal(platformOptions)
-	tunFd, err := w.iif.OpenTun(string(a), string(b))
+	tunFd, err := w.iif.OpenTun()
 	if err != nil {
 		return nil, E.Cause(err, "iif.OpenTun")
 	}
 	// Do you want to close it?
-	tunFd, err = syscall.Dup(tunFd)
+	tunFd, err = unix.Dup(tunFd)
 	if err != nil {
-		return nil, E.Cause(err, "syscall.Dup")
+		return nil, E.Cause(err, "unix.Dup")
 	}
 	//
 	options.FileDescriptor = tunFd
 	w.myTunName = options.Name
 	return tun.New(*options)
-}
-
-func (w *boxPlatformInterfaceWrapper) CloseTun() error {
-	return nil
 }
 
 func (w *boxPlatformInterfaceWrapper) CreateDefaultInterfaceMonitor(logger logger.Logger) tun.DefaultInterfaceMonitor {
@@ -106,14 +107,15 @@ func (w *boxPlatformInterfaceWrapper) Interfaces() ([]adapter.NetworkInterface, 
 	if err != nil {
 		return nil, err
 	}
-	var interfaces []adapter.NetworkInterface
-	for _, netInterface := range iteratorToArray[*NetworkInterface](interfaceIterator) {
+	interfaces := make([]adapter.NetworkInterface, 0, interfaceIterator.Length())
+	for interfaceIterator.HasNext() {
+		netInterface := interfaceIterator.Next()
 		if netInterface.Name == w.myTunName {
 			continue
 		}
-		w.defaultInterfaceAccess.Lock()
-		isDefault := w.defaultInterface != nil && int(netInterface.Index) == w.defaultInterface.Index
-		w.defaultInterfaceAccess.Unlock()
+		// w.defaultInterfaceAccess.Lock()
+		// isDefault := w.defaultInterface != nil && int(netInterface.Index) == w.defaultInterface.Index
+		// w.defaultInterfaceAccess.Unlock()
 		interfaces = append(interfaces, adapter.NetworkInterface{
 			Interface: control.Interface{
 				Index:     int(netInterface.Index),
@@ -124,25 +126,11 @@ func (w *boxPlatformInterfaceWrapper) Interfaces() ([]adapter.NetworkInterface, 
 			},
 			Type:        C.InterfaceType(netInterface.Type),
 			DNSServers:  iteratorToArray[string](netInterface.DNSServer),
-			Expensive:   netInterface.Metered || isDefault && w.isExpensive,
-			Constrained: isDefault && w.isConstrained,
+			Expensive:   netInterface.Metered, /*|| isDefault && w.isExpensive*/
+			Constrained: false,                // Not for Android
 		})
 	}
 	return interfaces, nil
-}
-
-// Android not using
-
-func (w *boxPlatformInterfaceWrapper) UnderNetworkExtension() bool {
-	return false
-}
-
-func (w *boxPlatformInterfaceWrapper) IncludeAllNetworks() bool {
-	// https://sing-box.sagernet.org/manual/misc/tunnelvision/#android
-	return false
-}
-
-func (w *boxPlatformInterfaceWrapper) ClearDNSCache() {
 }
 
 // process.Searcher
@@ -158,9 +146,9 @@ func (w *boxPlatformInterfaceWrapper) FindProcessInfo(_ context.Context, network
 		var ipProtocol int32
 		switch N.NetworkName(network) {
 		case N.NetworkTCP:
-			ipProtocol = syscall.IPPROTO_TCP
+			ipProtocol = unix.IPPROTO_TCP
 		case N.NetworkUDP:
-			ipProtocol = syscall.IPPROTO_UDP
+			ipProtocol = unix.IPPROTO_UDP
 		default:
 			return nil, E.New("unknown network: ", network)
 		}
@@ -172,6 +160,20 @@ func (w *boxPlatformInterfaceWrapper) FindProcessInfo(_ context.Context, network
 	}
 	packageName, _ := w.iif.PackageNameByUid(uid)
 	return &process.Info{UserId: uid, PackageName: packageName}, nil
+}
+
+// Android not using
+
+func (w *boxPlatformInterfaceWrapper) UnderNetworkExtension() bool {
+	return false
+}
+
+func (w *boxPlatformInterfaceWrapper) IncludeAllNetworks() bool {
+	// https://sing-box.sagernet.org/manual/misc/tunnelvision/#android
+	return false
+}
+
+func (w *boxPlatformInterfaceWrapper) ClearDNSCache() {
 }
 
 func (w *boxPlatformInterfaceWrapper) SendNotification(_ *platform.Notification) error {

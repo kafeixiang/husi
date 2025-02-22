@@ -15,6 +15,7 @@ import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.view.ViewCompat
 import androidx.preference.EditTextPreference
+import androidx.preference.MultiSelectListPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceDataStore
 import androidx.preference.PreferenceFragmentCompat
@@ -38,7 +39,9 @@ import io.nekohasekai.sagernet.widget.AppListPreference
 import io.nekohasekai.sagernet.widget.ListListener
 import io.nekohasekai.sagernet.widget.setOutbound
 import io.nekohasekai.sagernet.widget.updateOutboundSummary
+import io.nekohasekai.sagernet.widget.updateSummary
 import kotlinx.parcelize.Parcelize
+import androidx.activity.addCallback
 import rikka.preference.SimpleMenuPreference
 
 class RouteSettingsActivity(
@@ -49,7 +52,7 @@ class RouteSettingsActivity(
     fun init(packageName: String?) {
         RuleEntity().apply {
             if (!packageName.isNullOrBlank()) {
-                packages = listOf(packageName)
+                packages = setOf(packageName)
                 name = app.getString(R.string.route_for, PackageCache.loadLabel(packageName))
             }
         }.init()
@@ -77,7 +80,7 @@ class RouteSettingsActivity(
             RuleEntity.OUTBOUND_BLOCK -> 2
             else -> 3
         }
-        DataStore.routePackages = packages.joinToString("\n")
+        DataStore.routePackages = packages
     }
 
     fun RuleEntity.serialize() {
@@ -101,8 +104,8 @@ class RouteSettingsActivity(
             2 -> RuleEntity.OUTBOUND_BLOCK
             else -> DataStore.routeOutboundRule
         }
-        if (DataStore.routePackages.isNotBlank()) {
-            packages = DataStore.routePackages.split("\n").filter { it.isNotBlank() }
+        if (DataStore.routePackages.isNotEmpty()) {
+            packages = DataStore.routePackages.filterTo(hashSetOf()) { it.isNotBlank() }
         }
 
         if (DataStore.editingId == 0L) {
@@ -112,7 +115,7 @@ class RouteSettingsActivity(
 
     fun needSave(): Boolean {
         if (!DataStore.dirty) return false
-        if (DataStore.routePackages.isBlank() &&
+        if (DataStore.routePackages.isEmpty() &&
             DataStore.routeDomain.isBlank() &&
             DataStore.routeIP.isBlank() &&
             DataStore.routePort.isBlank() &&
@@ -124,7 +127,7 @@ class RouteSettingsActivity(
             DataStore.routeBSSID.isBlank() &&
             DataStore.routeClient.isBlank() &&
             DataStore.routeClashMode.isBlank() &&
-            DataStore.routeNetworkType.isBlank() &&
+            DataStore.routeNetworkType.isEmpty() &&
             DataStore.routeNetworkIsExpensive &&
             DataStore.routeOutbound == 0
         ) {
@@ -165,7 +168,7 @@ class RouteSettingsActivity(
 
     lateinit var outbound: SimpleMenuPreference
     lateinit var apps: AppListPreference
-    lateinit var networkType: SimpleMenuPreference
+    lateinit var networkType: MultiSelectListPreference
     lateinit var ssid: EditTextPreference
     lateinit var bssid: EditTextPreference
 
@@ -190,14 +193,16 @@ class RouteSettingsActivity(
             true
         }
 
-        fun updateNetwork(newValue: String = networkType.value) {
-            val visible = newValue == NETWORK_TYPE_WIFI
+        fun updateNetwork(newValue: Set<String> = networkType.values) {
+            networkType.updateSummary(newValue)
+            val visible = newValue.contains(NETWORK_TYPE_WIFI)
             ssid.isVisible = visible
             bssid.isVisible = visible
         }
         updateNetwork()
         networkType.setOnPreferenceChangeListener { _, newValue ->
-            updateNetwork(newValue as String)
+            @Suppress("UNCHECKED_CAST")
+            updateNetwork(newValue as Set<String>)
             true
         }
     }
@@ -209,7 +214,7 @@ class RouteSettingsActivity(
     class UnsavedChangesDialogFragment : AlertDialogFragment<Empty, Empty>() {
         override fun AlertDialog.Builder.prepare(listener: DialogInterface.OnClickListener) {
             setTitle(R.string.unsaved_changes_prompt)
-            setPositiveButton(R.string.yes) { _, _ ->
+            setPositiveButton(android.R.string.ok) { _, _ ->
                 runOnDefaultDispatcher {
                     (requireActivity() as RouteSettingsActivity).saveAndExit()
                 }
@@ -226,13 +231,13 @@ class RouteSettingsActivity(
     class DeleteConfirmationDialogFragment : AlertDialogFragment<ProfileIdArg, Empty>() {
         override fun AlertDialog.Builder.prepare(listener: DialogInterface.OnClickListener) {
             setTitle(R.string.delete_route_prompt)
-            setPositiveButton(R.string.yes) { _, _ ->
+            setPositiveButton(android.R.string.ok) { _, _ ->
                 runOnDefaultDispatcher {
                     ProfileManager.deleteRule(arg.ruleId)
                 }
                 requireActivity().finish()
             }
-            setNegativeButton(R.string.no, null)
+            setNegativeButton(android.R.string.cancel, null)
         }
     }
 
@@ -281,9 +286,17 @@ class RouteSettingsActivity(
                 }
             }
 
-
         }
 
+        onBackPressedDispatcher.addCallback {
+            if (needSave()) {
+                UnsavedChangesDialogFragment().apply {
+                    key()
+                }.show(supportFragmentManager, null)
+            } else {
+                finish()
+            }
+        }
     }
 
     suspend fun saveAndExit() {
@@ -317,23 +330,32 @@ class RouteSettingsActivity(
 
     }
 
-    val child by lazy { supportFragmentManager.findFragmentById(R.id.settings) as MyPreferenceFragmentCompat }
-
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.profile_config_menu, menu)
         return true
     }
 
-    override fun onOptionsItemSelected(item: MenuItem) = child.onOptionsItemSelected(item)
-
-    @Deprecated("This method has been deprecated in favor of using the\n      {@link OnBackPressedDispatcher} via {@link #getOnBackPressedDispatcher()}.\n      The OnBackPressedDispatcher controls how back button events are dispatched\n      to one or more {@link OnBackPressedCallback} objects.")
-    override fun onBackPressed() {
-        if (needSave()) {
-            UnsavedChangesDialogFragment().apply { key() }.show(supportFragmentManager, null)
-        } else {
-            @Suppress("DEPRECATION")
-            super.onBackPressed()
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        R.id.action_delete -> {
+            if (DataStore.editingId == 0L) {
+                finish()
+            } else {
+                DeleteConfirmationDialogFragment().apply {
+                    arg(ProfileIdArg(DataStore.editingId))
+                    key()
+                }.show(supportFragmentManager, null)
+            }
+            true
         }
+
+        R.id.action_apply -> {
+            runOnDefaultDispatcher {
+                saveAndExit()
+            }
+            true
+        }
+
+        else -> false
     }
 
     override fun onSupportNavigateUp(): Boolean {
@@ -380,30 +402,6 @@ class RouteSettingsActivity(
             activity?.apply {
                 viewCreated(view, savedInstanceState)
             }
-        }
-
-        @Deprecated("Deprecated in Java")
-        override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-            R.id.action_delete -> {
-                if (DataStore.editingId == 0L) {
-                    requireActivity().finish()
-                } else {
-                    DeleteConfirmationDialogFragment().apply {
-                        arg(ProfileIdArg(DataStore.editingId))
-                        key()
-                    }.show(parentFragmentManager, null)
-                }
-                true
-            }
-
-            R.id.action_apply -> {
-                runOnDefaultDispatcher {
-                    activity?.saveAndExit()
-                }
-                true
-            }
-
-            else -> false
         }
 
         override fun onDisplayPreferenceDialog(preference: Preference) {

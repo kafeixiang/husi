@@ -1,5 +1,3 @@
-//go:build android
-
 package libcore
 
 import (
@@ -30,9 +28,9 @@ type AndroidVPNType struct {
 }
 
 func ReadAndroidVPNType(publicSourceDirList StringIterator) (*AndroidVPNType, error) {
-	apkPathList := iteratorToArray[string](publicSourceDirList)
 	var lastError error
-	for _, apkPath := range apkPathList {
+	for publicSourceDirList.HasNext() {
+		apkPath := publicSourceDirList.Next()
 		androidVPNType, err := readAndroidVPNType(apkPath)
 		if androidVPNType == nil {
 			if err != nil {

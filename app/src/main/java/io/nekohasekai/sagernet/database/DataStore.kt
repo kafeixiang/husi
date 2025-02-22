@@ -3,13 +3,15 @@ package io.nekohasekai.sagernet.database
 import android.os.Binder
 import androidx.preference.PreferenceDataStore
 import io.nekohasekai.sagernet.CONNECTION_TEST_URL
+import io.nekohasekai.sagernet.CertProvider
+import io.nekohasekai.sagernet.DEFAULT_HTTP_BYPASS
 import io.nekohasekai.sagernet.GroupType
 import io.nekohasekai.sagernet.IPv6Mode
 import io.nekohasekai.sagernet.Key
 import io.nekohasekai.sagernet.MuxStrategy
 import io.nekohasekai.sagernet.MuxType
+import io.nekohasekai.sagernet.NetworkInterfaceStrategy
 import io.nekohasekai.sagernet.SPEED_TEST_URL
-import io.nekohasekai.sagernet.SniffPolicy
 import io.nekohasekai.sagernet.TrafficSortMode
 import io.nekohasekai.sagernet.TunImplementation
 import io.nekohasekai.sagernet.bg.BaseService
@@ -22,9 +24,9 @@ import io.nekohasekai.sagernet.ktx.int
 import io.nekohasekai.sagernet.ktx.long
 import io.nekohasekai.sagernet.ktx.parsePort
 import io.nekohasekai.sagernet.ktx.string
+import io.nekohasekai.sagernet.ktx.stringSet
 import io.nekohasekai.sagernet.ktx.stringToInt
 import io.nekohasekai.sagernet.ktx.stringToIntIfExists
-import moe.matsuri.nb4a.TempDatabase
 
 object DataStore : OnPreferenceDataStoreChangeListener {
 
@@ -86,7 +88,6 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     }
 
     var appTLSVersion by configurationStore.string(Key.APP_TLS_VERSION)
-    var clashAPIListen by configurationStore.string(Key.CLASH_API_LISTEN)
     var showBottomBar by configurationStore.boolean(Key.SHOW_BOTTOM_BAR)
     var interruptSelector by configurationStore.boolean(Key.INTERRUPT_SELECTOR)
 
@@ -98,7 +99,11 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var debugListen by configurationStore.string(Key.DEBUG_LISTEN)
     var anchorSSID by configurationStore.string(Key.ANCHOR_SSID)
 
-    var trafficSniffing by configurationStore.stringToInt(Key.TRAFFIC_SNIFFING) { SniffPolicy.ENABLED }
+    var networkInterfaceType by configurationStore.stringToInt(Key.NETWORK_INTERFACE_STRATEGY) {
+        NetworkInterfaceStrategy.DEFAULT
+    }
+    var networkPreferredInterfaces by configurationStore.stringSet(Key.NETWORK_PREFERRED_INTERFACES)
+    var enableSniff by configurationStore.boolean(Key.ENABLE_SNIFF) { true }
     var sniffTimeout by configurationStore.string(Key.SNIFF_TIMEOUT)
     var resolveDestination by configurationStore.boolean(Key.RESOLVE_DESTINATION)
 
@@ -113,7 +118,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
 
     var allowAccess by configurationStore.boolean(Key.ALLOW_ACCESS)
     var speedInterval by configurationStore.stringToInt(Key.SPEED_INTERVAL)
-    var showGroupInNotification by configurationStore.boolean("showGroupInNotification")
+    var showGroupInNotification by configurationStore.boolean(Key.SHOW_GROUP_IN_NOTIFICATION)
 
     var remoteDns by configurationStore.string(Key.REMOTE_DNS) { "tcp://dns.google" }
     var directDns by configurationStore.string(Key.DIRECT_DNS) { "local" }
@@ -168,6 +173,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     val persistAcrossReboot by configurationStore.boolean(Key.PERSIST_ACROSS_REBOOT) { false }
 
     var appendHttpProxy by configurationStore.boolean(Key.APPEND_HTTP_PROXY)
+    var httpProxyBypass by configurationStore.string(Key.HTTP_PROXY_BYPASS) { DEFAULT_HTTP_BYPASS }
     var connectionTestURL by configurationStore.string(Key.CONNECTION_TEST_URL) { CONNECTION_TEST_URL }
     var connectionTestConcurrent by configurationStore.int(Key.CONNECTION_TEST_CONCURRENT) { 5 }
     var connectionTestTimeout by configurationStore.int(Key.CONNECTION_TEST_TIMEOUT) { 3000 }
@@ -178,13 +184,13 @@ object DataStore : OnPreferenceDataStoreChangeListener {
 
     var tunImplementation by configurationStore.stringToInt(Key.TUN_IMPLEMENTATION) { TunImplementation.MIXED }
     var profileTrafficStatistics by configurationStore.boolean(Key.PROFILE_TRAFFIC_STATISTICS) { true }
+    var certProvider by configurationStore.stringToInt(Key.CERT_PROVIDER) { CertProvider.MOZILLA }
 
-    var trafficDescending by configurationStore.boolean("trafficDescending") { false }
-    var trafficSortMode by configurationStore.int("trafficSortMode") { TrafficSortMode.START }
-    var enabledCazilla by configurationStore.boolean(Key.ENABLED_CAZILLA) { false }
+    var trafficDescending by configurationStore.boolean(Key.TRAFFIC_DESCENDING) { false }
+    var trafficSortMode by configurationStore.int(Key.TRAFFIC_SORT_MODE) { TrafficSortMode.START }
 
-    var speedTestUrl by configurationStore.string("speedTestUrl") { SPEED_TEST_URL }
-    var speedTestTimeout by configurationStore.int("speedTestTimeout") { 20000 }
+    var speedTestUrl by configurationStore.string(Key.SPEED_TEST_URL) { SPEED_TEST_URL }
+    var speedTestTimeout by configurationStore.int(Key.SPEED_TEST_TIMEOUT) { 20000 }
 
     // ntp
     var ntpEnable by configurationStore.boolean(Key.ENABLE_NTP) { false }
@@ -198,38 +204,49 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var downloadSpeed by configurationStore.stringToInt(Key.DOWNLOAD_SPEED) { 0 }
     var customPluginPrefix by configurationStore.string(Key.CUSTOM_PLUGIN_PREFIX)
 
-    // old cache, DO NOT ADD
-
     var dirty by profileCacheStore.boolean(Key.PROFILE_DIRTY)
     var editingId by profileCacheStore.long(Key.PROFILE_ID)
     var editingGroup by profileCacheStore.long(Key.PROFILE_GROUP)
     var profileName by profileCacheStore.string(Key.PROFILE_NAME)
     var serverAddress by profileCacheStore.string(Key.SERVER_ADDRESS)
     var serverPort by profileCacheStore.stringToInt(Key.SERVER_PORT)
-    var serverPorts by profileCacheStore.string("serverPorts")
+    var serverPorts by profileCacheStore.string(Key.SERVER_PORTS)
     var serverUsername by profileCacheStore.string(Key.SERVER_USERNAME)
     var serverPassword by profileCacheStore.string(Key.SERVER_PASSWORD)
     var serverPassword1 by profileCacheStore.string(Key.SERVER_PASSWORD1)
     var serverMethod by profileCacheStore.string(Key.SERVER_METHOD)
     var overrideAddress by profileCacheStore.string(Key.OVERRIDE_ADDRESS)
     var overridePort by profileCacheStore.stringToInt(Key.OVERRIDE_PORT)
-
-    var sharedStorage by profileCacheStore.string("sharedStorage")
+    var pluginName by profileCacheStore.string(Key.PLUGIN_NAME)
+    var pluginConfig by profileCacheStore.string(Key.PLUGIN_CONFIG)
+    var udpOverTcp by profileCacheStore.boolean(Key.UDP_OVER_TCP)
 
     var serverProtocol by profileCacheStore.string(Key.SERVER_PROTOCOL)
     var serverObfs by profileCacheStore.string(Key.SERVER_OBFS)
 
-    var serverNetwork by profileCacheStore.string(Key.SERVER_NETWORK)
+    var serverNetwork by profileCacheStore.string(Key.SERVER_V2RAY_TRANSPORT)
     var serverHost by profileCacheStore.string(Key.SERVER_HOST)
     var serverPath by profileCacheStore.string(Key.SERVER_PATH)
+    var serverHeaders by profileCacheStore.string(Key.SERVER_HEADERS)
+    var serverWsMaxEarlyData by profileCacheStore.stringToInt(Key.SERVER_WS_MAX_EARLY_DATA)
+    var serverWsEarlyDataHeaderName by profileCacheStore.string(Key.SERVER_WS_EARLY_DATA_HEADER_NAME)
     var serverSNI by profileCacheStore.string(Key.SERVER_SNI)
+    var serverSecurity by profileCacheStore.string(Key.SERVER_SECURITY)
     var serverEncryption by profileCacheStore.string(Key.SERVER_ENCRYPTION)
     var serverALPN by profileCacheStore.string(Key.SERVER_ALPN)
     var serverCertificates by profileCacheStore.string(Key.SERVER_CERTIFICATES)
     var serverPinnedCertificateChain by profileCacheStore.string(Key.SERVER_PINNED_CERTIFICATE_CHAIN)
+    var serverUtlsFingerPrint by profileCacheStore.string(Key.SERVER_UTLS_FINGERPRINT)
+    var serverRealityPublicKey by profileCacheStore.string(Key.SERVER_REALITY_PUBLIC_KEY)
+    var serverRealityShortID by profileCacheStore.string(Key.SERVER_REALITY_SHORT_ID)
     var serverMTU by profileCacheStore.stringToInt(Key.SERVER_MTU)
-    var serverHeaders by profileCacheStore.string(Key.SERVER_HEADERS)
     var serverAllowInsecure by profileCacheStore.boolean(Key.SERVER_ALLOW_INSECURE)
+    var serverReserved by profileCacheStore.string(Key.SERVER_RESERVED)
+    var localAddress by profileCacheStore.string(Key.LOCAL_ADDRESS)
+    var listenPort by profileCacheStore.stringToInt(Key.LISTEN_PORT)
+    var privateKey by profileCacheStore.string(Key.PRIVATE_KEY)
+    var publicKey by profileCacheStore.string(Key.PUBLIC_KEY)
+    var preSharedKey by profileCacheStore.string(Key.PRE_SHARED_KEY)
 
     var serverMux by profileCacheStore.boolean(Key.SERVER_MUX) { false }
     var serverBrutal by profileCacheStore.boolean(Key.SERVER_BRUTAL) { false }
@@ -238,17 +255,19 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var serverMuxNumber by profileCacheStore.stringToInt(Key.SERVER_MUX_NUMBER) { 8 }
     var serverMuxPadding by profileCacheStore.boolean(Key.SERVER_MUX_PADDING) { false }
 
-    var authenticatedLength by profileCacheStore.boolean(Key.AUTHENTICATED_LENGTH)
+    var serverUserID by profileCacheStore.string(Key.SERVER_USER_ID)
+    var serverAlterID by profileCacheStore.stringToInt(Key.SERVER_ALTER_ID)
+    var serverPacketEncoding by profileCacheStore.stringToInt(Key.SERVER_PACKET_ENCODING)
+    var serverAuthenticatedLength by profileCacheStore.boolean(Key.SERVER_AUTHENTICATED_LENGTH)
 
-    // ECH
-    var ech by profileCacheStore.boolean(Key.ECH)
-    var echCfg by profileCacheStore.string(Key.ECH_CFG)
+    var serverECH by profileCacheStore.boolean(Key.SERVER_ECH)
+    var serverECHConfig by profileCacheStore.string(Key.SERVER_ECH_CONFIG)
 
     var serverAuthType by profileCacheStore.stringToInt(Key.SERVER_AUTH_TYPE)
     var serverStreamReceiveWindow by profileCacheStore.stringToIntIfExists(Key.SERVER_STREAM_RECEIVE_WINDOW)
     var serverConnectionReceiveWindow by profileCacheStore.stringToIntIfExists(Key.SERVER_CONNECTION_RECEIVE_WINDOW)
     var serverDisableMtuDiscovery by profileCacheStore.boolean(Key.SERVER_DISABLE_MTU_DISCOVERY)
-    var serverHopInterval by profileCacheStore.stringToInt(Key.SERVER_HOP_INTERVAL) { 10 }
+    var serverHopInterval by profileCacheStore.string(Key.SERVER_HOP_INTERVAL) { "10s" }
 
     var protocolVersion by profileCacheStore.stringToInt(Key.PROTOCOL_VERSION) { 2 } // default is SOCKS5
 
@@ -272,12 +291,12 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var routeProtocol by profileCacheStore.string(Key.ROUTE_PROTOCOL)
     var routeOutbound by profileCacheStore.stringToInt(Key.ROUTE_OUTBOUND)
     var routeOutboundRule by profileCacheStore.long(Key.ROUTE_OUTBOUND + "Long")
-    var routePackages by profileCacheStore.string(Key.ROUTE_PACKAGES)
+    var routePackages by profileCacheStore.stringSet(Key.ROUTE_PACKAGES)
     var routeSSID by profileCacheStore.string(Key.ROUTE_SSID)
     var routeBSSID by profileCacheStore.string(Key.ROUTE_BSSID)
     var routeClient by profileCacheStore.string(Key.ROUTE_CLIENT)
     var routeClashMode by profileCacheStore.string(Key.ROUTE_CLASH_MODE)
-    var routeNetworkType by profileCacheStore.string(Key.ROUTE_NETWORK_TYPE)
+    var routeNetworkType by profileCacheStore.stringSet(Key.ROUTE_NETWORK_TYPE)
     var routeNetworkIsExpensive by profileCacheStore.boolean(Key.ROUTE_NETWORK_IS_EXPENSIVE)
 
     var frontProxy by profileCacheStore.long(Key.GROUP_FRONT_PROXY + "Long")
@@ -304,7 +323,7 @@ object DataStore : OnPreferenceDataStoreChangeListener {
     var subscriptionAutoUpdate by profileCacheStore.boolean(Key.SUBSCRIPTION_AUTO_UPDATE)
     var subscriptionAutoUpdateDelay by profileCacheStore.stringToInt(Key.SUBSCRIPTION_AUTO_UPDATE_DELAY) { 360 }
 
-    var rulesFirstCreate by profileCacheStore.boolean("rulesFirstCreate")
+    var rulesFirstCreate by profileCacheStore.boolean(Key.RULES_FIRST_CREATE)
 
     override fun onPreferenceDataStoreChanged(store: PreferenceDataStore, key: String) {
     }

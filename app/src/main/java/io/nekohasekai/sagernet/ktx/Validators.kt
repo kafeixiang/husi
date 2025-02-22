@@ -31,7 +31,7 @@ import io.nekohasekai.sagernet.fmt.trojan.TrojanBean
 import io.nekohasekai.sagernet.fmt.tuic.TuicBean
 import io.nekohasekai.sagernet.fmt.v2ray.VMessBean
 import io.nekohasekai.sagernet.fmt.v2ray.isTLS
-import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean
+import io.nekohasekai.sagernet.fmt.shadowtls.ShadowTLSBean
 
 interface ValidateResult
 object ResultSecure : ValidateResult
@@ -75,7 +75,7 @@ fun AbstractBean.isInsecure(): ValidateResult {
 
         is HysteriaBean -> {
             if (allowInsecure) return ResultInsecure(R.raw.insecure)
-            if (protocolVersion < 2) return ResultDeprecated(R.raw.hysteria_legacy)
+            if (protocolVersion < HysteriaBean.PROTOCOL_VERSION_2) return ResultDeprecated(R.raw.hysteria_legacy)
         }
 
         // Should we said that TUIC died?
@@ -86,7 +86,7 @@ fun AbstractBean.isInsecure(): ValidateResult {
 
         is ShadowTLSBean -> {
             if (allowInsecure) return ResultInsecure(R.raw.insecure)
-            if (version < 3) return ResultDeprecated(R.raw.shadowtls_legacy)
+            if (protocolVersion < 3) return ResultDeprecated(R.raw.shadowtls_legacy)
         }
 
         is JuicityBean -> {

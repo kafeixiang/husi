@@ -13,6 +13,9 @@ import moe.matsuri.nb4a.SingBoxOptions;
 import org.jetbrains.annotations.NotNull;
 
 public class HysteriaBean extends AbstractBean {
+    public static final int PROTOCOL_VERSION_1 = 1;
+    public static final int PROTOCOL_VERSION_2 = 2;
+
     public static final int TYPE_NONE = 0;
     public static final int TYPE_STRING = 1;
 
@@ -37,18 +40,19 @@ public class HysteriaBean extends AbstractBean {
     // Use serverPorts instead of serverPort
     public String serverPorts;
     public Boolean ech;
-    public String echCfg;
+    public String echConfig;
     public String authPayload;
     public String obfuscation;
     public String sni;
-    public String caText;
+    public String certificates;
 
     // HY1
     public Boolean allowInsecure;
     public Integer streamReceiveWindow;
     public Integer connectionReceiveWindow;
     public Boolean disableMtuDiscovery;
-    public Integer hopInterval;
+    // Since serialize version 1, hopInterval change to string.
+    public String hopInterval;
     public String alpn;
     public Integer authPayloadType;
     public Integer protocol;
@@ -61,7 +65,7 @@ public class HysteriaBean extends AbstractBean {
     @Override
     public void initializeDefaultValues() {
         super.initializeDefaultValues();
-        if (protocolVersion == null) protocolVersion = 2;
+        if (protocolVersion == null) protocolVersion = PROTOCOL_VERSION_2;
 
         if (authPayloadType == null) authPayloadType = TYPE_NONE;
         if (authPayload == null) authPayload = "";
@@ -69,23 +73,23 @@ public class HysteriaBean extends AbstractBean {
         if (obfuscation == null) obfuscation = "";
         if (sni == null) sni = "";
         if (alpn == null) alpn = "";
-        if (caText == null) caText = "";
+        if (certificates == null) certificates = "";
         if (allowInsecure == null) allowInsecure = false;
 
 
         if (streamReceiveWindow == null) streamReceiveWindow = 0;
         if (connectionReceiveWindow == null) connectionReceiveWindow = 0;
         if (disableMtuDiscovery == null) disableMtuDiscovery = false;
-        if (hopInterval == null) hopInterval = 10;
+        if (hopInterval == null) hopInterval = "10s";
         if (serverPorts == null) serverPorts = "443";
 
         if (ech == null) ech = false;
-        if (echCfg == null) echCfg = "";
+        if (echConfig == null) echConfig = "";
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(0);
+        output.writeInt(1);
         super.serialize(output);
 
         output.writeInt(protocolVersion);
@@ -99,15 +103,15 @@ public class HysteriaBean extends AbstractBean {
 
         output.writeBoolean(allowInsecure);
 
-        output.writeString(caText);
+        output.writeString(certificates);
         output.writeInt(streamReceiveWindow);
         output.writeInt(connectionReceiveWindow);
         output.writeBoolean(disableMtuDiscovery);
-        output.writeInt(hopInterval);
+        output.writeString(hopInterval);
         output.writeString(serverPorts);
 
         output.writeBoolean(ech);
-        output.writeString(echCfg);
+        output.writeString(echConfig);
 
     }
 
@@ -124,16 +128,20 @@ public class HysteriaBean extends AbstractBean {
         sni = input.readString();
         alpn = input.readString();
         allowInsecure = input.readBoolean();
-        caText = input.readString();
+        certificates = input.readString();
         streamReceiveWindow = input.readInt();
         connectionReceiveWindow = input.readInt();
-        disableMtuDiscovery = input.readBoolean(); // note: skip 4
-        hopInterval = input.readInt();
+        disableMtuDiscovery = input.readBoolean();
+        if (version < 1) {
+            hopInterval = input.readInt()+"s";
+        } else {
+            hopInterval = input.readString();
+        }
         serverPorts = input.readString();
 
 
         ech = input.readBoolean();
-        echCfg = input.readString();
+        echConfig = input.readString();
     }
 
     @Override
@@ -144,13 +152,13 @@ public class HysteriaBean extends AbstractBean {
         bean.disableMtuDiscovery = disableMtuDiscovery;
         bean.hopInterval = hopInterval;
         bean.ech = ech;
-        bean.echCfg = echCfg;
+        bean.echConfig = echConfig;
     }
 
     @Override
     public boolean canTCPing() {
         return switch (protocolVersion) {
-            case 1 -> protocol == PROTOCOL_FAKETCP;
+            case PROTOCOL_VERSION_1 -> protocol == PROTOCOL_FAKETCP;
             default -> false;
         };
     }
@@ -169,8 +177,8 @@ public class HysteriaBean extends AbstractBean {
     @Override
     public @NotNull String outboundType() throws Throwable {
         return switch (protocolVersion) {
-            case 1 -> SingBoxOptions.TYPE_HYSTERIA;
-            case 2 -> SingBoxOptions.TYPE_HYSTERIA2;
+            case PROTOCOL_VERSION_1-> SingBoxOptions.TYPE_HYSTERIA;
+            case PROTOCOL_VERSION_2 -> SingBoxOptions.TYPE_HYSTERIA2;
             default -> throw unknownVersion();
         };
     }

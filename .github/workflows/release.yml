@@ -45,12 +45,19 @@ jobs:
         with:
           java-version: "21"
           distribution: "temurin"
-      - name: Patch Go
+      - name: Setup Android NDK
         if: steps.cache.outputs.cache-hit != 'true'
-        run: |
-          make patch_go1234
+        # Pin NDK version for `gomobile`.
+        id: setup-ndk
+        uses: nttld/setup-ndk@v1
+        with:
+          add-to-path: true
+          ndk-version: r28
+          local-cache: false
       - name: Native Build
         if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           ./run lib core
       - name: Upload libcore
@@ -99,10 +106,9 @@ jobs:
           BUILD_PLUGIN: none
         run: |
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
-          # export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
+          echo "${{ secrets.LOCAL_PROPERTIES }}" >> local.properties
           ./run init action gradle
           ./gradlew clean app:assembleFossRelease
-
           APK=$(find app/build/outputs/apk -name '*arm64-v8a*.apk')
           APK=$(dirname $APK)
           rm $APK/output-metadata.json
@@ -128,7 +134,7 @@ jobs:
           path: artifacts/
       - name: Release
         run: |
-          curl -Lo - https://github.com/tcnksm/ghr/releases/download/v0.16.2/ghr_v0.16.2_linux_amd64.tar.gz | tar xzv
+          curl -Lo - https://github.com/tcnksm/ghr/releases/download/v0.17.0/ghr_v0.17.0_linux_amd64.tar.gz | tar xzv
           mv ghr*linux_amd64/ghr .
-          ./ghr -delete -prerelease -t "${{ github.token }}" -n "${{ github.ref }}" "${{ github
-          .ref }}" ./artifacts/
+          ./ghr -delete -prerelease -t "${{ github.token }}" -n "${{ github.ref_name }}" "${{ github
+          .ref_name }}" ./artifacts/

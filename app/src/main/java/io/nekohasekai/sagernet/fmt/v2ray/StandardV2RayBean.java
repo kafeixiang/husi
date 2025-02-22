@@ -15,11 +15,13 @@ public abstract class StandardV2RayBean extends AbstractBean {
     //////// End of VMess & VLESS ////////
 
     // "V2Ray Transport" tcp/http/ws/quic/grpc/httpUpgrade
-    public String type;
+    public String v2rayTransport;
 
     public String host;
 
     public String path;
+
+    public String headers;
 
     // --------------------------------------- tls?
 
@@ -36,15 +38,15 @@ public abstract class StandardV2RayBean extends AbstractBean {
     // --------------------------------------- reality
 
 
-    public String realityPubKey;
+    public String realityPublicKey;
 
-    public String realityShortId;
+    public String realityShortID;
 
     // --------------------------------------- ECH
 
     public Boolean ech;
 
-    public String echCfg;
+    public String echConfig;
 
 
     // --------------------------------------- //
@@ -64,13 +66,14 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
         if (JavaUtil.isNullOrBlank(uuid)) uuid = "";
 
-        if (JavaUtil.isNullOrBlank(type)) type = "tcp";
-        else if ("h2".equals(type)) type = "http";
+        if (JavaUtil.isNullOrBlank(v2rayTransport)) v2rayTransport = "tcp";
+        else if ("h2".equals(v2rayTransport)) v2rayTransport = "http";
 
-        type = type.toLowerCase();
+        v2rayTransport = v2rayTransport.toLowerCase();
 
         if (JavaUtil.isNullOrBlank(host)) host = "";
         if (JavaUtil.isNullOrBlank(path)) path = "";
+        if (JavaUtil.isNullOrBlank(headers)) headers = "";
 
         if (JavaUtil.isNullOrBlank(security)) {
             if (this instanceof TrojanBean || isVLESS()) {
@@ -90,16 +93,16 @@ public abstract class StandardV2RayBean extends AbstractBean {
         if (allowInsecure == null) allowInsecure = false;
         if (packetEncoding == null) packetEncoding = 0;
 
-        if (realityPubKey == null) realityPubKey = "";
-        if (realityShortId == null) realityShortId = "";
+        if (realityPublicKey == null) realityPublicKey = "";
+        if (realityShortID == null) realityShortID = "";
 
         if (ech == null) ech = false;
-        if (echCfg == null) echCfg = "";
+        if (echConfig == null) echConfig = "";
     }
 
     @Override
     public void serialize(ByteBufferOutput output) {
-        output.writeInt(4);
+        output.writeInt(5);
         super.serialize(output);
 
         output.writeString(uuid);
@@ -108,8 +111,8 @@ public abstract class StandardV2RayBean extends AbstractBean {
             output.writeInt(((VMessBean) this).alterId);
         }
 
-        output.writeString(type);
-        switch (type) {
+        output.writeString(v2rayTransport);
+        switch (v2rayTransport) {
             case "tcp":
             case "quic": {
                 break;
@@ -119,11 +122,13 @@ public abstract class StandardV2RayBean extends AbstractBean {
                 output.writeString(path);
                 output.writeInt(wsMaxEarlyData);
                 output.writeString(earlyDataHeaderName);
+                output.writeString(headers);
                 break;
             }
             case "http": {
                 output.writeString(host);
                 output.writeString(path);
+                output.writeString(headers);
                 break;
             }
             case "grpc": {
@@ -132,7 +137,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
             case "httpupgrade": {
                 output.writeString(host);
                 output.writeString(path);
-
+                output.writeString(headers);
             }
         }
 
@@ -143,10 +148,10 @@ public abstract class StandardV2RayBean extends AbstractBean {
             output.writeString(certificates);
             output.writeBoolean(allowInsecure);
             output.writeString(utlsFingerprint);
-            output.writeString(realityPubKey);
-            output.writeString(realityShortId);
+            output.writeString(realityPublicKey);
+            output.writeString(realityShortID);
             output.writeBoolean(ech);
-            output.writeString(echCfg);
+            output.writeString(echConfig);
         }
 
         output.writeInt(packetEncoding);
@@ -166,8 +171,8 @@ public abstract class StandardV2RayBean extends AbstractBean {
             ((VMessBean) this).alterId = input.readInt();
         }
 
-        type = input.readString();
-        switch (type) {
+        v2rayTransport = input.readString();
+        switch (v2rayTransport) {
             case "tcp":
             case "quic": {
                 break;
@@ -177,11 +182,13 @@ public abstract class StandardV2RayBean extends AbstractBean {
                 path = input.readString();
                 wsMaxEarlyData = input.readInt();
                 earlyDataHeaderName = input.readString();
+                if (version >= 5) headers = input.readString();
                 break;
             }
             case "http": {
                 host = input.readString();
                 path = input.readString();
+                if (version >= 5) headers = input.readString();
                 break;
             }
             case "grpc": {
@@ -190,6 +197,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
             case "httpupgrade": {
                 host = input.readString();
                 path = input.readString();
+                if (version >= 5) headers = input.readString();
             }
         }
 
@@ -204,10 +212,10 @@ public abstract class StandardV2RayBean extends AbstractBean {
             if (version < 4 && utlsFingerprint.startsWith("chrome")) {
                 utlsFingerprint = "chrome";
             }
-            realityPubKey = input.readString();
-            realityShortId = input.readString();
+            realityPublicKey = input.readString();
+            realityShortID = input.readString();
             ech = input.readBoolean();
-            echCfg = input.readString();
+            echConfig = input.readString();
         }
 
         packetEncoding = input.readInt();
@@ -230,7 +238,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
         bean.utlsFingerprint = utlsFingerprint;
         bean.packetEncoding = packetEncoding;
         bean.ech = ech;
-        bean.echCfg = echCfg;
+        bean.echConfig = echConfig;
     }
 
     public boolean isVLESS() {
@@ -243,7 +251,7 @@ public abstract class StandardV2RayBean extends AbstractBean {
 
     @Override
     public boolean canTCPing() {
-        return !type.equals("quic");
+        return !v2rayTransport.equals("quic");
     }
 
 }

@@ -306,7 +306,7 @@ private fun mappedValue(value: Any?): Any? = when (value) {
         null
     } else {
         val needAsMap = shouldAsMap(value[0])
-        value.map {
+        value.mapX {
             if (needAsMap) {
                 it?.asMap()
             } else {
@@ -343,11 +343,43 @@ operator fun <K, V> Map<K, V>.getValue(thisRef: K, property: KProperty<*>) = get
 operator fun <K, V> MutableMap<K, V>.setValue(thisRef: K, property: KProperty<*>, value: V?) {
     if (value != null) {
         put(thisRef, value)
-
     } else {
         remove(thisRef)
-
     }
 }
 
 fun String?.blankAsNull(): String? = if (isNullOrBlank()) null else this
+
+/**
+ * Designed to replace map(), which only distribute 10 as initial length.
+ */
+fun <T, R> Collection<T>.mapX(transform: (T) -> R): List<R> {
+    val list = ArrayList<R>(size)
+    for (item in this) {
+        list.add(transform(item))
+    }
+    return list
+}
+
+/**
+ * Returns the first non-default value from the provided getters.
+ *
+ * This function iterates over the provided getter functions and returns the first value
+ * that is not equal to the default value. If all values are equal to the default value,
+ * the default value is returned.
+ *
+ * Inspired by Go cmp.Or()
+ *
+ * @param default The default value to compare against.
+ * @param getters A variable number of getter functions that return values to be compared.
+ * @return The first non-default value from the getters, or the default value if all are equal to the default.
+ */
+fun <T> defaultOr(default: T, vararg getters: () -> T?): T {
+    for (getter in getters) {
+        val it = getter()
+        if (it?.equals(default) == false) {
+            return it
+        }
+    }
+    return default
+}

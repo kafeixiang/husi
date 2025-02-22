@@ -8,7 +8,6 @@ import io.nekohasekai.sagernet.ktx.*
 import libcore.Libcore
 import libcore.URL
 import moe.matsuri.nb4a.SingBoxOptions.*
-import moe.matsuri.nb4a.utils.NGUtil
 import moe.matsuri.nb4a.utils.listByLineOrComma
 
 data class VmessQRCode(
@@ -61,7 +60,7 @@ fun parseV2Ray(rawUrl: String): StandardV2RayBean {
         bean.name = url.fragment
 
         var protocol = url.username
-        bean.type = protocol
+        bean.v2rayTransport = protocol
         bean.alterId = url.password.substringAfterLast('-').toInt()
         bean.uuid = url.password.substringBeforeLast('-')
 
@@ -88,42 +87,25 @@ fun parseV2Ray(rawUrl: String): StandardV2RayBean {
 //                }
 //            }
             "http" -> {
-                url.queryParameterNotBlank("path").let {
-                    bean.path = it
-                }
-                url.queryParameterNotBlank("host").let {
-                    bean.host = it.split("|").joinToString(",")
-                }
+                bean.path = url.queryParameterNotBlank("path")
+                bean.host = url.queryParameterNotBlank("host").split("|").joinToString(",")
             }
 
             "ws" -> {
-                url.queryParameterNotBlank("path").let {
-                    bean.path = it
-                }
-                url.queryParameterNotBlank("host").let {
-                    bean.host = it
-                }
+                bean.path = url.queryParameterNotBlank("path")
+                bean.host = url.queryParameterNotBlank("host")
             }
 
             "grpc" -> {
-                url.queryParameterNotBlank("serviceName").let {
-                    bean.path = it
-                }
+                bean.path = url.queryParameterNotBlank("serviceName")
             }
 
             "httpupgrade" -> {
-                url.queryParameterNotBlank("path").let {
-                    bean.path = it
-                }
-                url.queryParameterNotBlank("host").let {
-                    bean.host = it
-                }
+                bean.path = url.queryParameterNotBlank("path")
+                bean.host = url.queryParameterNotBlank("host")
             }
         }
-
-        bean.packetEncoding = 1 // It comes from V2Ray!
     } else {
-        // also vless format
         bean.parseDuckSoft(url)
     }
 
@@ -142,9 +124,9 @@ fun StandardV2RayBean.parseDuckSoft(url: URL) {
         uuid = url.username
     }
 
-    type = url.queryParameterNotBlank("type")
-    if (type.isNullOrBlank()) type = "tcp"
-    if (type == "h2") type = "http"
+    v2rayTransport = url.queryParameterNotBlank("type")
+    if (v2rayTransport.isNullOrBlank()) v2rayTransport = "tcp"
+    if (v2rayTransport == "h2") v2rayTransport = "http"
 
     security = url.queryParameterNotBlank("security")
     if (security.isNullOrBlank()) {
@@ -154,54 +136,35 @@ fun StandardV2RayBean.parseDuckSoft(url: URL) {
     when (security) {
         "tls", "reality" -> {
             security = "tls"
-            url.queryParameterNotBlank("sni").let {
-                sni = it
+            sni = url.queryParameterNotBlank("sni").ifBlank {
+                url.queryParameterNotBlank("host")
             }
-            url.queryParameterNotBlank("host").let {
-                if (sni.isNullOrBlank()) sni = it
-            }
-            url.queryParameterNotBlank("alpn").let {
-                alpn = it
-            }
-            url.queryParameterNotBlank("cert").let {
-                certificates = it
-            }
-            url.queryParameterNotBlank("pbk").let {
-                realityPubKey = it
-            }
-            url.queryParameterNotBlank("sid").let {
-                realityShortId = it
-            }
+            alpn = url.queryParameterNotBlank("alpn")
+            certificates = url.queryParameterNotBlank("cert")
+            realityPublicKey = url.queryParameterNotBlank("pbk")
+            realityShortID = url.queryParameterNotBlank("sid")
         }
     }
 
-    when (type) {
+    when (v2rayTransport) {
         "tcp" -> {
             // v2rayNG
             if (url.queryParameterNotBlank("headerType") == "http") {
                 url.queryParameterNotBlank("host").let {
-                    type = "http"
+                    v2rayTransport = "http"
                     host = it
                 }
             }
         }
 
         "http" -> {
-            url.queryParameterNotBlank("host").let {
-                host = it
-            }
-            url.queryParameterNotBlank("path").let {
-                path = it
-            }
+            host = url.queryParameterNotBlank("host")
+            path = url.queryParameterNotBlank("path")
         }
 
         "ws" -> {
-            url.queryParameterNotBlank("host").let {
-                host = it
-            }
-            url.queryParameterNotBlank("path").let {
-                path = it
-            }
+            host = url.queryParameterNotBlank("host")
+            path = url.queryParameterNotBlank("path")
             url.queryParameterNotBlank("ed").let { ed ->
                 if (ed.isNotBlank()) {
                     wsMaxEarlyData = ed.toIntOrNull() ?: 2048
@@ -216,46 +179,30 @@ fun StandardV2RayBean.parseDuckSoft(url: URL) {
         }
 
         "grpc" -> {
-            url.queryParameterNotBlank("serviceName").let {
-                path = it
-            }
+            path = url.queryParameterNotBlank("serviceName")
         }
 
         "httpupgrade" -> {
-            url.queryParameterNotBlank("host").let {
-                host = it
-            }
-            url.queryParameterNotBlank("path").let {
-                path = it
-            }
+            host = url.queryParameterNotBlank("host")
+            path = url.queryParameterNotBlank("path")
         }
     }
 
     // maybe from Matsuri vmess export
-    if (this is VMessBean && !isVLESS) {
-        url.queryParameterNotBlank("encryption").let {
-            encryption = it
+    if (this is VMessBean) {
+        when (url.queryParameterNotBlank("packetEncoding")) {
+            "packetaddr" -> packetEncoding = 1
+            "xudp" -> packetEncoding = 2
+        }
+
+        encryption = if (isVLESS) {
+            url.queryParameterNotBlank("flow").removeSuffix("-udp443")
+        } else {
+            url.queryParameterNotBlank("encryption")
         }
     }
 
-    if (isVLESS) {
-        url.queryParameterNotBlank("packetEncoding").let {
-            when (it) {
-                "packetaddr" -> packetEncoding = 1
-                "xudp" -> packetEncoding = 2
-            }
-        }
-    }
-
-    url.queryParameterNotBlank("flow").let {
-        if (isVLESS) {
-            encryption = it.removeSuffix("-udp443")
-        }
-    }
-
-    url.queryParameterNotBlank("fp").let {
-        utlsFingerprint = it
-    }
+    utlsFingerprint = url.queryParameterNotBlank("fp")
 }
 
 // SagerNet's
@@ -283,7 +230,7 @@ fun parseV2RayN(link: String): VMessBean {
     bean.encryption = vmessQRCode.scy
     bean.uuid = vmessQRCode.id
     bean.alterId = vmessQRCode.aid.toIntOrNull() ?: 0
-    bean.type = vmessQRCode.net
+    bean.v2rayTransport = vmessQRCode.net
     bean.host = vmessQRCode.host
     bean.path = vmessQRCode.path
     val headerType = vmessQRCode.type
@@ -298,10 +245,10 @@ fun parseV2RayN(link: String): VMessBean {
         }
     }
 
-    when (bean.type) {
+    when (bean.v2rayTransport) {
         "tcp" -> {
             if (headerType == "http") {
-                bean.type = "http"
+                bean.v2rayTransport = "http"
             }
         }
     }
@@ -334,7 +281,7 @@ private fun parseCsvVMess(csv: String): VMessBean {
         when {
             it == "over-tls=true" -> bean.security = "tls"
             it.startsWith("tls-host=") -> bean.host = it.substringAfter("=")
-            it.startsWith("obfs=") -> bean.type = it.substringAfter("=")
+            it.startsWith("obfs=") -> bean.v2rayTransport = it.substringAfter("=")
             it.startsWith("obfs-path=") || it.contains("Host:") -> {
                 runCatching {
                     bean.path = it.substringAfter("obfs-path=\"").substringBefore("\"obfs")
@@ -351,52 +298,6 @@ private fun parseCsvVMess(csv: String): VMessBean {
 
     return bean
 
-}
-
-fun VMessBean.toV2rayN(): String {
-    val bean = this
-    val protocol = if (isVLESS) "vless" else "vmess"
-    return "${protocol}://" + VmessQRCode().apply {
-        v = "2"
-        ps = bean.name
-        add = bean.serverAddress
-        port = bean.serverPort.toString()
-        id = bean.uuid
-        aid = bean.alterId.toString()
-        net = bean.type
-
-        when (bean.packetEncoding) {
-            0 -> packetEncoding = ""
-            1 -> packetEncoding = "packetaddr"
-            2 -> packetEncoding = "xudp"
-        }
-
-        host = bean.host
-        path = bean.path
-
-        when (net) {
-            "http" -> {
-                if (!isTLS()) {
-                    type = "http"
-                    net = "tcp"
-                }
-            }
-        }
-
-        if (isTLS()) {
-            tls = "tls"
-            if (bean.realityPubKey.isNotBlank()) {
-                tls = "reality"
-            }
-        }
-
-        scy = bean.encryption
-        sni = bean.sni
-        alpn = bean.alpn.replace("\n", ",")
-        fp = bean.utlsFingerprint
-    }.let {
-        NGUtil.encode(Gson().toJson(it))
-    }
 }
 
 fun StandardV2RayBean.toUriVMessVLESSTrojan(): String {
@@ -418,7 +319,7 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(): String {
         }
         host = serverAddress
         ports = serverPort.toString()
-        addQueryParameter("type", type)
+        addQueryParameter("type", v2rayTransport)
     }
 
     if (!isTrojan) {
@@ -438,7 +339,7 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(): String {
         }
     }
 
-    when (type) {
+    when (v2rayTransport) {
         "tcp" -> {}
         "ws", "http", "httpupgrade" -> {
             if (host.isNotBlank()) {
@@ -447,14 +348,14 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(): String {
             if (path.isNotBlank()) {
                 builder.addQueryParameter("path", path)
             }
-            if (type == "ws") {
+            if (v2rayTransport == "ws") {
                 if (wsMaxEarlyData > 0) {
                     builder.addQueryParameter("ed", "$wsMaxEarlyData")
                     if (earlyDataHeaderName.isNotBlank()) {
                         builder.addQueryParameter("eh", earlyDataHeaderName)
                     }
                 }
-            } else if (type == "http" && !isTLS()) {
+            } else if (v2rayTransport == "http" && !isTLS()) {
                 builder.setQueryParameter("type", "tcp")
                 builder.addQueryParameter("headerType", "http")
             }
@@ -486,10 +387,10 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(): String {
                 if (utlsFingerprint.isNotBlank()) {
                     builder.addQueryParameter("fp", utlsFingerprint)
                 }
-                if (realityPubKey.isNotBlank()) {
+                if (realityPublicKey.isNotBlank()) {
                     builder.setQueryParameter("security", "reality")
-                    builder.addQueryParameter("pbk", realityPubKey)
-                    builder.addQueryParameter("sid", realityShortId)
+                    builder.addQueryParameter("pbk", realityPublicKey)
+                    builder.addQueryParameter("sid", realityShortID)
                 }
             }
         }
@@ -503,7 +404,7 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(): String {
 }
 
 fun buildSingBoxOutboundStreamSettings(bean: StandardV2RayBean): V2RayTransportOptions? {
-    when (bean.type) {
+    when (bean.v2rayTransport) {
         "tcp" -> {
             return null
         }
@@ -512,9 +413,15 @@ fun buildSingBoxOutboundStreamSettings(bean: StandardV2RayBean): V2RayTransportO
             return V2RayTransportOptions_V2RayWebsocketOptions().apply {
                 type = "ws"
                 headers = mutableMapOf()
+                for (line in bean.headers.lines()) {
+                    val pair = line.split(":", limit = 2)
+                    if (pair.size == 2) {
+                        headers[pair[0].trim()] = listOf(pair[1].trim())
+                    }
+                }
 
                 if (bean.host.isNotBlank()) {
-                    headers["Host"] = listOf(bean.host)
+                    headers["Host"] = bean.host.listByLineOrComma()
                 }
 
                 if (bean.path.contains("?ed=")) {
@@ -540,9 +447,17 @@ fun buildSingBoxOutboundStreamSettings(bean: StandardV2RayBean): V2RayTransportO
                 type = "http"
                 if (!bean.isTLS()) method = "GET" // v2ray tcp header
                 if (bean.host.isNotBlank()) {
-                    host = bean.host.split(",")
+                    host = bean.host.listByLineOrComma()
                 }
                 path = bean.path.takeIf { it.isNotBlank() } ?: "/"
+
+                headers = mutableMapOf()
+                for (line in bean.headers.lines()) {
+                    val pair = line.split(":", limit = 2)
+                    if (pair.size == 2) {
+                        headers[pair[0].trim()] = listOf(pair[1].trim())
+                    }
+                }
             }
         }
 
@@ -562,17 +477,19 @@ fun buildSingBoxOutboundStreamSettings(bean: StandardV2RayBean): V2RayTransportO
         "httpupgrade" -> {
             return V2RayTransportOptions_V2RayHTTPUpgradeOptions().apply {
                 type = "httpupgrade"
-                host = bean.host
+                host = bean.host.listByLineOrComma().firstOrNull()
                 path = bean.path
+
+                headers = mutableMapOf()
+                for (line in bean.headers.lines()) {
+                    val pair = line.split(":", limit = 2)
+                    if (pair.size == 2) {
+                        headers[pair[0].trim()] = listOf(pair[1].trim())
+                    }
+                }
             }
         }
     }
-
-//    if (needKeepAliveInterval) {
-//        sockopt = StreamSettingsObject.SockoptObject().apply {
-//            tcpKeepAliveInterval = keepAliveInterval
-//        }
-//    }
 
     return null
 }
@@ -586,11 +503,11 @@ fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {
         if (bean.alpn.isNotBlank()) alpn = bean.alpn.listByLineOrComma()
         if (bean.certificates.isNotBlank()) certificate = listOf(bean.certificates)
         var fp = bean.utlsFingerprint
-        if (bean.realityPubKey.isNotBlank()) {
+        if (bean.realityPublicKey.isNotBlank()) {
             reality = OutboundRealityOptions().apply {
                 enabled = true
-                public_key = bean.realityPubKey
-                short_id = bean.realityShortId
+                public_key = bean.realityPublicKey
+                short_id = bean.realityShortID
             }
             if (fp.isNullOrBlank()) fp = "chrome"
         }
@@ -601,7 +518,7 @@ fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {
             }
         }
         if (bean.ech) {
-            val echList = bean.echCfg.split("\n")
+            val echList = bean.echConfig.split("\n")
             ech = OutboundECHOptions().apply {
                 enabled = true
                 pq_signature_schemes_enabled = echList.size > 5
@@ -613,67 +530,67 @@ fun buildSingBoxOutboundTLS(bean: StandardV2RayBean): OutboundTLSOptions? {
     }
 }
 
-fun buildSingBoxOutboundStandardV2RayBean(bean: StandardV2RayBean): Outbound {
-    when (bean) {
-        is HttpBean -> {
-            return Outbound_HTTPOptions().apply {
-                type = bean.outboundType()
-                server = bean.serverAddress
-                server_port = bean.serverPort
-                username = bean.username
-                password = bean.password
-                tls = buildSingBoxOutboundTLS(bean)
+fun buildSingBoxOutboundStandardV2RayBean(bean: StandardV2RayBean): Outbound = when (bean) {
+    is HttpBean -> Outbound_HTTPOptions().apply {
+        type = bean.outboundType()
+        server = bean.serverAddress
+        server_port = bean.serverPort
+        username = bean.username
+        password = bean.password
+        path = bean.path
+        tls = buildSingBoxOutboundTLS(bean)
+
+        headers = mutableMapOf()
+        for (line in bean.headers.lines()) {
+            val pair = line.split(":", limit = 2)
+            if (pair.size == 2) {
+                headers[pair[0].trim()] = listOf(pair[1].trim())
             }
         }
-
-        is VMessBean -> {
-            if (bean.isVLESS) return Outbound_VLESSOptions().apply {
-                type = bean.outboundType()
-                server = bean.serverAddress
-                server_port = bean.serverPort
-                uuid = bean.uuid
-                if (bean.encryption.isNotBlank() && bean.encryption != "auto") {
-                    flow = bean.encryption
-                }
-                when (bean.packetEncoding) {
-                    0 -> packet_encoding = ""
-                    1 -> packet_encoding = "packetaddr"
-                    2 -> packet_encoding = "xudp"
-                }
-                tls = buildSingBoxOutboundTLS(bean)
-                transport = buildSingBoxOutboundStreamSettings(bean)
-            }
-            return Outbound_VMessOptions().apply {
-                type = bean.outboundType()
-                server = bean.serverAddress
-                server_port = bean.serverPort
-                uuid = bean.uuid
-                alter_id = bean.alterId
-                security = bean.encryption.takeIf { it.isNotBlank() } ?: "auto"
-                when (bean.packetEncoding) {
-                    0 -> packet_encoding = ""
-                    1 -> packet_encoding = "packetaddr"
-                    2 -> packet_encoding = "xudp"
-                }
-                tls = buildSingBoxOutboundTLS(bean)
-                transport = buildSingBoxOutboundStreamSettings(bean)
-
-                global_padding = true
-                authenticated_length = bean.authenticatedLength
-            }
-        }
-
-        is TrojanBean -> {
-            return Outbound_TrojanOptions().apply {
-                type = bean.outboundType()
-                server = bean.serverAddress
-                server_port = bean.serverPort
-                password = bean.password
-                tls = buildSingBoxOutboundTLS(bean)
-                transport = buildSingBoxOutboundStreamSettings(bean)
-            }
-        }
-
-        else -> throw IllegalStateException("can't reach")
     }
+
+    is VMessBean -> if (bean.isVLESS) Outbound_VLESSOptions().apply {
+        type = bean.outboundType()
+        server = bean.serverAddress
+        server_port = bean.serverPort
+        uuid = bean.uuid
+        if (bean.encryption.isNotBlank() && bean.encryption != "auto") {
+            flow = bean.encryption
+        }
+        packet_encoding = when (bean.packetEncoding) {
+            1 -> "packetaddr"
+            2 -> "xudp"
+            else -> null
+        }
+        tls = buildSingBoxOutboundTLS(bean)
+        transport = buildSingBoxOutboundStreamSettings(bean)
+    } else Outbound_VMessOptions().apply {
+        type = bean.outboundType()
+        server = bean.serverAddress
+        server_port = bean.serverPort
+        uuid = bean.uuid
+        alter_id = bean.alterId
+        security = bean.encryption.takeIf { it.isNotBlank() } ?: "auto"
+        packet_encoding = when (bean.packetEncoding) {
+            1 -> "packetaddr"
+            2 -> "xudp"
+            else -> null
+        }
+        tls = buildSingBoxOutboundTLS(bean)
+        transport = buildSingBoxOutboundStreamSettings(bean)
+
+        global_padding = true
+        authenticated_length = bean.authenticatedLength
+    }
+
+    is TrojanBean -> Outbound_TrojanOptions().apply {
+        type = bean.outboundType()
+        server = bean.serverAddress
+        server_port = bean.serverPort
+        password = bean.password
+        tls = buildSingBoxOutboundTLS(bean)
+        transport = buildSingBoxOutboundStreamSettings(bean)
+    }
+
+    else -> throw IllegalStateException()
 }

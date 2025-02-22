@@ -111,12 +111,12 @@ class SubscriptionFoundException(val link: String) : RuntimeException()
 
 suspend fun parseProxies(text: String): List<AbstractBean> {
     val links = text.split('\n').flatMap { it.trim().split(' ') }
-    val linksByLine = text.split('\n').map { it.trim() }
+    val linksByLine = text.split('\n').mapX { it.trim() }
 
     val entities = ArrayList<AbstractBean>()
     val entitiesByLine = ArrayList<AbstractBean>()
 
-    suspend fun String.parseLink(entities: ArrayList<AbstractBean>) {
+    suspend fun String.parseLink(entities: MutableList<AbstractBean>) {
         if (startsWith("sing-box://import-remote-profile?") || startsWith("husi://subscription?")) {
             throw SubscriptionFoundException(this)
         }
@@ -143,10 +143,10 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
 
             "http", "https" -> {
                 Logs.d("Try parse http link: $this")
-                runCatching {
+                try {
                     entities.add(parseHttp(this))
-                }.onFailure {
-                    Logs.w(it)
+                } catch (e: Exception) {
+                    Logs.w(e)
                 }
             }
 
@@ -258,3 +258,9 @@ fun <T : Serializable> T.applyDefaultValues(): T {
     initializeDefaultValues()
     return this
 }
+
+/**
+ * Due to the lack of standards, the different share links use different style to
+ * store boolean.
+ */
+fun String.linkBoolean(): Boolean = this.lowercase().let { it == "1" || it == "true" }

@@ -2,10 +2,9 @@ package libcore
 
 import (
 	"net"
-	"net/netip"
 
 	C "github.com/sagernet/sing-box/constant"
-	tun "github.com/sagernet/sing-tun"
+	"github.com/sagernet/sing-tun"
 	"github.com/sagernet/sing/common/control"
 	E "github.com/sagernet/sing/common/exceptions"
 	"github.com/sagernet/sing/common/logger"
@@ -20,7 +19,7 @@ var (
 )
 
 type InterfaceUpdateListener interface {
-	UpdateDefaultInterface(interfaceName string, interfaceIndex int32, isExpensive bool, isConstrained bool)
+	UpdateDefaultInterface(interfaceName string, interfaceIndex int32)
 }
 
 const (
@@ -45,6 +44,7 @@ type NetworkInterface struct {
 type NetworkInterfaceIterator interface {
 	Next() *NetworkInterface
 	HasNext() bool
+	Length() int32
 }
 
 type interfaceMonitor struct {
@@ -54,17 +54,18 @@ type interfaceMonitor struct {
 	logger    logger.Logger
 }
 
-type networkAddress struct {
-	interfaceName  string
-	interfaceIndex int
-	addresses      []netip.Prefix
-}
-
 func (m *interfaceMonitor) Start() error {
+	if m.forTest {
+		// Just make dialer has available interface.
+		return m.networkManager.UpdateInterfaces()
+	}
 	return m.iif.StartDefaultInterfaceMonitor(m)
 }
 
 func (m *interfaceMonitor) Close() error {
+	if m.forTest {
+		return nil
+	}
 	return m.iif.CloseDefaultInterfaceMonitor(m)
 }
 
@@ -94,9 +95,9 @@ func (m *interfaceMonitor) UnregisterCallback(element *list.Element[tun.DefaultI
 	m.callbacks.Remove(element)
 }
 
-func (m *interfaceMonitor) UpdateDefaultInterface(interfaceName string, interfaceIndex32 int32, isExpensive bool, isConstrained bool) {
-	m.isExpensive = isExpensive
-	m.isConstrained = isConstrained
+func (m *interfaceMonitor) UpdateDefaultInterface(interfaceName string, interfaceIndex32 int32) {
+	/*m.isExpensive = isExpensive
+	m.isConstrained = isConstrained*/
 	err := m.networkManager.UpdateInterfaces()
 	if err != nil {
 		m.logger.Error(E.Cause(err, "update interfaces"))
@@ -126,7 +127,7 @@ func (m *interfaceMonitor) UpdateDefaultInterface(interfaceName string, interfac
 	callbacks := m.callbacks.Array()
 	m.defaultInterfaceAccess.Unlock()
 	for _, callback := range callbacks {
-		callback(nil, 0)
+		callback(newInterface, 0)
 	}
 }
 

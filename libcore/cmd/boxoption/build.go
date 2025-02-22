@@ -30,7 +30,7 @@ var mainBuilder = bytes.NewBuffer(make([]byte, mainBuilderSize))
 
 // mainBuilderSize is the maximum size of the mainBuilder.
 // We found this is the max size the mainBuilder will use.
-const mainBuilderSize = 2048
+const mainBuilderSize = 4096
 
 func buildClass(opt any, belongs string) []byte {
 	value := reflect.Indirect(reflect.ValueOf(opt))
@@ -112,6 +112,7 @@ const (
 	javaInteger = "Integer"
 	javaLong    = "Long"
 	javaString  = "String"
+	javaList    = "List<"
 
 	reservedDefault = "default"
 	reservedFinal   = "final"
@@ -143,11 +144,17 @@ func className(valueType reflect.Type) string {
 		return javaString
 	case reflect.Slice:
 		elem := valueType.Elem()
-		if elem.Kind() == reflect.Uint8 {
-			// Go json save []uint8 or []byte as base64 string
-			return javaString
+		switch elem.Kind() {
+		case reflect.Uint8:
+			switch elem.Name() {
+			case "byte", "uint8":
+				// Go json save []uint8 or []byte as base64 string.
+				return javaString
+			default:
+				// Others may custom enum types
+			}
 		}
-		return "List<" + className(elem) + ">"
+		return javaList + className(elem) + ">"
 	case reflect.Map:
 		return "Map<" + className(valueType.Key()) + ", " + className(valueType.Elem()) + ">"
 	case reflect.Struct:
@@ -156,12 +163,13 @@ func className(valueType reflect.Type) string {
 		case "Addr", "Prefix", "Prefixable", "Regexp":
 			return javaString
 		case "NetworkList":
-			return "Named<String>"
+			return "List<String>"
 		}
 		return valueType.Name()
 	case reflect.Uint8:
 		switch valueType.Name() {
-		case "DomainStrategy":
+		// Custom enum types
+		case "DomainStrategy", "InterfaceType", "NetworkStrategy":
 			return javaString
 		}
 		return javaInteger

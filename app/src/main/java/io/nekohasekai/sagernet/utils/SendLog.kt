@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
 import io.nekohasekai.sagernet.BuildConfig
-import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.SagerNet
 import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.app
@@ -51,12 +50,13 @@ object SendLog {
                         Intent.EXTRA_STREAM, FileProvider.getUriForFile(
                             context, BuildConfig.APPLICATION_ID + ".cache", logFile
                         )
-                    ), context.getString(R.string.abc_shareactionprovider_share_with)
+                    ),
+                context.getString(androidx.appcompat.R.string.abc_shareactionprovider_share_with),
             )
         )
     }
 
-    val logFile by lazy { File(SagerNet.application.externalAssets, "stderr.log") }
+    val logFile get() = File(SagerNet.application.externalAssets, "stderr.log")
 
     // Get log bytes from stderr.log
     fun getCoreLog(max: Long): ByteArray {

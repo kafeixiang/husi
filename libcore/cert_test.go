@@ -23,7 +23,7 @@ func Test_UpdateRootCACerts(t *testing.T) {
 	defer listener.Close()
 	listen := listener.Addr().String()
 
-	privateKey, publicKey := common.Must2(aTLS.GenerateKeyPair(time.Now, husi, time.Now().Add(5*time.Minute)))
+	privateKey, publicKey := common.Must2(aTLS.GenerateCertificate(nil, nil, time.Now, husi, time.Now().Add(5*time.Minute)))
 	common.Must(os.WriteFile(customCaFile, publicKey, os.ModePerm))
 	defer os.Remove(customCaFile)
 
@@ -87,12 +87,12 @@ func Test_UpdateRootCACerts(t *testing.T) {
 	testConnect(husi, listen, true, "normal local")
 
 	// Load local cert and Mozilla CA
-	UpdateRootCACerts(true)
+	UpdateRootCACerts(true, nil)
 	testConnect(chinaRailway, trustAsiaAddress, true, "mozilla 12306")
 	testConnect(husi, listen, false, "loaded custom")
 
 	// Set back but load local
-	UpdateRootCACerts(false)
+	UpdateRootCACerts(false, nil)
 	testConnect(chinaRailway, trustAsiaAddress, false, "normal 12306 2")
 	testConnect(husi, listen, false, "loaded custom 2")
 }

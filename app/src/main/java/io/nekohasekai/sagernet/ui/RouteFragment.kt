@@ -115,14 +115,14 @@ class RouteFragment : ToolbarFragment(R.layout.layout_route), Toolbar.OnMenuItem
             R.id.action_reset_route -> {
                 MaterialAlertDialogBuilder(activity).setTitle(R.string.confirm)
                     .setMessage(R.string.clear_profiles_message)
-                    .setPositiveButton(R.string.yes) { _, _ ->
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
                         runOnDefaultDispatcher {
                             SagerDatabase.rulesDao.reset()
                             DataStore.rulesFirstCreate = false
                             ruleAdapter.reload()
                         }
                     }
-                    .setNegativeButton(R.string.no, null)
+                    .setNegativeButton(android.R.string.cancel, null)
                     .show()
             }
 
@@ -228,7 +228,7 @@ class RouteFragment : ToolbarFragment(R.layout.layout_route), Toolbar.OnMenuItem
         }
 
         override fun commit(actions: List<Pair<Int, RuleEntity>>) {
-            val rules = actions.map { it.second }
+            val rules = actions.mapX { it.second }
             runOnDefaultDispatcher {
                 ProfileManager.deleteRules(rules)
             }
