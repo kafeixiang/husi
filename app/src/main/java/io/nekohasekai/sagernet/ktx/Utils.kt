@@ -270,56 +270,6 @@ fun <T> Continuation<T>.tryResumeWithException(exception: Throwable) {
     }
 }
 
-fun <T : Any> T.asMap(): MutableMap<String, Any> {
-    if (!shouldAsMap(this)) throw RuntimeException("invalid type to as map: " + javaClass.name)
-
-    val map = mutableMapOf<String, Any>()
-
-    var clazz: Class<*> = this.javaClass
-    // Traverse the class hierarchy
-    while (clazz != Any::class.java) {
-        for (field in clazz.declaredFields) {
-            field.isAccessible = true
-
-            // Get the field value and process it
-            val value = mappedValue(field.get(this)) ?: continue
-
-            // Get SerializedName annotation or fallback to field name
-            val key = field.getAnnotation(SerializedName::class.java)?.value ?: field.name
-            map[key] = value
-        }
-        clazz = clazz.superclass
-    }
-
-    return map
-}
-
-private fun shouldAsMap(value: Any?): Boolean = when (value) {
-    null, is String, is Number, is Boolean, is Map<*, *>, is List<*> -> false
-    else -> true
-}
-
-private fun mappedValue(value: Any?): Any? = when (value) {
-    null -> null
-
-    is List<*> -> if (value.isEmpty()) {
-        null
-    } else {
-        val needAsMap = shouldAsMap(value[0])
-        value.mapX {
-            if (needAsMap) {
-                it?.asMap()
-            } else {
-                it
-            }
-        }
-    }
-
-    is String, is Number, is Boolean, is Map<*, *> -> value
-
-    else -> value.asMap()
-}
-
 operator fun <F> KProperty0<F>.getValue(thisRef: Any?, property: KProperty<*>): F = get()
 operator fun <F> KMutableProperty0<F>.setValue(
     thisRef: Any?, property: KProperty<*>, value: F
@@ -339,14 +289,6 @@ operator fun <T> AtomicReference<T>.getValue(thisRef: Any?, property: KProperty<
 operator fun <T> AtomicReference<T>.setValue(thisRef: Any?, property: KProperty<*>, value: T) =
     set(value)
 
-operator fun <K, V> Map<K, V>.getValue(thisRef: K, property: KProperty<*>) = get(thisRef)
-operator fun <K, V> MutableMap<K, V>.setValue(thisRef: K, property: KProperty<*>, value: V?) {
-    if (value != null) {
-        put(thisRef, value)
-    } else {
-        remove(thisRef)
-    }
-}
 
 fun String?.blankAsNull(): String? = if (isNullOrBlank()) null else this
 
@@ -359,4 +301,27 @@ fun <T, R> Collection<T>.mapX(transform: (T) -> R): List<R> {
         list.add(transform(item))
     }
     return list
+}
+
+/**
+ * Returns the first non-default value from the provided getters.
+ *
+ * This function iterates over the provided getter functions and returns the first value
+ * that is not equal to the default value. If all values are equal to the default value,
+ * the default value is returned.
+ *
+ * Inspired by Go cmp.Or()
+ *
+ * @param default The default value to compare against.
+ * @param getters A variable number of getter functions that return values to be compared.
+ * @return The first non-default value from the getters, or the default value if all are equal to the default.
+ */
+fun <T> defaultOr(default: T, vararg getters: () -> T?): T {
+    for (getter in getters) {
+        val it = getter()
+        if (it?.equals(default) == false) {
+            return it
+        }
+    }
+    return default
 }

@@ -12,7 +12,7 @@ import android.os.Bundle
 import android.os.RemoteException
 import android.view.KeyEvent
 import android.view.MenuItem
-import androidx.activity.addCallback
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.IdRes
 import androidx.annotation.RequiresApi
@@ -48,6 +48,7 @@ import io.nekohasekai.sagernet.group.GroupInterfaceAdapter
 import io.nekohasekai.sagernet.group.GroupUpdater
 import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.alert
+import io.nekohasekai.sagernet.ktx.defaultOr
 import io.nekohasekai.sagernet.ktx.hasPermission
 import io.nekohasekai.sagernet.ktx.launchCustomTab
 import io.nekohasekai.sagernet.ktx.onMainDispatcher
@@ -68,6 +69,16 @@ class MainActivity : ThemedActivity(),
 
     lateinit var binding: LayoutMainBinding
     private lateinit var navigation: NavigationView
+
+    override val onBackPressedCallback = object : OnBackPressedCallback(enabled = false) {
+        override fun handleOnBackPressed() {
+            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
+                moveTaskToBack(true)
+            } else {
+                displayFragmentWithId(R.id.nav_configuration)
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -93,13 +104,6 @@ class MainActivity : ThemedActivity(),
 
         if (savedInstanceState == null) {
             displayFragmentWithId(R.id.nav_configuration)
-        }
-        onBackPressedDispatcher.addCallback {
-            if (supportFragmentManager.findFragmentById(R.id.fragment_holder) is ConfigurationFragment) {
-                moveTaskToBack(true)
-            } else {
-                displayFragmentWithId(R.id.nav_configuration)
-            }
         }
 
         binding.fab.setOnClickListener {
@@ -141,7 +145,7 @@ class MainActivity : ThemedActivity(),
                 MaterialAlertDialogBuilder(this@MainActivity)
                     .setTitle("LICENSE")
                     .setMessage(this.assets.open("LICENSE").bufferedReader().readText())
-                    .setPositiveButton(R.string.yes) { _, _ ->
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
                         f.createNewFile()
                     }
                     .setNegativeButton(android.R.string.cancel) { _, _ ->
@@ -178,7 +182,16 @@ class MainActivity : ThemedActivity(),
     suspend fun importSubscription(uri: Uri) {
         val group: ProxyGroup
 
-        val url = uri.getQueryParameter("url")
+        val url = defaultOr(
+            "",
+            { uri.getQueryParameter("url") },
+            {
+                when (uri.scheme) {
+                    "http", "https" -> uri.toString()
+                    else -> null
+                }
+            }
+        )
         if (!url.isNullOrBlank()) {
             group = ProxyGroup(type = GroupType.SUBSCRIPTION)
             val subscription = SubscriptionBean()
@@ -191,12 +204,17 @@ class MainActivity : ThemedActivity(),
                 "sip008" -> SubscriptionType.SIP008
                 else -> SubscriptionType.RAW
             }
-            group.name = uri.getQueryParameter("name")
+            group.name = defaultOr(
+                "",
+                { uri.getQueryParameter("name") },
+                { uri.fragment },
+            )
         } else {
             val data = uri.encodedQuery.takeIf { !it.isNullOrBlank() } ?: return
             try {
                 group = KryoConverters.deserialize(
-                    ProxyGroup().apply { export = true }, Util.zlibDecompress(Util.b64Decode(data))
+                    ProxyGroup().apply { export = true },
+                    Util.zlibDecompress(Util.b64Decode(data)),
                 ).apply {
                     export = false
                 }
@@ -208,8 +226,9 @@ class MainActivity : ThemedActivity(),
             }
         }
 
-        val name = group.name.takeIf { !it.isNullOrBlank() } ?: group.subscription?.link
-        ?: group.subscription?.token
+        val name = group.name.takeIf { !it.isNullOrBlank() }
+            ?: group.subscription?.link
+            ?: group.subscription?.token
         if (name.isNullOrBlank()) return
 
         group.name = group.name.takeIf { !it.isNullOrBlank() }
@@ -221,7 +240,7 @@ class MainActivity : ThemedActivity(),
 
             MaterialAlertDialogBuilder(this@MainActivity).setTitle(R.string.subscription_import)
                 .setMessage(getString(R.string.subscription_import_message, name))
-                .setPositiveButton(R.string.yes) { _, _ ->
+                .setPositiveButton(android.R.string.ok) { _, _ ->
                     runOnDefaultDispatcher {
                         finishImportSubscription(group)
                     }
@@ -251,7 +270,7 @@ class MainActivity : ThemedActivity(),
         onMainDispatcher {
             MaterialAlertDialogBuilder(this@MainActivity).setTitle(R.string.profile_import)
                 .setMessage(getString(R.string.profile_import_message, profile.displayName()))
-                .setPositiveButton(R.string.yes) { _, _ ->
+                .setPositiveButton(android.R.string.ok) { _, _ ->
                     runOnDefaultDispatcher {
                         finishImportProfile(profile)
                     }
@@ -386,7 +405,8 @@ class MainActivity : ThemedActivity(),
         if (msg != null) snackbar(getString(R.string.vpn_error, msg)).show()
 
         // If is in dashboard, enable dashboard status loop.
-        val trafficFragment = supportFragmentManager.findFragmentById(R.id.fragment_holder) as? TrafficFragment
+        val trafficFragment =
+            supportFragmentManager.findFragmentById(R.id.fragment_holder) as? TrafficFragment
         if (trafficFragment != null && state == BaseService.State.Connected) {
             connection.service?.enableDashboardStatus(true)
             trafficFragment.refreshClashMode()
@@ -519,7 +539,7 @@ class MainActivity : ThemedActivity(),
         MaterialAlertDialogBuilder(this)
             .setTitle(R.string.location_permission_title)
             .setMessage(R.string.location_permission_description)
-            .setPositiveButton(R.string.ok) { _, _ ->
+            .setPositiveButton(android.R.string.ok) { _, _ ->
                 requestFineLocationPermission0()
             }
             .setNegativeButton(R.string.no_thanks, null)
@@ -542,7 +562,7 @@ class MainActivity : ThemedActivity(),
             .setMessage(
                 R.string.location_permission_background_description
             )
-            .setPositiveButton(R.string.ok) { _, _ ->
+            .setPositiveButton(android.R.string.ok) { _, _ ->
                 backgroundLocationPermissionLauncher.launch(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
             }
             .setNegativeButton(R.string.no_thanks, null)

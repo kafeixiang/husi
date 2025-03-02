@@ -119,7 +119,6 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
                 groupAdapter.commitMove()
             }
         }).attachToRecyclerView(groupListView)
-
     }
 
     override fun onMenuItemClick(item: MenuItem): Boolean {
@@ -131,14 +130,14 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
             R.id.action_update_all -> {
                 MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.confirm)
                     .setMessage(R.string.update_all_subscription)
-                    .setPositiveButton(R.string.yes) { _, _ ->
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
                         SagerDatabase.groupDao.allGroups()
                             .filter { it.type == GroupType.SUBSCRIPTION }
                             .forEach {
                                 GroupUpdater.startUpdate(it, true)
                             }
                     }
-                    .setNegativeButton(R.string.no, null)
+                    .setNegativeButton(android.R.string.cancel, null)
                     .show()
             }
         }
@@ -152,7 +151,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
             if (data != null) {
                 runOnDefaultDispatcher {
                     val profiles = SagerDatabase.proxyDao.getByGroup(selectedGroup.id)
-                    val links = profiles.joinToString("\n") { it.toStdLink(compact = true) }
+                    val links = profiles.joinToString("\n") { it.toStdLink() }
                     try {
                         (requireActivity() as MainActivity).contentResolver.openOutputStream(
                             data
@@ -371,7 +370,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
 
                 R.id.action_export_clipboard -> runOnDefaultDispatcher {
                     val profiles = SagerDatabase.proxyDao.getByGroup(selectedGroup.id)
-                    val links = profiles.joinToString("\n") { it.toStdLink(compact = true) }
+                    val links = profiles.joinToString("\n") { it.toStdLink() }
                     onMainDispatcher {
                         SagerNet.trySetPrimaryClip(links)
                         snackbar(getString(androidx.browser.R.string.copy_toast_msg)).show()
@@ -384,7 +383,7 @@ class GroupFragment : ToolbarFragment(R.layout.layout_group),
 
                 R.id.action_clear -> MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.confirm)
                     .setMessage(R.string.clear_profiles_message)
-                    .setPositiveButton(R.string.yes) { _, _ ->
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
                         runOnDefaultDispatcher {
                             GroupManager.clearGroup(proxyGroup.id)
                         }

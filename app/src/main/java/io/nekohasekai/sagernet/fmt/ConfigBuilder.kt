@@ -16,7 +16,12 @@ import io.nekohasekai.sagernet.database.ProxyEntity
 import io.nekohasekai.sagernet.database.ProxyEntity.Companion.TYPE_CONFIG
 import io.nekohasekai.sagernet.database.RuleEntity
 import io.nekohasekai.sagernet.database.SagerDatabase
+import io.nekohasekai.sagernet.fmt.shadowtls.ShadowTLSBean
+import io.nekohasekai.sagernet.fmt.shadowtls.buildSingBoxOutboundShadowTLSBean
 import io.nekohasekai.sagernet.fmt.ConfigBuildResult.IndexEntity
+import io.nekohasekai.sagernet.fmt.anytls.AnyTLSBean
+import io.nekohasekai.sagernet.fmt.anytls.buildSingBoxOutboundAnyTLSBean
+import io.nekohasekai.sagernet.fmt.config.ConfigBean
 import io.nekohasekai.sagernet.fmt.direct.DirectBean
 import io.nekohasekai.sagernet.fmt.direct.buildSingBoxOutboundDirectBean
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
@@ -41,10 +46,12 @@ import io.nekohasekai.sagernet.ktx.isExpert
 import io.nekohasekai.sagernet.ktx.isIpAddress
 import io.nekohasekai.sagernet.ktx.mapX
 import io.nekohasekai.sagernet.ktx.mkPort
+import io.nekohasekai.sagernet.ktx.mergeJson
 import io.nekohasekai.sagernet.logLevelString
 import io.nekohasekai.sagernet.utils.PackageCache
 import libcore.Libcore
-import moe.matsuri.nb4a.RuleItem
+import io.nekohasekai.sagernet.ktx.JSONMap
+import io.nekohasekai.sagernet.ktx.toJsonMap
 import moe.matsuri.nb4a.SingBoxOptions
 import moe.matsuri.nb4a.SingBoxOptions.BrutalOptions
 import moe.matsuri.nb4a.SingBoxOptions.CacheFileOptions
@@ -57,7 +64,6 @@ import moe.matsuri.nb4a.SingBoxOptions.MyOptions
 import moe.matsuri.nb4a.SingBoxOptions.NTPOptions
 import moe.matsuri.nb4a.SingBoxOptions.RouteOptions
 import moe.matsuri.nb4a.SingBoxOptions.User
-import moe.matsuri.nb4a.SingBoxOptionsUtil
 import moe.matsuri.nb4a.SingBoxOptions.DNSRule_Default
 import moe.matsuri.nb4a.SingBoxOptions.Inbound_DirectOptions
 import moe.matsuri.nb4a.SingBoxOptions.Inbound_HTTPMixedOptions
@@ -68,16 +74,7 @@ import moe.matsuri.nb4a.SingBoxOptions.Outbound_SelectorOptions
 import moe.matsuri.nb4a.SingBoxOptions.Outbound_SOCKSOptions
 import moe.matsuri.nb4a.SingBoxOptions.Rule_Default
 import moe.matsuri.nb4a.SingBoxOptions.Rule_Logical
-import moe.matsuri.nb4a.buildRuleSets
-import moe.matsuri.nb4a.checkEmpty
-import moe.matsuri.nb4a.isEndpoint
-import moe.matsuri.nb4a.makeCommonRule
-import moe.matsuri.nb4a.parseRules
-import moe.matsuri.nb4a.proxy.config.ConfigBean
-import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean
-import moe.matsuri.nb4a.proxy.shadowtls.buildSingBoxOutboundShadowTLSBean
 import moe.matsuri.nb4a.utils.JavaUtil.gson
-import moe.matsuri.nb4a.utils.Util
 import moe.matsuri.nb4a.utils.listByLineOrComma
 
 // Inbound
@@ -334,13 +331,13 @@ fun buildConfig(
                 add(entity)
             }
 
-            var currentOutbound = mutableMapOf<String, Any>()
-            lateinit var pastOutbound: MutableMap<String, Any>
+            var currentOutbound = mutableMapOf<String, Any?>()
+            lateinit var pastOutbound: JSONMap
             lateinit var pastInboundTag: String
             var pastEntity: ProxyEntity? = null
             val externalChainMap = LinkedHashMap<Int, ProxyEntity>()
             externalIndexMap.add(IndexEntity(externalChainMap))
-            val chainOutbounds = ArrayList<MutableMap<String, Any>>()
+            val chainOutbounds = ArrayList<JSONMap>()
 
             // chainTagOut: v2ray outbound tag for this chain
             var chainTagOut = ""
@@ -415,7 +412,7 @@ fun buildConfig(
                     if (bean is JuicityBean) hasJuicity = true
                 } else { // internal outbound
                     currentOutbound = when (bean) {
-                        is ConfigBean -> gson.fromJson(bean.config, currentOutbound.javaClass)
+                        is ConfigBean -> bean.config.toJsonMap()
 
                         is ShadowTLSBean -> // before StandardV2RayBean
                             buildSingBoxOutboundShadowTLSBean(bean).asMap()
@@ -436,6 +433,8 @@ fun buildConfig(
                         is SSHBean -> buildSingBoxOutboundSSHBean(bean).asMap()
 
                         is DirectBean -> buildSingBoxOutboundDirectBean(bean).asMap()
+
+                        is AnyTLSBean -> buildSingBoxOutboundAnyTLSBean(bean).asMap()
 
                         else -> throw IllegalStateException("can't reach")
                     }
@@ -488,13 +487,8 @@ fun buildConfig(
 
                 // internal & external
                 currentOutbound.apply {
-                    // udp over tcp
-                    try {
-                        val sUoT = bean.javaClass.getField("sUoT").get(bean)
-                        if (sUoT is Boolean && sUoT == true) {
-                            this["udp_over_tcp"] = true
-                        }
-                    } catch (_: Exception) {
+                    if (bean.canUdpOverTcp()) {
+                        this["udp_over_tcp"] = true
                     }
 
                     pastEntity?.requireBean()?.apply {
@@ -503,7 +497,6 @@ fun buildConfig(
                             domainListDNSDirectForce.add("full:$serverAddress")
                         }
                     }
-                    // domain_strategy
                     this["domain_strategy"] = if (forTest) {
                         ""
                     } else {
@@ -511,8 +504,8 @@ fun buildConfig(
                     }
 
                     // custom JSON merge
-                    if (bean.customOutboundJson.isNotBlank()) {
-                        Util.mergeJSON(bean.customOutboundJson, currentOutbound)
+                    bean.customOutboundJson.blankAsNull()?.toJsonMap()?.let {
+                        mergeJson(it, currentOutbound)
                     }
                 }
 
@@ -603,11 +596,11 @@ fun buildConfig(
                 }
                 var domainList: List<RuleItem> = listOf()
                 if (rule.domains.isNotBlank()) {
-                    domainList = parseRules(rule.domains.listByLineOrComma())
+                    domainList = RuleItem.parseRules(rule.domains.listByLineOrComma())
                     makeCommonRule(domainList, false)
                 }
                 if (rule.ip.isNotBlank()) {
-                    makeCommonRule(parseRules(rule.ip.listByLineOrComma()), true)
+                    makeCommonRule(RuleItem.parseRules(rule.ip.listByLineOrComma()), true)
                 }
                 if (rule.port.isNotBlank()) {
                     port = mutableListOf()
@@ -670,7 +663,7 @@ fun buildConfig(
                 fun makeDnsRuleObj(): DNSRule_Default {
                     return DNSRule_Default().apply {
                         if (uidList.isNotEmpty()) user_id = uidList
-                        val ips = parseRules(rule.ip.listByLineOrComma()).filter {
+                        val ips = RuleItem.parseRules(rule.ip.listByLineOrComma()).filter {
                             it.dns
                         }
                         makeCommonRule(domainList + ips)
@@ -758,10 +751,9 @@ fun buildConfig(
             var serverAddr = it.serverAddress
 
             if (it is ConfigBean) {
-                var config = mutableMapOf<String, Any>()
-                config = gson.fromJson(it.config, config.javaClass)
-                config["server"]?.apply {
-                    serverAddr = toString()
+                val config = it.config.toJsonMap()
+                config["server"]?.let { server ->
+                    serverAddr = server.toString()
                 }
             }
 
@@ -919,7 +911,7 @@ fun buildConfig(
             if (domainListDNSDirectForce.isNotEmpty()) {
                 dns.rules.add(0, DNSRule_Default().apply {
                     makeCommonRule(
-                        parseRules(domainListDNSDirectForce.distinct()),
+                        RuleItem.parseRules(domainListDNSDirectForce.distinct()),
                     )
                     server = TAG_DNS_DIRECT
                 })
@@ -983,7 +975,9 @@ fun buildConfig(
     }.let {
         ConfigBuildResult(
             gson.toJson(it.asMap().apply {
-                Util.mergeJSON(optionsToMerge, this)
+                optionsToMerge.blankAsNull()?.toJsonMap()?.let { jsonMap ->
+                    mergeJson(jsonMap, this)
+                }
             }),
             externalIndexMap,
             proxy.id,

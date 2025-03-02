@@ -12,7 +12,6 @@ import android.text.format.Formatter
 import android.text.method.LinkMovementMethod
 import android.text.style.ForegroundColorSpan
 import android.text.util.Linkify
-import android.util.Log
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MenuItem
@@ -46,7 +45,7 @@ import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.SagerNet
 import io.nekohasekai.sagernet.aidl.TrafficData
 import io.nekohasekai.sagernet.bg.BaseService
-import io.nekohasekai.sagernet.bg.proto.UrlTest
+import io.nekohasekai.sagernet.bg.proto.TestInstance
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.GroupManager
 import io.nekohasekai.sagernet.database.ProfileManager
@@ -98,6 +97,7 @@ import io.nekohasekai.sagernet.ui.profile.TrojanSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.TuicSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.VMessSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.WireGuardSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.ShadowTLSSettingsActivity
 import io.nekohasekai.sagernet.widget.QRCodeDialog
 import io.nekohasekai.sagernet.widget.UndoSnackbarManager
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -110,9 +110,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import libcore.Libcore
 import moe.matsuri.nb4a.Protocols
-import moe.matsuri.nb4a.proxy.config.ConfigBean
-import moe.matsuri.nb4a.proxy.config.ConfigSettingActivity
-import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSSettingsActivity
+import io.nekohasekai.sagernet.fmt.config.ConfigBean
+import io.nekohasekai.sagernet.ui.ThemedActivity
+import io.nekohasekai.sagernet.ui.profile.AnyTLSSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.ConfigSettingActivity
 import moe.matsuri.nb4a.utils.blur
 import moe.matsuri.nb4a.utils.closeQuietly
 import moe.matsuri.nb4a.utils.setOnFocusCancel
@@ -126,16 +127,15 @@ import kotlin.collections.set
 
 class ConfigurationFragment @JvmOverloads constructor(
     val select: Boolean = false, val selectedItem: ProxyEntity? = null, val titleRes: Int = 0,
-) : ToolbarFragment(R.layout.layout_group_list),
-    PopupMenu.OnMenuItemClickListener,
-    Toolbar.OnMenuItemClickListener,
-    SearchView.OnQueryTextListener,
+) : ToolbarFragment(R.layout.layout_group_list), PopupMenu.OnMenuItemClickListener,
+    Toolbar.OnMenuItemClickListener, SearchView.OnQueryTextListener,
     OnPreferenceDataStoreChangeListener {
 
     interface SelectCallback {
         fun returnProfile(profileId: Long)
     }
 
+    val activity: ThemedActivity? get() = super.getActivity() as? ThemedActivity
     lateinit var adapter: GroupPagerAdapter
     lateinit var tabLayout: TabLayout
     lateinit var groupPager: ViewPager2
@@ -197,12 +197,14 @@ class ConfigurationFragment @JvmOverloads constructor(
             }
         }
 
+        val activity = activity
         val searchView = toolbar.findViewById<SearchView>(R.id.action_search)
         if (searchView != null) {
             searchView.setOnQueryTextListener(this)
             searchView.maxWidth = Int.MAX_VALUE
-            searchView.setOnFocusCancel()
-
+            searchView.setOnFocusCancel { hasFocus ->
+                activity?.onBackPressedCallback?.isEnabled = hasFocus
+            }
         }
 
         groupPager = view.findViewById(R.id.group_pager)
@@ -248,8 +250,8 @@ class ConfigurationFragment @JvmOverloads constructor(
         }
 
         toolbar.setOnLongClickListener {
-            val selectedProxy = selectedItem
-                ?: SagerDatabase.proxyDao.getById(DataStore.selectedProxy)
+            val selectedProxy =
+                selectedItem ?: SagerDatabase.proxyDao.getById(DataStore.selectedProxy)
                 ?: return@setOnLongClickListener true
             val groupIndex = adapter.groupList.indexOfFirst {
                 it.id == selectedProxy.groupId
@@ -271,6 +273,8 @@ class ConfigurationFragment @JvmOverloads constructor(
         }
 
         DataStore.profileCacheStore.registerChangeListener(this)
+
+        activity?.onBackPressedCallback?.isEnabled = false
     }
 
     override fun onPreferenceDataStoreChanged(store: PreferenceDataStore, key: String) {
@@ -384,19 +388,54 @@ class ConfigurationFragment @JvmOverloads constructor(
                 if (text.isBlank()) {
                     snackbar(getString(R.string.clipboard_empty)).show()
                 } else runOnDefaultDispatcher {
-                    try {
-                        val proxies = RawUpdater.parseRaw(text)
-                        if (proxies.isNullOrEmpty()) onMainDispatcher {
-                            snackbar(getString(R.string.no_proxies_found_in_clipboard)).show()
-                        } else import(proxies)
-                    } catch (e: SubscriptionFoundException) {
-                        (requireActivity() as MainActivity).importSubscription(Uri.parse(e.link))
-                    } catch (e: Exception) {
-                        Logs.w(e)
+                    suspend fun parseSubscription() {
+                        try {
+                            val proxies = RawUpdater.parseRaw(text)
+                            if (proxies.isNullOrEmpty()) onMainDispatcher {
+                                snackbar(getString(R.string.no_proxies_found_in_clipboard)).show()
+                            } else import(proxies)
+                        } catch (e: SubscriptionFoundException) {
+                            (requireActivity() as MainActivity).importSubscription(Uri.parse(e.link))
+                        } catch (e: Exception) {
+                            Logs.w(e)
 
-                        onMainDispatcher {
-                            snackbar(e.readableMessage).show()
+                            onMainDispatcher {
+                                snackbar(e.readableMessage).show()
+                            }
                         }
+                    }
+
+                    val singleURI = try {
+                        Uri.parse(text)
+                    } catch (_: Exception) {
+                        null
+                    }
+                    if (singleURI != null) {
+                        // Import as proxy or subscription
+                        when (singleURI.scheme) {
+                            "http", "https" -> onMainDispatcher {
+                                MaterialAlertDialogBuilder(requireContext())
+                                    .setTitle(R.string.subscription_import)
+                                    .setMessage(R.string.import_http_url)
+                                    .setPositiveButton(R.string.subscription_import) { _, _ ->
+                                        runOnDefaultDispatcher {
+                                            (requireActivity() as MainActivity).importSubscription(
+                                                singleURI
+                                            )
+                                        }
+                                    }
+                                    .setNegativeButton(R.string.profile_import) { _, _ ->
+                                        runOnDefaultDispatcher {
+                                            parseSubscription()
+                                        }
+                                    }
+                                    .show()
+                            }
+
+                            else -> parseSubscription()
+                        }
+                    } else {
+                        parseSubscription()
                     }
                 }
             }
@@ -467,6 +506,10 @@ class ConfigurationFragment @JvmOverloads constructor(
                 startActivity(Intent(requireActivity(), ShadowTLSSettingsActivity::class.java))
             }
 
+            R.id.action_new_anytls -> {
+                startActivity(Intent(requireActivity(), AnyTLSSettingsActivity::class.java))
+            }
+
             R.id.action_new_config -> {
                 startActivity(Intent(requireActivity(), ConfigSettingActivity::class.java))
             }
@@ -475,128 +518,120 @@ class ConfigurationFragment @JvmOverloads constructor(
                 startActivity(Intent(requireActivity(), ChainSettingsActivity::class.java))
             }
 
-            R.id.action_clear_traffic_statistics -> {
-                runOnDefaultDispatcher {
-                    val profiles = SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId())
-                    val toClear = mutableListOf<ProxyEntity>()
-                    if (profiles.isNotEmpty()) for (profile in profiles) {
+            R.id.action_clear_traffic_statistics -> runOnDefaultDispatcher {
+                val profiles = SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId())
+                val toClear = mutableListOf<ProxyEntity>()
+                if (profiles.isNotEmpty()) {
+                    for (profile in profiles) {
                         if (profile.tx != 0L || profile.rx != 0L) {
                             profile.tx = 0
                             profile.rx = 0
                             toClear.add(profile)
                         }
                     }
-                    if (toClear.isNotEmpty()) {
-                        ProfileManager.updateProfile(toClear)
-                    }
+                }
+                if (toClear.isNotEmpty()) {
+                    ProfileManager.updateProfile(toClear)
                 }
             }
 
-            R.id.action_connection_test_clear_results -> {
-                runOnDefaultDispatcher {
-                    val profiles = SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId())
-                    val toClear = mutableListOf<ProxyEntity>()
-                    if (profiles.isNotEmpty()) for (profile in profiles) {
-                        if (profile.status != 0) {
-                            profile.status = 0
+            R.id.action_connection_test_clear_results -> runOnDefaultDispatcher {
+                val profiles = SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId())
+                val toClear = mutableListOf<ProxyEntity>()
+                if (profiles.isNotEmpty()) {
+                    for (profile in profiles) {
+                        if (profile.status != ProxyEntity.STATUS_INITIAL) {
+                            profile.status = ProxyEntity.STATUS_INITIAL
                             profile.ping = 0
                             profile.error = null
                             toClear.add(profile)
                         }
                     }
-                    if (toClear.isNotEmpty()) {
-                        ProfileManager.updateProfile(toClear)
-                    }
+                }
+                if (toClear.isNotEmpty()) {
+                    ProfileManager.updateProfile(toClear)
                 }
             }
 
-            R.id.action_connection_test_delete_unavailable -> {
-                runOnDefaultDispatcher {
-                    val profiles = SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId())
-                    val toClear = mutableListOf<ProxyEntity>()
-                    if (profiles.isNotEmpty()) for (profile in profiles) {
-                        if (profile.status != 0 && profile.status != 1) {
+            R.id.action_connection_test_delete_unavailable -> runOnDefaultDispatcher {
+                val profiles = SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId())
+                val toClear = mutableListOf<ProxyEntity>()
+                if (profiles.isNotEmpty()) {
+                    for (profile in profiles) {
+                        if (profile.status != ProxyEntity.STATUS_INITIAL && profile.status != ProxyEntity.STATUS_AVAILABLE) {
                             toClear.add(profile)
                         }
                     }
-                    if (toClear.isNotEmpty()) {
-                        onMainDispatcher {
-                            MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.confirm)
-                                .setMessage(R.string.delete_confirm_prompt)
-                                .setPositiveButton(R.string.yes) { _, _ ->
-                                    for (profile in toClear) {
-                                        adapter.groupFragments[DataStore.selectedGroup]?.adapter?.apply {
-                                            val index = configurationIdList.indexOf(profile.id)
-                                            if (index >= 0) {
-                                                configurationIdList.removeAt(index)
-                                                configurationList.remove(profile.id)
-                                                notifyItemRemoved(index)
-                                            }
-                                        }
-                                    }
-                                    runOnDefaultDispatcher {
-                                        for (profile in toClear) {
-                                            ProfileManager.deleteProfile2(
-                                                profile.groupId, profile.id
-                                            )
+                }
+                if (toClear.isNotEmpty()) {
+                    onMainDispatcher {
+                        MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.confirm)
+                            .setMessage(R.string.delete_confirm_prompt)
+                            .setPositiveButton(android.R.string.ok) { _, _ ->
+                                for (profile in toClear) {
+                                    adapter.groupFragments[DataStore.selectedGroup]?.adapter?.apply {
+                                        val index = configurationIdList.indexOf(profile.id)
+                                        if (index >= 0) {
+                                            configurationIdList.removeAt(index)
+                                            configurationList.remove(profile.id)
+                                            notifyItemRemoved(index)
                                         }
                                     }
                                 }
-                                .setNegativeButton(R.string.no, null)
-                                .show()
-                        }
+                                runOnDefaultDispatcher {
+                                    for (profile in toClear) {
+                                        ProfileManager.deleteProfile2(
+                                            profile.groupId, profile.id
+                                        )
+                                    }
+                                }
+                            }.setNegativeButton(android.R.string.cancel, null).show()
                     }
                 }
             }
 
-            R.id.action_remove_duplicate -> {
-                runOnDefaultDispatcher {
-                    val profiles = SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId())
-                    val toClear = mutableListOf<ProxyEntity>()
-                    val uniqueProxies = LinkedHashSet<Protocols.Deduplication>()
-                    for (pf in profiles) {
-                        val proxy = Protocols.Deduplication(pf.requireBean(), pf.displayType())
-                        if (!uniqueProxies.add(proxy)) {
-                            toClear += pf
-                        }
+            R.id.action_remove_duplicate -> runOnDefaultDispatcher {
+                val profiles = SagerDatabase.proxyDao.getByGroup(DataStore.currentGroupId())
+                val toClear = mutableListOf<ProxyEntity>()
+                val uniqueProxies = LinkedHashSet<Protocols.Deduplication>()
+                for (pf in profiles) {
+                    val proxy = Protocols.Deduplication(pf.requireBean(), pf.displayType())
+                    if (!uniqueProxies.add(proxy)) {
+                        toClear += pf
                     }
-                    if (toClear.isNotEmpty()) {
-                        onMainDispatcher {
-                            MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.confirm)
-                                .setMessage(
-                                    getString(R.string.delete_confirm_prompt) + "\n" +
-                                            toClear.mapIndexedNotNull { index, proxyEntity ->
-                                                if (index < 20) {
-                                                    proxyEntity.displayName()
-                                                } else if (index == 20) {
-                                                    "......"
-                                                } else {
-                                                    null
-                                                }
-                                            }.joinToString("\n")
-                                )
-                                .setPositiveButton(R.string.yes) { _, _ ->
-                                    for (profile in toClear) {
-                                        adapter.groupFragments[DataStore.selectedGroup]?.adapter?.apply {
-                                            val index = configurationIdList.indexOf(profile.id)
-                                            if (index >= 0) {
-                                                configurationIdList.removeAt(index)
-                                                configurationList.remove(profile.id)
-                                                notifyItemRemoved(index)
-                                            }
-                                        }
+                }
+                if (toClear.isNotEmpty()) {
+                    onMainDispatcher {
+                        MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.confirm)
+                            .setMessage(
+                                getString(R.string.delete_confirm_prompt) + "\n" + toClear.mapIndexedNotNull { index, proxyEntity ->
+                                    if (index < 20) {
+                                        proxyEntity.displayName()
+                                    } else if (index == 20) {
+                                        "......"
+                                    } else {
+                                        null
                                     }
-                                    runOnDefaultDispatcher {
-                                        for (profile in toClear) {
-                                            ProfileManager.deleteProfile2(
-                                                profile.groupId, profile.id
-                                            )
+                                }.joinToString("\n")
+                            ).setPositiveButton(android.R.string.ok) { _, _ ->
+                                for (profile in toClear) {
+                                    adapter.groupFragments[DataStore.selectedGroup]?.adapter?.apply {
+                                        val index = configurationIdList.indexOf(profile.id)
+                                        if (index >= 0) {
+                                            configurationIdList.removeAt(index)
+                                            configurationList.remove(profile.id)
+                                            notifyItemRemoved(index)
                                         }
                                     }
                                 }
-                                .setNegativeButton(R.string.no, null)
-                                .show()
-                        }
+                                runOnDefaultDispatcher {
+                                    for (profile in toClear) {
+                                        ProfileManager.deleteProfile2(
+                                            profile.groupId, profile.id
+                                        )
+                                    }
+                                }
+                            }.setNegativeButton(android.R.string.cancel, null).show()
                     }
                 }
             }
@@ -610,7 +645,7 @@ class ConfigurationFragment @JvmOverloads constructor(
             }
 
             R.id.action_connection_url_test -> {
-                urlTest()
+                urlTests()
             }
         }
         return true
@@ -621,11 +656,9 @@ class ConfigurationFragment @JvmOverloads constructor(
         val builder = MaterialAlertDialogBuilder(requireContext()).setView(binding.root)
             .setNegativeButton(android.R.string.cancel) { _, _ ->
                 cancel()
-            }
-            .setOnDismissListener {
+            }.setOnDismissListener {
                 cancel()
-            }
-            .setCancelable(false)
+            }.setCancelable(false)
 
         lateinit var cancel: () -> Unit
         val fragment by lazy { getCurrentGroupFragment() }
@@ -646,27 +679,27 @@ class ConfigurationFragment @JvmOverloads constructor(
                 var profileStatusColor = 0
 
                 when (profile.status) {
-                    -1 -> {
+                    ProxyEntity.STATUS_INVALID -> {
                         profileStatusText = profile.error
                         profileStatusColor = context.getColorAttr(android.R.attr.textColorSecondary)
                     }
 
-                    0 -> {
+                    ProxyEntity.STATUS_INITIAL -> {
                         profileStatusText = getString(R.string.connection_test_testing)
                         profileStatusColor = context.getColorAttr(android.R.attr.textColorSecondary)
                     }
 
-                    1 -> {
+                    ProxyEntity.STATUS_AVAILABLE -> {
                         profileStatusText = getString(R.string.available, profile.ping)
                         profileStatusColor = context.getColour(R.color.material_green_500)
                     }
 
-                    2 -> {
+                    ProxyEntity.STATUS_UNREACHABLE -> {
                         profileStatusText = profile.error
                         profileStatusColor = context.getColour(R.color.material_red_500)
                     }
 
-                    3 -> {
+                    ProxyEntity.STATUS_UNAVAILABLE -> {
                         val err = profile.error ?: ""
                         val msg = Protocols.genFriendlyMsg(err)
                         profileStatusText = if (msg != err) msg else getString(R.string.unavailable)
@@ -680,13 +713,13 @@ class ConfigurationFragment @JvmOverloads constructor(
                     append(
                         profile.displayType(),
                         ForegroundColorSpan(context.getColorAttr(R.attr.accentOrTextSecondary)),
-                        SPAN_EXCLUSIVE_EXCLUSIVE
+                        SPAN_EXCLUSIVE_EXCLUSIVE,
                     )
                     append(" ")
                     append(
                         profileStatusText,
                         ForegroundColorSpan(profileStatusColor),
-                        SPAN_EXCLUSIVE_EXCLUSIVE
+                        SPAN_EXCLUSIVE_EXCLUSIVE,
                     )
                     append("\n")
                 }
@@ -711,7 +744,7 @@ class ConfigurationFragment @JvmOverloads constructor(
             val profiles = ConcurrentLinkedQueue(profilesUnfiltered)
             val testPool = newFixedThreadPoolContext(
                 DataStore.connectionTestConcurrent,
-                "pingTest"
+                "pingTest",
             )
             repeat(DataStore.connectionTestConcurrent) {
                 testJobs.add(launch(testPool) {
@@ -720,7 +753,7 @@ class ConfigurationFragment @JvmOverloads constructor(
 
                         if (icmpPing) {
                             if (!profile.requireBean().canICMPing()) {
-                                profile.status = -1
+                                profile.status = ProxyEntity.STATUS_INVALID
                                 profile.error =
                                     app.getString(R.string.connection_test_icmp_ping_unavailable)
                                 test.insert(profile)
@@ -728,7 +761,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                             }
                         } else {
                             if (!profile.requireBean().canTCPing()) {
-                                profile.status = -1
+                                profile.status = ProxyEntity.STATUS_INVALID
                                 profile.error =
                                     app.getString(R.string.connection_test_tcp_ping_unavailable)
                                 test.insert(profile)
@@ -736,7 +769,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                             }
                         }
 
-                        profile.status = 0
+                        profile.status = ProxyEntity.STATUS_INVALID
                         test.insert(profile)
                         val bean = profile.requireBean()
                         var address = bean.serverAddress
@@ -752,7 +785,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                         }
                         if (!isActive) break
                         if (!address.isIpAddress()) {
-                            profile.status = 2
+                            profile.status = ProxyEntity.STATUS_UNREACHABLE
                             profile.error = app.getString(R.string.connection_test_domain_not_found)
                             test.update(profile)
                             continue
@@ -762,11 +795,11 @@ class ConfigurationFragment @JvmOverloads constructor(
                                 try {
                                     val result = Libcore.icmpPing(address, 5000)
                                     if (!isActive) break
-                                    profile.status = 1
+                                    profile.status = ProxyEntity.STATUS_AVAILABLE
                                     profile.ping = result
                                     test.update(profile)
                                 } catch (_: Exception) {
-                                    profile.status = 2
+                                    profile.status = ProxyEntity.STATUS_UNREACHABLE
                                     profile.error = getString(R.string.connection_test_unreachable)
                                 }
                             } else {
@@ -774,24 +807,23 @@ class ConfigurationFragment @JvmOverloads constructor(
                                     val result =
                                         Libcore.tcpPing(address, bean.serverPort.toString(), 3000)
                                     if (!isActive) break
-                                    profile.status = 1
+                                    profile.status = ProxyEntity.STATUS_AVAILABLE
                                     profile.ping = result
                                     test.update(profile)
                                 } catch (_: Exception) {
-                                    profile.status = 2
+                                    profile.status = ProxyEntity.STATUS_UNREACHABLE
                                     profile.error = getString(R.string.connection_test_unreachable)
                                 }
                             }
                         } catch (e: Exception) {
-                            Log.e("Test", e.toString())
+                            Logs.e(e)
                             if (!isActive) break
                             val message = e.readableMessage
+                            profile.status = ProxyEntity.STATUS_UNREACHABLE
 
                             if (icmpPing) {
-                                profile.status = 2
                                 profile.error = getString(R.string.connection_test_unreachable)
                             } else {
-                                profile.status = 2
                                 when {
                                     !message.contains("failed:") -> profile.error =
                                         getString(R.string.connection_test_timeout)
@@ -808,7 +840,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                                         }
 
                                         else -> {
-                                            profile.status = 3
+                                            profile.status = ProxyEntity.STATUS_UNAVAILABLE
                                             profile.error = message
                                         }
                                     }
@@ -844,7 +876,7 @@ class ConfigurationFragment @JvmOverloads constructor(
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun urlTest() {
+    fun urlTests() {
         val test = TestDialog()
         val dialog = test.builder.show()
         val testJobs = mutableListOf<Job>()
@@ -856,28 +888,20 @@ class ConfigurationFragment @JvmOverloads constructor(
             val profiles = ConcurrentLinkedQueue(profilesUnfiltered)
             val testPool = newFixedThreadPoolContext(
                 DataStore.connectionTestConcurrent,
-                "urlTest"
+                "urlTest",
             )
             repeat(DataStore.connectionTestConcurrent) {
                 testJobs.add(launch(testPool) {
-                    val urlTest = UrlTest() // note: this is NOT in bg process
+                    // note: this is NOT in bg process
+
+                    // Store here to avoid reading datastore frequently
+                    val testURL = DataStore.connectionTestURL
+                    val testTimeout = DataStore.connectionTestTimeout
                     while (isActive) {
                         val profile = profiles.poll() ?: break
-                        profile.status = 0
+                        profile.status = ProxyEntity.STATUS_INITIAL
                         test.insert(profile)
-
-                        try {
-                            val result = urlTest.doTest(profile)
-                            profile.status = 1
-                            profile.ping = result
-                        } catch (e: PluginManager.PluginNotFoundException) {
-                            profile.status = -1
-                            profile.error = e.readableMessage
-                        } catch (e: Exception) {
-                            profile.status = 3
-                            profile.error = e.readableMessage
-                        }
-
+                        profile.doUrlTest(testURL, testTimeout)
                         test.update(profile)
                     }
                 })
@@ -905,8 +929,7 @@ class ConfigurationFragment @JvmOverloads constructor(
         }
     }
 
-    inner class GroupPagerAdapter : FragmentStateAdapter(this),
-        ProfileManager.Listener,
+    inner class GroupPagerAdapter : FragmentStateAdapter(this), ProfileManager.Listener,
         GroupManager.Listener {
 
         var selectedGroupIndex = 0
@@ -1066,11 +1089,11 @@ class ConfigurationFragment @JvmOverloads constructor(
         override fun onViewStateRestored(savedInstanceState: Bundle?) {
             super.onViewStateRestored(savedInstanceState)
 
-            @Suppress("DEPRECATION")
-            savedInstanceState?.getParcelable<ProxyGroup>("proxyGroup")?.also {
-                proxyGroup = it
-                onViewCreated(requireView(), null)
-            }
+            @Suppress("DEPRECATION") savedInstanceState?.getParcelable<ProxyGroup>("proxyGroup")
+                ?.also {
+                    proxyGroup = it
+                    onViewCreated(requireView(), null)
+                }
         }
 
         private val isEnabled: Boolean
@@ -1230,8 +1253,7 @@ class ConfigurationFragment @JvmOverloads constructor(
         }
 
         inner class ConfigurationAdapter : RecyclerView.Adapter<ConfigurationHolder>(),
-            ProfileManager.Listener,
-            GroupManager.Listener,
+            ProfileManager.Listener, GroupManager.Listener,
             UndoSnackbarManager.Interface<ProxyEntity> {
 
             init {
@@ -1289,9 +1311,9 @@ class ConfigurationFragment @JvmOverloads constructor(
                 configurationIdList.clear()
                 val lower = name.lowercase()
                 configurationIdList.addAll(configurationList.filter {
-                    it.value.displayName().lowercase().contains(lower) ||
-                            it.value.displayType().lowercase().contains(lower) ||
-                            it.value.displayAddress().lowercase().contains(lower)
+                    it.value.displayName().lowercase().contains(lower) || it.value.displayType()
+                        .lowercase().contains(lower) || it.value.displayAddress().lowercase()
+                        .contains(lower)
                 }.keys)
                 notifyDataSetChanged()
             }
@@ -1376,9 +1398,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                         runOnDefaultDispatcher {
                             onUpdated(
                                 TrafficData(
-                                    id = profile.id,
-                                    rx = oldProfile.rx,
-                                    tx = oldProfile.tx
+                                    id = profile.id, rx = oldProfile.rx, tx = oldProfile.tx
                                 )
                             )
                         }
@@ -1439,8 +1459,13 @@ class ConfigurationFragment @JvmOverloads constructor(
                     }
 
                     GroupOrder.BY_DELAY -> {
-                        newProfiles =
-                            newProfiles.sortedBy { if (it.status == 1) it.ping else 114514 }
+                        newProfiles = newProfiles.sortedBy {
+                            if (it.status == ProxyEntity.STATUS_AVAILABLE) {
+                                it.ping
+                            } else {
+                                Int.MAX_VALUE
+                            }
+                        }
                     }
                 }
 
@@ -1558,7 +1583,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                 val tmpAddress by lazy { proxyEntity.displayAddress() }
                 val address = when {
                     pf.blurredAddress -> {
-                        // It's length is not bigger than 20.
+                        // In most of times, it's length should not bigger than 20.
                         val blurredAddress = tmpAddress.blur()
                         if (profileName.text == tmpAddress) profileName.text = blurredAddress
                         blurredAddress
@@ -1575,9 +1600,9 @@ class ConfigurationFragment @JvmOverloads constructor(
 
                 profileAddress.text = address
                 (trafficText.parent as View).isGone =
-                    (!showTraffic || proxyEntity.status <= 0) && address.isBlank()
+                    (!showTraffic || proxyEntity.status <= ProxyEntity.STATUS_INITIAL) && address.isBlank()
 
-                if (proxyEntity.status <= 0) {
+                if (proxyEntity.status <= ProxyEntity.STATUS_INITIAL) {
                     if (showTraffic) {
                         profileStatus.text = trafficText.text
                         profileStatus.setTextColor(requireContext().getColorAttr(android.R.attr.textColorSecondary))
@@ -1585,17 +1610,24 @@ class ConfigurationFragment @JvmOverloads constructor(
                     } else {
                         profileStatus.text = ""
                     }
-                } else if (proxyEntity.status == 1) {
+                } else if (proxyEntity.status == ProxyEntity.STATUS_AVAILABLE) {
                     profileStatus.text = getString(R.string.available, proxyEntity.ping)
                     profileStatus.setTextColor(requireContext().getColour(R.color.material_green_500))
                 } else {
                     profileStatus.setTextColor(requireContext().getColour(R.color.material_red_500))
-                    if (proxyEntity.status == 2) {
+                    if (proxyEntity.status == ProxyEntity.STATUS_UNREACHABLE) {
                         profileStatus.text = proxyEntity.error
                     }
                 }
 
-                if (proxyEntity.status == 3) {
+                profileStatus.setOnLongClickListener {
+                    runOnDefaultDispatcher {
+                        proxyEntity.doUrlTest()
+                        ProfileManager.updateProfile(proxyEntity)
+                    }
+                    true
+                }
+                if (proxyEntity.status == ProxyEntity.STATUS_UNAVAILABLE) {
                     val err = proxyEntity.error ?: "<?>"
                     val msg = Protocols.genFriendlyMsg(err)
                     profileStatus.text = if (msg != err) msg else getString(R.string.unavailable)
@@ -1641,10 +1673,8 @@ class ConfigurationFragment @JvmOverloads constructor(
                         popup.menuInflater.inflate(R.menu.profile_share_menu, popup.menu)
 
                         if (!proxyEntity.haveStandardLink()) {
-                            popup.menu.findItem(R.id.action_group_qr)
-                                .subMenu?.removeItem(R.id.action_standard_qr)
-                            popup.menu.findItem(R.id.action_group_clipboard)
-                                .subMenu?.removeItem(R.id.action_standard_clipboard)
+                            popup.menu.findItem(R.id.action_group_qr).subMenu?.removeItem(R.id.action_standard_qr)
+                            popup.menu.findItem(R.id.action_group_clipboard).subMenu?.removeItem(R.id.action_standard_clipboard)
                         }
 
                         if (!proxyEntity.haveLink()) {
@@ -1653,10 +1683,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                         }
 
                         val bean = proxyEntity.requireBean()
-                        if (proxyEntity.type == ProxyEntity.TYPE_CHAIN
-                            || proxyEntity.mustUsePlugin()
-                            || (bean as? ConfigBean)?.type == ConfigBean.TYPE_CONFIG
-                        ) {
+                        if (proxyEntity.type == ProxyEntity.TYPE_CHAIN || proxyEntity.mustUsePlugin() || (bean as? ConfigBean)?.type == ConfigBean.TYPE_CONFIG) {
                             popup.menu.removeItem(R.id.action_group_outbound)
                         }
 
@@ -1681,13 +1708,10 @@ class ConfigurationFragment @JvmOverloads constructor(
                                 shareLayout.setOnClickListener {
                                     MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.insecure)
                                         .setMessage(resources.openRawResource(validateResult.textRes)
-                                            .bufferedReader()
-                                            .use { it.readText() })
+                                            .bufferedReader().use { it.readText() })
                                         .setPositiveButton(android.R.string.ok) { _, _ ->
                                             showShare(it)
-                                        }
-                                        .show()
-                                        .apply {
+                                        }.show().apply {
                                             findViewById<TextView>(android.R.id.message)?.apply {
                                                 Linkify.addLinks(this, Linkify.WEB_URLS)
                                                 movementMethod = LinkMovementMethod.getInstance()
@@ -1706,13 +1730,10 @@ class ConfigurationFragment @JvmOverloads constructor(
                                 shareLayout.setOnClickListener {
                                     MaterialAlertDialogBuilder(requireContext()).setTitle(R.string.deprecated)
                                         .setMessage(resources.openRawResource(validateResult.textRes)
-                                            .bufferedReader()
-                                            .use { it.readText() })
+                                            .bufferedReader().use { it.readText() })
                                         .setPositiveButton(android.R.string.ok) { _, _ ->
                                             showShare(it)
-                                        }
-                                        .show()
-                                        .apply {
+                                        }.show().apply {
                                             findViewById<TextView>(android.R.id.message)?.apply {
                                                 Linkify.addLinks(this, Linkify.WEB_URLS)
                                                 movementMethod = LinkMovementMethod.getInstance()
@@ -1787,8 +1808,7 @@ class ConfigurationFragment @JvmOverloads constructor(
                 runOnDefaultDispatcher {
                     try {
                         (requireActivity() as MainActivity).contentResolver.openOutputStream(data)!!
-                            .bufferedWriter()
-                            .use {
+                            .bufferedWriter().use {
                                 it.write(DataStore.serverConfig)
                             }
                         onMainDispatcher {
@@ -1805,4 +1825,24 @@ class ConfigurationFragment @JvmOverloads constructor(
             }
         }
 
+}
+
+/**
+ * Try test & set status.
+ */
+private suspend fun ProxyEntity.doUrlTest(
+    link: String = DataStore.connectionTestURL,
+    timeout: Int = DataStore.connectionTestTimeout,
+) {
+    try {
+        val result = TestInstance(this, link, timeout).doTest()
+        status = ProxyEntity.STATUS_AVAILABLE
+        ping = result
+    } catch (e: PluginManager.PluginNotFoundException) {
+        status = ProxyEntity.STATUS_INVALID
+        error = e.readableMessage
+    } catch (e: Exception) {
+        status = ProxyEntity.STATUS_UNAVAILABLE
+        error = e.readableMessage
+    }
 }

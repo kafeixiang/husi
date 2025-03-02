@@ -1,7 +1,6 @@
 package moe.matsuri.nb4a
 
 import io.nekohasekai.sagernet.R
-import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.v2ray.StandardV2RayBean
 import io.nekohasekai.sagernet.fmt.v2ray.isTLS
@@ -12,7 +11,7 @@ object Protocols {
     // Mux
 
     fun isProfileNeedMux(bean: StandardV2RayBean): Boolean {
-        return when (bean.type) {
+        return when (bean.v2rayTransport) {
             "tcp", "ws" -> true
             "http" -> !bean.isTLS()
             else -> false

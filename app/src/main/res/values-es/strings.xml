@@ -49,13 +49,11 @@
     <string name="service_mode_proxy">Solo proxy</string>
     <string name="service_mode_vpn" translatable="false">VPN</string>
     <string name="port_proxy">Puerto proxy</string>
-    <string name="port_http">Puerto proxy HTTP</string>
     <string name="cag_route">Ajustes de ruta</string>
     <string name="allow_access">Permitir conexiones desde la LAN</string>
     <string name="allow_access_sum">Vincula los servidores de entrada a 0.0.0.0</string>
     <string name="inbound_settings">Ajustes de entrada</string>
     <string name="general_settings">Ajustes de la app</string>
-    <string name="require_http">Activar HTTP entrante</string>
     <string name="cag_ws">Ajustes de WebSocket</string>
     <string name="ws_max_early_data" translatable="false">Max early data</string>
     <string name="ws_browser_forwarding">Reenvío del navegador</string>
@@ -274,7 +272,6 @@
     <string name="proxy_cat">Ajustes del servidor</string>
     <string name="ss_cat">Ajustes de Shadowsocks</string>
     <string name="unsaved_changes_prompt">Cambios no guardados. ¿Quieres guardar?</string>
-    <string name="yes">Sí</string>
     <string name="no">No</string>
     <string name="apply">Aplicar</string>
     <string name="need_reload">Vuelve a cargar el servicio de proxy para aplicar los cambios</string>
@@ -291,7 +288,6 @@
     <string name="list">Lista</string>
     <string name="random">Aleatorio</string>
     <string name="leastPing" translatable="false">Ping</string>
-    <string name="api_port">Puerto de API</string>
     <string name="probe_interval">Intervalo de observación del equilibrador</string>
     <string name="standard">Estándar</string>
     <string name="available" translatable="false">%dms</string>
@@ -469,7 +465,6 @@
     <string name="custom_config_json">JSON de config. personalizada</string>
     <string name="is_outbound_only">El conjunto JSON es saliente</string>
     <string name="save">Guardar</string>
-    <string name="set_panel_url">Establecer URL del panel</string>
     <string name="log_level">Nivel de registro</string>
     <string name="xtls_flow">Flow (Subprotocolo VLESS)</string>
     <string name="utls_fingerprint">Huella digital uTLS</string>
@@ -479,7 +474,6 @@
     <string name="domain_strategy_for_server">Est. de dominio para direc. del servidor</string>
     <string name="bypass_lan_in_core">Omitir LAN en el núcleo</string>
     <string name="need_restart">Reiniciar app para aplicar los cambios</string>
-    <string name="enable_clash_api">Dirección de escucha de la API de Clash</string>
     <string name="protocol_version">Versión del protocolo</string>
     <string name="reset_connections">Restablecer conexiones</string>
     <string name="remove_duplicate">Eliminar servidores duplicados</string>
@@ -499,7 +493,6 @@
     <string name="vpn_app_type">Tipo de app</string>
     <string name="vpn_core_path">Ruta detectada</string>
     <string name="vpn_core_type_unknown">Desconocido</string>
-    <string name="cazilla">Utilizar programa de certificados CA de Mozilla</string>
     <string name="dns_mode">Modo DNS</string>
     <string name="landing_proxy">Proxy de aterrizaje</string>
     <string name="show_group_in_notification">Mostrar nombre del grupo en notificación</string>
@@ -516,14 +509,12 @@
     <string name="vpn_core_type">Tipo de núcleo</string>
     <string name="vpn_golang_version">Versión Go</string>
     <string name="assets_update">Actualizar activos geográficos</string>
-    <string name="cazilla_long">Se puede evitar el ataque de quien pueda controlar CA. Y puede permitir que el dispositivo antiguo utilice un certificado nuevo.</string>
     <string name="enable_brutal">Activar controlador de congestión TCP Brutal</string>
     <string name="blurred_address">Difuminar la dirección del servidor</string>
     <string name="action_camera_switch">Cambiar de cámara</string>
     <string name="action_flash_off">Apagar el flash</string>
     <string name="action_flash_on">Encender el flash</string>
     <string name="location_permission_title">Permiso de ubicación</string>
-    <string name="ok">Aceptar</string>
     <string name="no_thanks">No, gracias</string>
     <string name="location_permission_description">Tu regla de ruta contiene reglas de enrutamiento Wi-Fi SSID o Wi-Fi BSSID. Para que funcionen, husi utiliza el permiso de ubicación en segundo plano para obtener información sobre la red Wi-Fi conectada. La información se utilizará únicamente con fines de enrutamiento.</string>
     <string name="location_permission_background_description">A partir de Android 10, se requiere permiso de ubicación en segundo plano. Seleccione Permitir siempre para otorgar el permiso.</string>

@@ -52,8 +52,8 @@ jobs:
         uses: nttld/setup-ndk@v1
         with:
           add-to-path: true
-          ndk-version: r27c
-          local-cache: true
+          ndk-version: r28
+          local-cache: false
       - name: Native Build
         if: steps.cache.outputs.cache-hit != 'true'
         env:
@@ -106,7 +106,7 @@ jobs:
           BUILD_PLUGIN: none
         run: |
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
-          # export LOCAL_PROPERTIES="${{ secrets.LOCAL_PROPERTIES }}"
+          echo "${{ secrets.LOCAL_PROPERTIES }}" >> local.properties
           ./run init action gradle
           ./gradlew clean app:assembleFossRelease
 

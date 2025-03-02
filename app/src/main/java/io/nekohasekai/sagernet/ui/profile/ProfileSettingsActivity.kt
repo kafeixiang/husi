@@ -11,7 +11,7 @@ import android.view.View
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.Toast
-import androidx.activity.addCallback
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.component1
 import androidx.activity.result.component2
 import androidx.activity.result.contract.ActivityResultContracts
@@ -48,10 +48,18 @@ abstract class ProfileSettingsActivity<T : AbstractBean>(
     @LayoutRes resId: Int = R.layout.layout_config_settings,
 ) : ThemedActivity(resId), OnPreferenceDataStoreChangeListener {
 
+    override val onBackPressedCallback = object : OnBackPressedCallback(enabled = false) {
+        override fun handleOnBackPressed() {
+            UnsavedChangesDialogFragment().apply {
+                key()
+            }.show(supportFragmentManager, null)
+        }
+    }
+
     class UnsavedChangesDialogFragment : AlertDialogFragment<Empty, Empty>() {
         override fun AlertDialog.Builder.prepare(listener: DialogInterface.OnClickListener) {
             setTitle(R.string.unsaved_changes_prompt)
-            setPositiveButton(R.string.yes) { _, _ ->
+            setPositiveButton(android.R.string.ok) { _, _ ->
                 runOnDefaultDispatcher {
                     (requireActivity() as ProfileSettingsActivity<*>).saveAndExit()
                 }
@@ -68,13 +76,13 @@ abstract class ProfileSettingsActivity<T : AbstractBean>(
     class DeleteConfirmationDialogFragment : AlertDialogFragment<ProfileIdArg, Empty>() {
         override fun AlertDialog.Builder.prepare(listener: DialogInterface.OnClickListener) {
             setTitle(R.string.delete_confirm_prompt)
-            setPositiveButton(R.string.yes) { _, _ ->
+            setPositiveButton(android.R.string.ok) { _, _ ->
                 runOnDefaultDispatcher {
                     ProfileManager.deleteProfile(arg.groupId, arg.profileId)
                 }
                 requireActivity().finish()
             }
-            setNegativeButton(R.string.no, null)
+            setNegativeButton(android.R.string.cancel, null)
         }
     }
 
@@ -125,15 +133,6 @@ abstract class ProfileSettingsActivity<T : AbstractBean>(
                 }
             }
 
-        }
-
-        onBackPressedDispatcher.addCallback {
-            if (DataStore.dirty) UnsavedChangesDialogFragment().apply {
-                key()
-            }.show(supportFragmentManager, null)
-            else {
-                finish()
-            }
         }
     }
 
@@ -302,6 +301,7 @@ abstract class ProfileSettingsActivity<T : AbstractBean>(
     override fun onPreferenceDataStoreChanged(store: PreferenceDataStore, key: String) {
         if (key != Key.PROFILE_DIRTY) {
             DataStore.dirty = true
+            onBackPressedCallback.isEnabled = true
         }
     }
 

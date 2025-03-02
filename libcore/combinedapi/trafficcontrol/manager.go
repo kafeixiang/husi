@@ -1,13 +1,13 @@
 package trafficcontrol
 
 import (
-	"libcore/syncmap"
+	"github.com/sagernet/sing-box/experimental/clashapi/compatible"
 
 	"github.com/gofrs/uuid/v5"
 )
 
 type Manager struct {
-	connections      syncmap.RWMutexMap[uuid.UUID, Tracker]
+	connections      compatible.Map[uuid.UUID, Tracker]
 	outboundCounters map[string]*outboundCounter
 	// closedConnectionsAccess sync.Mutex
 	// closedConnections       list.List[TrackerMetadata]
@@ -16,7 +16,6 @@ type Manager struct {
 
 func NewManager() *Manager {
 	return &Manager{
-		connections:      *syncmap.NewRWMutexMap[uuid.UUID, Tracker](nil),
 		outboundCounters: make(map[string]*outboundCounter),
 	}
 }
@@ -30,8 +29,13 @@ func (m *Manager) Leave(c Tracker) {
 	m.connections.Delete(metadata.ID)
 }
 
-func (m *Manager) Connections() []Tracker {
-	return m.connections.Array()
+func (m *Manager) Connections() (trackers []Tracker) {
+	// Can't distribute capacity.
+	m.connections.Range(func(_ uuid.UUID, tracker Tracker) bool {
+		trackers = append(trackers, tracker)
+		return true
+	})
+	return
 }
 
 func (m *Manager) Connection(id uuid.UUID) Tracker {

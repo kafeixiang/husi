@@ -3,6 +3,7 @@ package io.nekohasekai.sagernet.ktx
 import com.google.gson.JsonParser
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.Serializable
+import io.nekohasekai.sagernet.fmt.anytls.parseAnyTLS
 import io.nekohasekai.sagernet.fmt.http.parseHttp
 import io.nekohasekai.sagernet.fmt.hysteria.parseHysteria1
 import io.nekohasekai.sagernet.fmt.hysteria.parseHysteria2
@@ -116,7 +117,7 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
     val entities = ArrayList<AbstractBean>()
     val entitiesByLine = ArrayList<AbstractBean>()
 
-    suspend fun String.parseLink(entities: ArrayList<AbstractBean>) {
+    suspend fun String.parseLink(entities: MutableList<AbstractBean>) {
         if (startsWith("sing-box://import-remote-profile?") || startsWith("husi://subscription?")) {
             throw SubscriptionFoundException(this)
         }
@@ -143,10 +144,10 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
 
             "http", "https" -> {
                 Logs.d("Try parse http link: $this")
-                runCatching {
+                try {
                     entities.add(parseHttp(this))
-                }.onFailure {
-                    Logs.w(it)
+                } catch (e: Exception) {
+                    Logs.w(e)
                 }
             }
 
@@ -227,6 +228,15 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
                 Logs.d("Try parse Mieru link: $this")
                 runCatching {
                     entities.add(parseMieru(this))
+                }.onFailure {
+                    Logs.w(it)
+                }
+            }
+
+            "anytls" -> {
+                Logs.d("Try parse AnyTLS link: $this")
+                runCatching {
+                    entities.add(parseAnyTLS(this))
                 }.onFailure {
                     Logs.w(it)
                 }

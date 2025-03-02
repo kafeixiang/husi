@@ -50,17 +50,19 @@ object Key {
 
     const val BYPASS_LAN = "bypassLan"
     const val BYPASS_LAN_IN_CORE = "bypassLanInCore"
+
+    const val APPEND_HTTP_PROXY = "appendHttpProxy"
+    const val HTTP_PROXY_BYPASS = "httpProxyBypass"
     const val INBOUND_USERNAME = "inboundUsername"
     const val INBOUND_PASSWORD = "inboundPassword"
     const val ANCHOR_SSID = "anchorSSID"
 
     const val MIXED_PORT = "mixedPort"
     const val ALLOW_ACCESS = "allowAccess"
+    const val SHOW_GROUP_IN_NOTIFICATION = "showGroupInNotification"
     const val SPEED_INTERVAL = "speedInterval"
     const val SHOW_DIRECT_SPEED = "showDirectSpeed"
     const val LOCAL_DNS_PORT = "portLocalDns"
-
-    const val APPEND_HTTP_PROXY = "appendHttpProxy"
 
     const val CONNECTION_TEST_URL = "connectionTestURL"
     const val CONNECTION_TEST_CONCURRENT = "connectionTestConcurrent"
@@ -93,6 +95,16 @@ object Key {
     const val TUN_IMPLEMENTATION = "tunImplementation"
     const val PROFILE_TRAFFIC_STATISTICS = "profileTrafficStatistics"
 
+    const val APP_TLS_VERSION = "appTLSVersion"
+    const val CERT_PROVIDER = "certProvider"
+    const val INTERRUPT_SELECTOR = "interruptSelector"
+
+    const val TRAFFIC_DESCENDING = "trafficDescending"
+    const val TRAFFIC_SORT_MODE = "trafficSortMode"
+
+    const val SPEED_TEST_URL = "speedTestURL"
+    const val SPEED_TEST_TIMEOUT = "speedTestTimeout"
+
     const val PROFILE_DIRTY = "profileDirty"
     const val PROFILE_ID = "profileId"
     const val PROFILE_NAME = "profileName"
@@ -104,24 +116,35 @@ object Key {
 
     const val SERVER_ADDRESS = "serverAddress"
     const val SERVER_PORT = "serverPort"
+    const val SERVER_PORTS = "serverPorts"
     const val SERVER_USERNAME = "serverUsername"
     const val SERVER_PASSWORD = "serverPassword"
     const val SERVER_METHOD = "serverMethod"
     const val SERVER_PASSWORD1 = "serverPassword1"
+    const val PLUGIN_NAME = "pluginName"
+    const val PLUGIN_CONFIG = "pluginConfig"
+    const val UDP_OVER_TCP = "udpOverTcp"
 
     const val PROTOCOL_VERSION = "protocolVersion"
 
     const val SERVER_PROTOCOL = "serverProtocol"
     const val SERVER_OBFS = "serverObfs"
 
-    const val SERVER_NETWORK = "serverNetwork"
+    const val SERVER_V2RAY_TRANSPORT = "serverV2rayTransport"
     const val SERVER_HOST = "serverHost"
     const val SERVER_PATH = "serverPath"
+    const val SERVER_HEADERS = "serverHeaders"
+    const val SERVER_WS_MAX_EARLY_DATA = "serverWsMaxEarlyData"
+    const val SERVER_WS_EARLY_DATA_HEADER_NAME = "serverWsEarlyDataHeaderName"
+    const val SERVER_SECURITY = "serverSecurity"
     const val SERVER_SNI = "serverSNI"
     const val SERVER_ENCRYPTION = "serverEncryption"
     const val SERVER_ALPN = "serverALPN"
     const val SERVER_CERTIFICATES = "serverCertificates"
     const val SERVER_PINNED_CERTIFICATE_CHAIN = "serverPinnedCertificateChain"
+    const val SERVER_UTLS_FINGERPRINT = "serverUtlsFingerprint"
+    const val SERVER_REALITY_PUBLIC_KEY = "serverRealityPublicKey"
+    const val SERVER_REALITY_SHORT_ID = "serverRealityShortID"
     const val SERVER_MTU = "serverMTU"
 
     const val SERVER_MUX = "serverMux"
@@ -131,8 +154,11 @@ object Key {
     const val SERVER_MUX_NUMBER = "serverMuxNumber"
     const val SERVER_MUX_PADDING = "serverMuxPadding"
 
+    const val SERVER_USER_ID = "serverUserID"
+    const val SERVER_ALTER_ID = "serverAlterID"
+    const val SERVER_PACKET_ENCODING = "serverPacketEncoding"
     const val SERVER_VMESS_EXPERIMENTS_CATEGORY = "serverVMessExperimentsCategory"
-    const val AUTHENTICATED_LENGTH = "authenticatedLength"
+    const val SERVER_AUTHENTICATED_LENGTH = "serverAuthenticatedLength"
 
     const val SERVER_CONFIG = "serverConfig"
     const val SERVER_CUSTOM = "serverCustom"
@@ -143,11 +169,10 @@ object Key {
     const val SERVER_ECH_CATEGORY = "serverEchCategory"
     const val SERVER_WS_CATEGORY = "serverWsCategory"
     const val SERVER_MUX_CATEGORY = "serverMuxCategory"
-    const val SERVER_HEADERS = "serverHeaders"
     const val SERVER_ALLOW_INSECURE = "serverAllowInsecure"
 
-    const val ECH = "ech"
-    const val ECH_CFG = "echCfg"
+    const val SERVER_ECH = "serverECH"
+    const val SERVER_ECH_CONFIG = "serverECHConfig"
 
     const val SERVER_AUTH_TYPE = "serverAuthType"
     const val SERVER_STREAM_RECEIVE_WINDOW = "serverStreamReceiveWindow"
@@ -163,6 +188,17 @@ object Key {
     const val SERVER_CONGESTION_CONTROLLER = "serverCongestionController"
     const val SERVER_DISABLE_SNI = "serverDisableSNI"
     const val SERVER_REDUCE_RTT = "serverReduceRTT"
+
+    const val SERVER_IDLE_SESSION_CHECK_INTERVAL = "serverIdleSessionCheckInterval"
+    const val SERVER_IDLE_SESSION_TIMEOUT = "serverIdleSessionTimeout"
+    const val SERVER_MIN_IDLE_SESSION = "serverMinIdleSession"
+
+    const val SERVER_RESERVED = "serverReserved"
+    const val LOCAL_ADDRESS = "localAddress"
+    const val LISTEN_PORT = "listenPort"
+    const val PRIVATE_KEY = "privateKey"
+    const val PUBLIC_KEY = "publicKey"
+    const val PRE_SHARED_KEY = "preSharedKey"
 
     const val ROUTE_NAME = "routeName"
     const val ROUTE_DOMAIN = "routeDomain"
@@ -180,6 +216,8 @@ object Key {
     const val ROUTE_CLASH_MODE = "routeClashMode"
     const val ROUTE_NETWORK_TYPE = "routeNetworkType"
     const val ROUTE_NETWORK_IS_EXPENSIVE = "routeNetworkIsExpensive"
+
+    const val RULES_FIRST_CREATE = "rulesFirstCreate"
 
     const val GROUP_NAME = "groupName"
     const val GROUP_TYPE = "groupType"
@@ -200,11 +238,6 @@ object Key {
     const val SUBSCRIPTION_AUTO_UPDATE = "subscriptionAutoUpdate"
     const val SUBSCRIPTION_AUTO_UPDATE_DELAY = "subscriptionAutoUpdateDelay"
 
-    //
-
-    const val APP_TLS_VERSION = "appTLSVersion"
-    const val ENABLED_CAZILLA = "enabledCazilla"
-    const val INTERRUPT_SELECTOR = "interruptSelector"
 }
 
 fun logLevelString(level: Int): String = when (level) {
@@ -295,3 +328,31 @@ object NetworkInterfaceStrategy {
     const val HYBRID = 1
     const val FALLBACK = 2
 }
+
+object CertProvider {
+    const val SYSTEM = 0
+    const val MOZILLA = 1
+    const val SYSTEM_AND_USER = 2 // Put it last because Go may fix the bug one day.
+}
+
+// https://github.com/chen08209/FlClash/blob/6c27f2e2f1ac033e62f09b7b30b2710dd0d13bb4/lib/models/config.dart#L110-L128
+const val DEFAULT_HTTP_BYPASS = """# If you are annoyed with default value, just set a "#"
+# Chinese apps that can't work with http proxy
+*zhihu.com
+*zhimg.com
+*jd.com
+100ime-iat-api.xfyun.cn
+*360buyimg.com
+# local
+localhost
+*.local
+127.*
+10.*
+172.16.*
+172.17.*
+172.18.*
+172.19.*
+172.2*
+172.30.*
+172.31.*
+192.168.*"""

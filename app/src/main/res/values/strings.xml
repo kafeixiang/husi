@@ -51,13 +51,11 @@
     <string name="service_mode_proxy">Proxy only</string>
     <string name="service_mode_vpn" translatable="false">VPN</string>
     <string name="port_proxy">Proxy Port</string>
-    <string name="port_http">HTTP Proxy Port</string>
     <string name="cag_route">Route Settings</string>
     <string name="allow_access">Allow Connections from the LAN</string>
     <string name="allow_access_sum">Bind inbound servers to 0.0.0.0</string>
     <string name="inbound_settings">Inbound Settings</string>
     <string name="general_settings">App Settings</string>
-    <string name="require_http">Enable HTTP inbound</string>
     <string name="cag_ws">WebSocket Settings</string>
     <string name="ws_max_early_data" translatable="false">Max early data</string>
     <string name="ws_browser_forwarding">Browser Forwarding</string>
@@ -217,13 +215,13 @@
     <string name="action_trojan" translatable="false">Trojan</string>
     <string name="action_mieru" translatable="false">Mieru</string>
     <string name="action_naive" translatable="false">Naïve</string>
-    <string name="action_ping_tunnel" translatable="false">Ping Tunnel</string>
     <string name="action_hysteria" translatable="false">Hysteria</string>
     <string name="action_ssh" translatable="false">SSH</string>
     <string name="action_wireguard" translatable="false">WireGuard</string>
     <string name="action_tuic" translatable="false">TUIC</string>
     <string name="action_juicity" translatable="false">Juicity</string>
     <string name="action_direct" translatable="false">Direct</string>
+    <string name="action_anytls" translatable="false">AnyTLS</string>
     <string name="proxy_chain">Proxy Chain</string>
     <string name="custom_config">Custom Config</string>
     <string name="balancer">Balancer</string>
@@ -298,7 +296,6 @@
     <string name="proxy_cat">Server Settings</string>
     <string name="ss_cat">Shadowsocks Settings</string>
     <string name="unsaved_changes_prompt">Changes not saved. Do you want to save?</string>
-    <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="apply">Apply</string>
     <string name="need_reload">Reload proxy service to apply changes</string>
@@ -317,7 +314,6 @@
     <string name="list">List</string>
     <string name="random">Random</string>
     <string name="leastPing" translatable="false">Ping</string>
-    <string name="api_port">API Port</string>
     <string name="probe_interval">Balancer observation interval</string>
     <string name="standard">Standard</string>
     <string name="available" translatable="false">%dms</string>
@@ -515,8 +511,6 @@
     <string name="custom_config_json">Custom config JSON</string>
     <string name="is_outbound_only">The JSON set is outbound</string>
     <string name="save">Save</string>
-    <string name="set_panel_url">Set panel URL</string>
-    <string name="enable_clash_api">Clash API listen address</string>
     <string name="log_level">Log Level</string>
     <string name="xtls_flow">Flow (VLESS Sub-protocol)</string>
     <string name="bypass_lan_in_core">Bypass LAN in Core</string>
@@ -560,8 +554,6 @@
     <string name="vpn_app_type_other">Other</string>
     <string name="vpn_core_type_unknown">Unknown</string>
     <string name="assets_update">Update geo assets</string>
-    <string name="cazilla">Use Mozilla CA Certificate Program</string>
-    <string name="cazilla_long">May be can avoid attack from who can control CA. And can let old device use new certificate.</string>
     <string name="sekai">nekohasekai</string>
     <string name="test_timeout">Test timeout (ms)</string>
     <string name="mux_preference">Multiplex Settings</string>
@@ -573,7 +565,6 @@
     <string name="action_camera_switch">Switch camera</string>
     <string name="action_flash_off">Turn of flash</string>
     <string name="location_permission_title">Location permission</string>
-    <string name="ok">OK</string>
     <string name="no_thanks">No, thanks</string>
     <string name="location_permission_description">Your route rule contains Wi-Fi SSID or Wi-Fi BSSID routing rules. To make them work, husi uses the location permission in the background to get information about the connected Wi-Fi network. The information will be used for routing purposes only.</string>
     <string name="location_permission_background_description">On Android 10 and up, background location permission is required. Select Allow all the time to grant the permission.</string>
@@ -654,4 +645,20 @@
     <string name="network_interface_preference_detail">Enable multi network interfaces dialing</string>
     <string name="hybrid">Hybrid</string>
     <string name="fallback">Fallback</string>
+    <string name="listen_port">Listen Port</string>
+    <string name="reserved" translatable="false">Reserved</string>
+    <string name="certificate_authority">Certificate Authority</string>
+    <string name="mozilla" translatable="false">Mozilla</string>
+    <string name="system_and_user">System and User</string>
+    <string name="http_proxy_bypass">HTTP proxy bypass list</string>
+    <string name="udp_over_tcp" translatable="false">UDP over TCP</string>
+    <string name="reality_public_key">REALITY Public Key</string>
+    <string name="reality_short_id" translatable="false">REALITY Short ID</string>
+    <string name="ech" translatable="false">ECH</string>
+    <string name="v2ray_transport">V2Ray Transport</string>
+    <string name="http_headers" translatable="false">HTTP Headers</string>
+    <string name="import_http_url">You are importing a HTTP URL. Which action do you want?</string>
+    <string name="idle_session_check_interval">IDLE Session Check Interval</string>
+    <string name="idle_session_timeout">IDLE Session Timeout</string>
+    <string name="min_idle_session">Mininum IDLE Session</string>
 </resources>

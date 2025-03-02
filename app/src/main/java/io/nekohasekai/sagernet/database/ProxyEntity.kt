@@ -16,8 +16,11 @@ import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.fmt.KryoConverters
 import io.nekohasekai.sagernet.fmt.Serializable
+import io.nekohasekai.sagernet.fmt.anytls.AnyTLSBean
+import io.nekohasekai.sagernet.fmt.anytls.toUri
 import io.nekohasekai.sagernet.fmt.buildConfig
 import io.nekohasekai.sagernet.fmt.buildSingBoxOutbound
+import io.nekohasekai.sagernet.fmt.config.ConfigBean
 import io.nekohasekai.sagernet.fmt.direct.DirectBean
 import io.nekohasekai.sagernet.fmt.http.HttpBean
 import io.nekohasekai.sagernet.fmt.http.toUri
@@ -66,10 +69,10 @@ import io.nekohasekai.sagernet.ui.profile.TuicSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.VMessSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.WireGuardSettingsActivity
 import moe.matsuri.nb4a.Protocols
-import moe.matsuri.nb4a.proxy.config.ConfigBean
-import moe.matsuri.nb4a.proxy.config.ConfigSettingActivity
-import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSBean
-import moe.matsuri.nb4a.proxy.shadowtls.ShadowTLSSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.ConfigSettingActivity
+import io.nekohasekai.sagernet.fmt.shadowtls.ShadowTLSBean
+import io.nekohasekai.sagernet.ui.profile.AnyTLSSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.ShadowTLSSettingsActivity
 
 @Entity(
     tableName = "proxy_entities", indices = [Index("groupId", name = "groupId")]
@@ -81,7 +84,7 @@ data class ProxyEntity(
     var userOrder: Long = 0L,
     var tx: Long = 0L,
     var rx: Long = 0L,
-    var status: Int = 0,
+    var status: Int = STATUS_INITIAL,
     var ping: Int = 0,
     var uuid: String = "",
     var error: String? = null,
@@ -99,6 +102,7 @@ data class ProxyEntity(
     var wgBean: WireGuardBean? = null,
     var shadowTLSBean: ShadowTLSBean? = null,
     var directBean: DirectBean? = null,
+    var anyTLSBean: AnyTLSBean? = null,
     var chainBean: ChainBean? = null,
     var configBean: ConfigBean? = null,
 ) : Serializable() {
@@ -109,7 +113,7 @@ data class ProxyEntity(
         const val TYPE_SS = 2
         const val TYPE_VMESS = 4 // And VLESS
         const val TYPE_TROJAN = 6
-        const val TYPE_TROJAN_GO = 7
+        const val TYPE_TROJAN_GO = 7 // Deleted
         const val TYPE_CHAIN = 8
         const val TYPE_NAIVE = 9
         const val TYPE_HYSTERIA = 15
@@ -120,8 +124,20 @@ data class ProxyEntity(
         const val TYPE_MIERU = 21
         const val TYPE_JUICITY = 22
         const val TYPE_DIRECT = 23
+        const val TYPE_ANYTLS = 24
         const val TYPE_CONFIG = 998
-        const val TYPE_NEKO = 999
+        const val TYPE_NEKO = 999 // Deleted
+
+        /** Plugin not found or not support this ping type */
+        const val STATUS_INVALID = -1
+        const val STATUS_INITIAL = 0
+        const val STATUS_AVAILABLE = 1
+
+        /** Unclear */
+        const val STATUS_UNREACHABLE = 2
+
+        /** Has obvious error */
+        const val STATUS_UNAVAILABLE = 3
 
         val chainName by lazy { app.getString(R.string.proxy_chain) }
 
@@ -203,6 +219,7 @@ data class ProxyEntity(
             TYPE_JUICITY -> juicityBean = KryoConverters.juicityDeserialize(byteArray)
             TYPE_DIRECT -> directBean = KryoConverters.directDeserialize(byteArray)
             TYPE_SHADOWTLS -> shadowTLSBean = KryoConverters.shadowTLSDeserialize(byteArray)
+            TYPE_ANYTLS -> anyTLSBean = KryoConverters.anyTLSDeserialize(byteArray)
             TYPE_CHAIN -> chainBean = KryoConverters.chainDeserialize(byteArray)
             TYPE_CONFIG -> configBean = KryoConverters.configDeserialize(byteArray)
         }
@@ -223,6 +240,7 @@ data class ProxyEntity(
         TYPE_JUICITY -> "Juicity"
         TYPE_SHADOWTLS -> "ShadowTLS"
         TYPE_DIRECT -> "Direct"
+        TYPE_ANYTLS -> "AnyTLS"
         TYPE_CHAIN -> chainName
         TYPE_CONFIG -> configBean!!.displayType()
         else -> "Undefined type $type"
@@ -246,6 +264,7 @@ data class ProxyEntity(
             TYPE_TUIC -> tuicBean
             TYPE_JUICITY -> juicityBean
             TYPE_DIRECT -> directBean
+            TYPE_ANYTLS -> anyTLSBean
             TYPE_SHADOWTLS -> shadowTLSBean
             TYPE_CHAIN -> chainBean
             TYPE_CONFIG -> configBean
@@ -253,26 +272,24 @@ data class ProxyEntity(
         } ?: error("Null ${displayType()} profile")
     }
 
-    fun haveLink(): Boolean {
-        return when (type) {
-            TYPE_CHAIN -> false
-            TYPE_DIRECT -> false
-            else -> true
-        }
+    /** Determines if has internal link. */
+    fun haveLink(): Boolean = when (type) {
+        TYPE_CHAIN -> false
+        TYPE_DIRECT -> false
+        else -> true
     }
 
-    fun haveStandardLink(): Boolean {
-        return when (requireBean()) {
-            is SSHBean -> false
-            is WireGuardBean -> false
-            is ShadowTLSBean -> false
-            is DirectBean -> false
-            is ConfigBean -> false
-            else -> true
-        }
+    /** Determines if has standard link. */
+    fun haveStandardLink(): Boolean = when (type) {
+        TYPE_SSH -> false
+        TYPE_WG -> false
+        TYPE_SHADOWTLS -> false
+        TYPE_CHAIN -> false
+        TYPE_CONFIG -> false
+        else -> true
     }
 
-    fun toStdLink(compact: Boolean = false): String = with(requireBean()) {
+    fun toStdLink(): String = with(requireBean()) {
         when (this) {
             is SOCKSBean -> toUri()
             is HttpBean -> toUri()
@@ -284,6 +301,7 @@ data class ProxyEntity(
             is TuicBean -> toUri()
             is JuicityBean -> toUri()
             is MieruBean -> toUri()
+            is AnyTLSBean -> toUri()
             else -> toUniversalLink()
         }
     }
@@ -320,7 +338,7 @@ data class ProxyEntity(
 
                             is HysteriaBean -> {
                                 append("\n\n")
-                                append(bean.buildHysteriaConfig(port, null))
+                                append(bean.buildHysteriaConfig(port, false, null))
                             }
 
                             is JuicityBean -> {
@@ -354,7 +372,7 @@ data class ProxyEntity(
             TYPE_TROJAN -> Protocols.isProfileNeedMux(trojanBean!!) && trojanBean!!.serverMux
 
             TYPE_SS -> ssBean!!.run {
-                !sUoT && serverMux
+                !udpOverTcp && serverMux
             }
 
             else -> false
@@ -376,6 +394,7 @@ data class ProxyEntity(
         juicityBean = null
         directBean = null
         shadowTLSBean = null
+        anyTLSBean = null
         chainBean = null
         configBean = null
 
@@ -450,6 +469,11 @@ data class ProxyEntity(
                 shadowTLSBean = bean
             }
 
+            is AnyTLSBean -> {
+                type = TYPE_ANYTLS
+                anyTLSBean = bean
+            }
+
             is ChainBean -> {
                 type = TYPE_CHAIN
                 chainBean = bean
@@ -482,6 +506,7 @@ data class ProxyEntity(
                 TYPE_JUICITY -> JuicitySettingsActivity::class.java
                 TYPE_DIRECT -> DirectSettingsActivity::class.java
                 TYPE_SHADOWTLS -> ShadowTLSSettingsActivity::class.java
+                TYPE_ANYTLS -> AnyTLSSettingsActivity::class.java
                 TYPE_CHAIN -> ChainSettingsActivity::class.java
                 TYPE_CONFIG -> ConfigSettingActivity::class.java
                 else -> throw IllegalArgumentException()

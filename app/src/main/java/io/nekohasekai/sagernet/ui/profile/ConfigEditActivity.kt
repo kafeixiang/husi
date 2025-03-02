@@ -1,11 +1,11 @@
 package io.nekohasekai.sagernet.ui.profile
 
 import android.annotation.SuppressLint
-import androidx.activity.addCallback
 import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.core.widget.addTextChangedListener
 import com.blacksquircle.ui.editorkit.insert
@@ -32,10 +32,18 @@ class ConfigEditActivity : ThemedActivity() {
     private var dirty = false
     var key = Key.SERVER_CONFIG
 
+    override val onBackPressedCallback = object : OnBackPressedCallback(enabled = false) {
+        override fun handleOnBackPressed() {
+            UnsavedChangesDialogFragment().apply {
+                key()
+            }.show(supportFragmentManager, null)
+        }
+    }
+
     class UnsavedChangesDialogFragment : AlertDialogFragment<Empty, Empty>() {
         override fun AlertDialog.Builder.prepare(listener: DialogInterface.OnClickListener) {
             setTitle(R.string.unsaved_changes_prompt)
-            setPositiveButton(R.string.yes) { _, _ ->
+            setPositiveButton(android.R.string.ok) { _, _ ->
                 (requireActivity() as ConfigEditActivity).saveAndExit()
             }
             setNegativeButton(R.string.no) { _, _ ->
@@ -73,6 +81,7 @@ class ConfigEditActivity : ThemedActivity() {
                 if (!dirty) {
                     dirty = true
                     DataStore.dirty = true
+                    onBackPressedCallback.isEnabled = true
                 }
             }
         }
@@ -117,7 +126,7 @@ class ConfigEditActivity : ThemedActivity() {
                     .show()
                 return@setOnClickListener
             }
-            snackbar(R.string.ok).show()
+            snackbar(android.R.string.ok).show()
         }
 
         val extendedKeyboard = findViewById<ExtendedKeyboard>(R.id.extended_keyboard)
@@ -125,15 +134,6 @@ class ConfigEditActivity : ThemedActivity() {
         extendedKeyboard.setHasFixedSize(true)
         extendedKeyboard.submitList("{},:_\"".map { it.toString() })
         extendedKeyboard.setBackgroundColor(getColorAttr(R.attr.primaryOrTextPrimary))
-
-        onBackPressedDispatcher.addCallback {
-            if (dirty) UnsavedChangesDialogFragment().apply {
-                key()
-            }.show(supportFragmentManager, null)
-            else {
-                finish()
-            }
-        }
     }
 
     private fun formatText(): String? {

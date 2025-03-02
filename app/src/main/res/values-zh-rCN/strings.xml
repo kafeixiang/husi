@@ -44,7 +44,6 @@
     <string name="service_mode">运行模式</string>
     <string name="service_mode_proxy">仅代理</string>
     <string name="port_proxy">代理端口</string>
-    <string name="port_http">HTTP 代理端口</string>
     <string name="port_local_dns">本地 DNS 端口</string>
     <string name="allow_access">允许来自局域网的连接</string>
     <string name="allow_access_sum">将入站绑定至 0.0.0.0</string>
@@ -52,7 +51,6 @@
     <string name="cag_route">路由设置</string>
     <string name="inbound_settings">入站设置</string>
     <string name="general_settings">软件设置</string>
-    <string name="require_http">启用 HTTP 入站</string>
     <string name="cag_ws">WebSocket 设置</string>
     <string name="ws_browser_forwarding">浏览器转发</string>
     <string name="ws_browser_forwarding_sum">转发相应的 WebSockets 到浏览器.</string>
@@ -172,7 +170,6 @@
     <string name="plugin_auto_connect_unlock_only">此插件可能不支持自动连接</string>
     <string name="proxy_cat">服务器设置</string>
     <string name="unsaved_changes_prompt">是否要保存修改？</string>
-    <string name="yes">是</string>
     <string name="no">否</string>
     <string name="apply">应用</string>
     <string name="license">授权协议</string>
@@ -276,7 +273,6 @@
     <string name="balancer_strategy">策略</string>
     <string name="list">列表</string>
     <string name="random">随机</string>
-    <string name="api_port">API 端口</string>
     <string name="probe_interval">负载均衡观测间隔</string>
     <string name="standard">标准</string>
     <string name="unavailable">不可用</string>
@@ -460,8 +456,6 @@
     <string name="custom_config_json">自定义配置 JSON</string>
     <string name="is_outbound_only">设置的 JSON 是出站</string>
     <string name="save">保存</string>
-    <string name="set_panel_url">设置面板 URL</string>
-    <string name="enable_clash_api">Clash API 监听地址</string>
     <string name="xtls_flow">Flow（VLESS 子协议）</string>
     <string name="log_level">日志级别</string>
     <string name="need_restart">重新启动应用程序以应用更改</string>
@@ -499,8 +493,6 @@
     <string name="vpn_app_type_other">其他</string>
     <string name="vpn_core_type_unknown">未知</string>
     <string name="assets_update">更新 geo 资源</string>
-    <string name="cazilla">使用 Mozilla 证书 CA 机构</string>
-    <string name="cazilla_long">可能能防止能操纵 CA 机构的力量攻击。也可以让旧的设备得以使用新的证书。</string>
     <string name="sekai">世界</string>
     <string name="test_timeout">测试超时 (ms)</string>
     <string name="mux_preference">多路复用设置</string>
@@ -511,7 +503,6 @@
     <string name="action_camera_switch">切换摄像头</string>
     <string name="action_flash_off">关闭闪光灯</string>
     <string name="location_permission_title">位置权限</string>
-    <string name="ok">好</string>
     <string name="no_thanks">不了，谢谢</string>
     <string name="location_permission_description">您的路由规则包含 Wi-Fi SSID 或 Wi-Fi BSSID 路由规则。为使其正常工作，虎兕 使用后台位置权限获取有关已连接 Wi-Fi 网络的信息。此信息仅用于路由目的。</string>
     <string name="location_permission_background_description">在 Android 10 及更高版本上，需要后台位置权限。选择“始终允许”以授予权限。</string>
@@ -589,4 +580,14 @@
     <string name="network_interface_preference_detail">启用多网络接口拨号</string>
     <string name="hybrid">混连</string>
     <string name="fallback">回退</string>
+    <string name="listen_port">监听端口</string>
+    <string name="certificate_authority">数字证书认证机构</string>
+    <string name="system_and_user">系统和用户</string>
+    <string name="http_proxy_bypass">HTTP 代理绕过列表</string>
+    <string name="v2ray_transport">V2Ray 传输层</string>
+    <string name="reality_public_key">REALITY 公钥</string>
+    <string name="import_http_url">您正在导入一个 HTTP URL，您需要进行？</string>
+    <string name="idle_session_check_interval">空闲会话检查间隔</string>
+    <string name="idle_session_timeout">空闲会话超时</string>
+    <string name="min_idle_session">最小闲置会话数</string>
 </resources>

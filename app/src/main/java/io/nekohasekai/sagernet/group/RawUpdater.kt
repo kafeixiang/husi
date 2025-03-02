@@ -10,6 +10,8 @@ import io.nekohasekai.sagernet.database.GroupManager
 import io.nekohasekai.sagernet.database.ProxyGroup
 import io.nekohasekai.sagernet.database.SubscriptionBean
 import io.nekohasekai.sagernet.fmt.AbstractBean
+import io.nekohasekai.sagernet.fmt.anytls.AnyTLSBean
+import io.nekohasekai.sagernet.fmt.config.ConfigBean
 import io.nekohasekai.sagernet.fmt.http.HttpBean
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
 import io.nekohasekai.sagernet.fmt.hysteria.parseHysteria1Json
@@ -37,7 +39,6 @@ import io.nekohasekai.sagernet.ktx.mapX
 import io.nekohasekai.sagernet.ktx.parseProxies
 import io.nekohasekai.sagernet.ktx.toStringPretty
 import libcore.Libcore
-import moe.matsuri.nb4a.proxy.config.ConfigBean
 import moe.matsuri.nb4a.utils.JavaUtil.gson
 import org.ini4j.Ini
 import org.json.JSONArray
@@ -80,25 +81,26 @@ object RawUpdater : GroupUpdater() {
 
             // https://github.com/crossutility/Quantumult/blob/master/extra-subscription-feature.md
             // Subscription-Userinfo: upload=2375927198; download=12983696043; total=1099511627776; expire=1862111613
+            // Be careful that some value may be empty.
             val userInfo = response.getHeader("Subscription-Userinfo")
             if (userInfo.isNotBlank()) {
                 var used = 0L
                 var total = 0L
-                var expired = -1L
+                var expired = 0L
                 for (info in userInfo.split("; ")) {
                     info.split("=", limit = 2).let {
                         if (it.size != 2) return@let
                         when (it[0]) {
-                            "upload", "download" -> used += it[1].toLong()
-                            "total" -> total = it[1].toLong()
-                            "expire" -> expired = it[1].toLong()
+                            "upload", "download" -> used += it[1].toLongOrNull() ?: 0
+                            "total" -> total = it[1].toLongOrNull() ?: 0
+                            "expire" -> expired = it[1].toLongOrNull() ?: 0
                         }
                     }
                 }
                 subscription.apply {
                     bytesUsed = used
                     bytesRemaining = total - used
-                    if (expired > 0) expiryDate = expired
+                    expiryDate = expired
                 }
             }
         }
@@ -139,7 +141,7 @@ object RawUpdater : GroupUpdater() {
                                     else -> SOCKSBean.PROTOCOL_SOCKS5
                                 }
 
-                                "udp_over_tcp" -> sUoT = parseUot(opt.value)
+                                "udp_over_tcp" -> udpOverTcp = parseUot(opt.value)
                             }
                         }
                     })
@@ -168,7 +170,7 @@ object RawUpdater : GroupUpdater() {
                                                 "enabled" -> ech =
                                                     echOpt.value.toString().toBoolean()
 
-                                                "config" -> echCfg =
+                                                "config" -> echConfig =
                                                     listable<String>(echOpt.value)?.joinToString("\n")
                                             }
                                         }
@@ -182,10 +184,10 @@ object RawUpdater : GroupUpdater() {
 
                                         "reality" -> for (realityOpt in (tlsOpt.value as Map<String, Any>)) {
                                             when (realityOpt.key) {
-                                                "public_key" -> realityPubKey =
+                                                "public_key" -> realityPublicKey =
                                                     realityOpt.value.toString()
 
-                                                "short_id" -> realityShortId =
+                                                "short_id" -> realityShortID =
                                                     realityOpt.value.toString()
                                             }
                                         }
@@ -204,7 +206,7 @@ object RawUpdater : GroupUpdater() {
                                 "method" -> method = opt.value.toString()
                                 "plugin" -> pluginName = opt.value.toString()
                                 "plugin_opts" -> pluginOpt = opt.value.toString()
-                                "udp_over_tcp" -> sUoT = parseUot(opt.value)
+                                "udp_over_tcp" -> udpOverTcp = parseUot(opt.value)
                             }
                         }
                         if (pluginName.isNotBlank()) plugin = "$pluginName;$pluginOpt"
@@ -244,7 +246,10 @@ object RawUpdater : GroupUpdater() {
 
                                 "transport" -> for (transportOpt in (opt.value as Map<String, Any>)) {
                                     when (transportOpt.key) {
-                                        "type" -> bean.type = transportOpt.value.toString()
+                                        "type" -> {
+                                            bean.v2rayTransport = transportOpt.value.toString()
+                                        }
+
                                         "host" -> listable<String>(transportOpt.value)?.firstOrNull()
                                         "path", "service_name" -> bean.path =
                                             transportOpt.value.toString()
@@ -278,7 +283,7 @@ object RawUpdater : GroupUpdater() {
                                                 "enabled" -> bean.ech =
                                                     echOpt.value.toString().toBoolean()
 
-                                                "config" -> bean.echCfg =
+                                                "config" -> bean.echConfig =
                                                     listable<String>(tlsOpt.value)
                                                         ?.joinToString("\n")
                                             }
@@ -293,10 +298,10 @@ object RawUpdater : GroupUpdater() {
 
                                         "reality" -> for (realityOpt in (tlsOpt.value as Map<String, Any>)) {
                                             when (realityOpt.key) {
-                                                "public_key" -> bean.realityPubKey =
+                                                "public_key" -> bean.realityPublicKey =
                                                     realityOpt.value.toString()
 
-                                                "short_id" -> bean.realityShortId =
+                                                "short_id" -> bean.realityShortID =
                                                     realityOpt.value.toString()
                                             }
                                         }
@@ -317,6 +322,7 @@ object RawUpdater : GroupUpdater() {
                             mtu = proxy["mtu"]?.toString()?.toIntOrNull()
                             localAddress =
                                 listable<String>(proxy["address"])?.joinToString("\n")
+                            listenPort = proxy["listen_port"]?.toString()?.toIntOrNull()
                             privateKey = proxy["private_key"]?.toString()
 
                             for (opt in peer) {
@@ -324,8 +330,8 @@ object RawUpdater : GroupUpdater() {
                                 when (opt.key) {
                                     "address" -> serverAddress = opt.value.toString()
                                     "port" -> serverPort = opt.value.toString().toInt()
-                                    "public_key" -> peerPublicKey = opt.value.toString()
-                                    "pre_shared_key" -> peerPreSharedKey = opt.value.toString()
+                                    "public_key" -> publicKey = opt.value.toString()
+                                    "pre_shared_key" -> preSharedKey = opt.value.toString()
                                     "reserved" -> reserved = when (val v = opt.value) {
                                         is String? -> v
 
@@ -342,12 +348,17 @@ object RawUpdater : GroupUpdater() {
 
                     "hysteria" -> proxies.add(HysteriaBean().apply {
                         protocolVersion = HysteriaBean.PROTOCOL_VERSION_1
+                        val tmpPorts = mutableListOf<String>()
                         for (opt in proxy) {
                             if (opt.value == null) continue
                             when (opt.key) {
                                 "tag" -> name = opt.value.toString()
                                 "server" -> serverAddress = opt.value.toString()
-                                "server_port" -> serverPorts = opt.value.toString()
+                                "server_port" -> tmpPorts.add(opt.value.toString())
+                                "server_ports" -> listable<String>(opt.value)?.let {
+                                    tmpPorts.addAll(it)
+                                }
+
                                 "obfs" -> obfuscation = opt.value.toString()
 
                                 "auth" -> {
@@ -369,7 +380,7 @@ object RawUpdater : GroupUpdater() {
                                         "alpn" -> alpn =
                                             listable<String>(tlsOpt.value)?.joinToString("\n")
 
-                                        "certificate" -> caText =
+                                        "certificate" -> certificates =
                                             listable<String>(tlsOpt.value)?.joinToString("\n")
 
                                         "ech" -> for (echOpt in (tlsOpt.value as Map<String, Any>)) {
@@ -377,7 +388,7 @@ object RawUpdater : GroupUpdater() {
                                                 "enabled" -> ech =
                                                     echOpt.value.toString().toBoolean()
 
-                                                "config" -> echCfg =
+                                                "config" -> echConfig =
                                                     listable<String>(echOpt.value)?.joinToString("\n")
                                             }
                                         }
@@ -385,17 +396,22 @@ object RawUpdater : GroupUpdater() {
                                 }
                             }
                         }
+                        serverPorts = tmpPorts.joinToString(",")
                     })
 
                     "hysteria2" -> proxies.add(HysteriaBean().apply {
                         protocolVersion = HysteriaBean.PROTOCOL_VERSION_2
+                        val tmpPorts = mutableListOf<String>()
                         for (opt in proxy) {
                             if (opt.value == null) continue
                             when (opt.key) {
                                 "tag" -> name = opt.value.toString()
                                 "server" -> serverAddress = opt.value.toString()
-                                "server_port" -> serverPorts = opt.value.toString()
-                                "server_ports" -> listable<String>(opt.value)?.joinToString(",")
+                                "server_port" -> tmpPorts.add(opt.value.toString())
+                                "server_ports" -> listable<String>(opt.value)?.let {
+                                    tmpPorts.addAll(it)
+                                }
+
                                 "hop_interval" -> hopInterval = opt.value.toString()
                                 "obfs" -> for (obfsOpt in (opt.value as Map<String, Any>)) {
                                     when (obfsOpt.key) {
@@ -414,15 +430,17 @@ object RawUpdater : GroupUpdater() {
                                         "alpn" -> alpn = listable<String>(tlsOpt.value)
                                             ?.joinToString("\n")
 
-                                        "certificate" -> caText = listable<String>(tlsOpt.value)
-                                            ?.joinToString("\n")
+                                        "certificate" -> {
+                                            certificates =
+                                                listable<String>(tlsOpt.value)?.joinToString("\n")
+                                        }
 
                                         "ech" -> for (echOpt in (tlsOpt.value as Map<String, Any>)) {
                                             when (echOpt.key) {
                                                 "enabled" -> ech =
                                                     echOpt.value.toString().toBoolean()
 
-                                                "config" -> echCfg =
+                                                "config" -> echConfig =
                                                     listable<String>(echOpt.value)
                                                         ?.joinToString("\n")
                                             }
@@ -432,6 +450,7 @@ object RawUpdater : GroupUpdater() {
 
                             }
                         }
+                        serverPorts = tmpPorts.joinToString(",")
                     })
 
                     "tuic" -> proxies.add(TuicBean().apply {
@@ -464,15 +483,17 @@ object RawUpdater : GroupUpdater() {
                                         "alpn" -> alpn = listable<String>(tlsOpt.value)
                                             ?.joinToString("\n")
 
-                                        "certificate" -> caText = listable<String>(tlsOpt.value)
-                                            ?.joinToString("\n")
+                                        "certificate" -> {
+                                            certificates = listable<String>(tlsOpt.value)
+                                                ?.joinToString("\n")
+                                        }
 
                                         "ech" -> for (echOpt in (tlsOpt.value as Map<String, Any>)) {
                                             when (echOpt.key) {
                                                 "enabled" -> ech =
                                                     echOpt.value.toString().toBoolean()
 
-                                                "config" -> echCfg =
+                                                "config" -> echConfig =
                                                     listable<String>(echOpt.value)?.joinToString("\n")
                                             }
                                         }
@@ -494,6 +515,47 @@ object RawUpdater : GroupUpdater() {
                                 }
 
                                 "host_key" -> listable<String>(opt.value)?.firstOrNull()
+                            }
+                        }
+                    })
+
+                    "anytls" -> proxies.add(AnyTLSBean().apply {
+                        applyFromMap(proxy) { opt ->
+                            when (opt.key) {
+                                "idle_session_check_interval" -> {
+                                    idleSessionCheckInterval = opt.value.toString()
+                                }
+
+                                "idle_session_timeout" -> {
+                                    idleSessionTimeout = opt.value.toString()
+                                }
+
+                                "min_idle_session" -> {
+                                    minIdleSession = opt.value.toString().toIntOrNull() ?: 0
+                                }
+
+                                "tls" -> for (tlsOpt in opt.value as Map<String, Any?>) {
+                                    when (tlsOpt.key) {
+                                        "server_name" -> serverName = tlsOpt.value.toString()
+                                        "insecure" -> allowInsecure =
+                                            tlsOpt.value.toString().toBoolean()
+
+                                        "alpn" -> alpn = listable<String>(tlsOpt.value)
+                                            ?.joinToString("\n")
+
+                                        "certificate" -> certificates =
+                                            listable<String>(tlsOpt.value)?.joinToString("\n")
+
+                                        "ech" -> for (echOpt in (tlsOpt.value as Map<String, Any>)) {
+                                            when (echOpt.key) {
+                                                "config" -> echConfig =
+                                                    listable<String>(echOpt.value)?.joinToString("\n")
+                                            }
+                                        }
+                                    }
+                                }
+
+                                else -> null
                             }
                         }
                     })
@@ -611,6 +673,7 @@ object RawUpdater : GroupUpdater() {
         bean.localAddress = localAddresses.flatMap { it.split(",") }.joinToString("\n")
         bean.privateKey = iface["PrivateKey"]
         bean.mtu = iface["MTU"]?.toIntOrNull() ?: 1408
+        bean.listenPort = iface["ListenPort"]?.toInt()
         val peers = ini.getAll("Peer")
         if (peers.isNullOrEmpty()) error("Missing 'Peer' selections")
         val beans = mutableListOf<WireGuardBean>()
@@ -624,8 +687,8 @@ object RawUpdater : GroupUpdater() {
                         peerBean.serverAddress = keyValue.substringBeforeLast(":")
                     }
 
-                    "publickey" -> peerBean.peerPublicKey = keyValue ?: continue@loopPeer
-                    "presharedkey" -> peerBean.peerPreSharedKey = keyValue
+                    "publickey" -> peerBean.publicKey = keyValue ?: continue@loopPeer
+                    "presharedkey" -> peerBean.preSharedKey = keyValue
                 }
             }
             beans.add(peerBean.applyDefaultValues())
