@@ -237,10 +237,6 @@
     <string name="select_profile">選擇設定檔</string>
     <string name="proxy_chain">代理鏈結</string>
     <string name="custom_config">客製化設定檔</string>
-    <string name="balancer">負載平衡器</string>
-    <string name="balancer_settings">負載平衡器設定</string>
-    <string name="balancer_type">類型</string>
-    <string name="balancer_strategy">策略</string>
     <string name="chain_settings">鏈結設定</string>
     <string name="config_settings">設定檔設定</string>
     <string name="circular_reference">循環參考</string>
@@ -267,8 +263,6 @@
     <string name="enable_log">啟用記錄檔</string>
     <string name="enable_log_sum">用於除錯用途</string>
     <string name="list">列表</string>
-    <string name="random">隨機</string>
-    <string name="probe_interval">負載平衡器觀測間隔</string>
     <string name="standard">標準</string>
     <string name="unavailable">無法使用</string>
     <string name="always_show_address">始終顯示位址</string>
@@ -485,7 +479,6 @@
     <string name="create_shortcut">建立快捷方式</string>
     <string name="bypass_lan_in_core">在核心中繞過 LAN</string>
     <string name="need_restart">重新啟動應用程式以應用更改</string>
-    <string name="use_selector">啟用 selector （免重載切換節點）</string>
     <string name="front_proxy">前端代理</string>
     <string name="landing_proxy">登陸代理</string>
     <string name="resolve_server">根據IPv6策略解析伺服器位址</string>
@@ -546,7 +539,6 @@
     <string name="close">關閉</string>
     <string name="custom_rule_provider">自定義規則提供者</string>
     <string name="pin_log">固定日誌</string>
-    <string name="interrupt_selector">(Selector) 切換配置時中斷所有連接</string>
     <string name="speed_test">測速</string>
     <string name="client_type">客戶端型別</string>
     <string name="traffic_status">狀態</string>

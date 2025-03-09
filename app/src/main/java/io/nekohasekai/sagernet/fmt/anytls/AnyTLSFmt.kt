@@ -6,7 +6,7 @@ import io.nekohasekai.sagernet.ktx.JSONMap
 import io.nekohasekai.sagernet.ktx.blankAsNull
 import io.nekohasekai.sagernet.ktx.map
 import libcore.Libcore
-import moe.matsuri.nb4a.SingBoxOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions
 import moe.matsuri.nb4a.utils.listByLineOrComma
 import org.json.JSONObject
 

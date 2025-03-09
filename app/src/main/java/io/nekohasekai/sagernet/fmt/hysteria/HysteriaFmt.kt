@@ -12,13 +12,12 @@ import io.nekohasekai.sagernet.ktx.isIpAddress
 import io.nekohasekai.sagernet.ktx.linkBoolean
 import io.nekohasekai.sagernet.ktx.map
 import io.nekohasekai.sagernet.ktx.mapX
-import io.nekohasekai.sagernet.ktx.toJSONMap
 import io.nekohasekai.sagernet.ktx.toStringPretty
 import io.nekohasekai.sagernet.ktx.wrapIPV6Host
 import libcore.Libcore
-import moe.matsuri.nb4a.SingBoxOptions
-import moe.matsuri.nb4a.SingBoxOptions.OutboundECHOptions
-import moe.matsuri.nb4a.SingBoxOptions.OutboundTLSOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.OutboundECHOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.OutboundTLSOptions
 import moe.matsuri.nb4a.utils.listByLineOrComma
 import org.json.JSONObject
 import java.io.File

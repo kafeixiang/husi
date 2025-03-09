@@ -10,6 +10,7 @@ import io.nekohasekai.sagernet.fmt.direct.DirectBean;
 import io.nekohasekai.sagernet.fmt.http.HttpBean;
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean;
 import io.nekohasekai.sagernet.fmt.internal.ChainBean;
+import io.nekohasekai.sagernet.fmt.internal.GroupBean;
 import io.nekohasekai.sagernet.fmt.juicity.JuicityBean;
 import io.nekohasekai.sagernet.fmt.mieru.MieruBean;
 import io.nekohasekai.sagernet.fmt.naive.NaiveBean;
@@ -163,6 +164,12 @@ public class KryoConverters {
     public static SubscriptionBean subscriptionDeserialize(byte[] bytes) {
         if (JavaUtil.isEmpty(bytes)) return null;
         return deserialize(new SubscriptionBean(), bytes);
+    }
+
+    @TypeConverter
+    public static GroupBean groupDeserialize(byte[] bytes) {
+        if (JavaUtil.isEmpty(bytes)) return null;
+        return deserialize(new GroupBean(), bytes);
     }
 
 }

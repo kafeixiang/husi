@@ -203,10 +203,6 @@
     <string name="select_profile">Seleccionar perfil</string>
     <string name="proxy_chain">Cadena del proxy</string>
     <string name="custom_config">Config. personalizada</string>
-    <string name="balancer">Equilibrador</string>
-    <string name="balancer_settings">Ajustes del equilibrador</string>
-    <string name="balancer_type">Tipo</string>
-    <string name="balancer_strategy">Estrategia</string>
     <string name="chain_settings">Ajustes de cadena</string>
     <string name="config_settings">Ajustes de config.</string>
     <string name="circular_reference">Referencia circular</string>
@@ -286,9 +282,7 @@
     <string name="enable_log">Activar registro</string>
     <string name="enable_log_sum">Para propósitos de depuración</string>
     <string name="list">Lista</string>
-    <string name="random">Aleatorio</string>
     <string name="leastPing" translatable="false">Ping</string>
-    <string name="probe_interval">Intervalo de observación del equilibrador</string>
     <string name="standard">Estándar</string>
     <string name="available" translatable="false">%dms</string>
     <string name="unavailable">No disponible</string>
@@ -468,7 +462,6 @@
     <string name="log_level">Nivel de registro</string>
     <string name="xtls_flow">Flow (Subprotocolo VLESS)</string>
     <string name="utls_fingerprint">Huella digital uTLS</string>
-    <string name="use_selector">Utilizar selector</string>
     <string name="domain_strategy_for_remote">Estrategia de dominio para remoto</string>
     <string name="domain_strategy_for_direct">Estrategia de dominio para directo</string>
     <string name="domain_strategy_for_server">Est. de dominio para direc. del servidor</string>
@@ -562,7 +555,6 @@
     <string name="padding">Relleno</string>
     <string name="custom_rule_provider">Proveedor de reglas personalizadas</string>
     <string name="pin_log">Fijar registro</string>
-    <string name="interrupt_selector">(Selector) Interrumpir todas las conexiones cuando se cambia la configuración</string>
     <string name="client_type">Tipo de cliente</string>
     <string name="done">Hecho</string>
     <string name="custom_plugin_prefix">Prefijo de plugin personalizado</string>

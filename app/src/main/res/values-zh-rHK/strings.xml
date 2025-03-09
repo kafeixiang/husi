@@ -59,7 +59,6 @@
     <string name="action_scan_china_apps">尋找國產應用程式</string>
     <string name="download">下載</string>
     <string name="apply">套用</string>
-    <string name="random">隨機</string>
     <string name="connection_test">連接測試</string>
     <string name="group_create">創建分組</string>
     <string name="group_delete_confirm_prompt">你確定要移除這個分組嗎？</string>

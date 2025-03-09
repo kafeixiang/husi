@@ -222,12 +222,11 @@
     <string name="action_juicity" translatable="false">Juicity</string>
     <string name="action_direct" translatable="false">Direct</string>
     <string name="action_anytls" translatable="false">AnyTLS</string>
+    <string name="action_urltest" translatable="false">URLTest</string>
+    <string name="action_selector" translatable="false">Selector</string>
+    <string name="action_balancer" translatable="false">Balancer</string>
     <string name="proxy_chain">Proxy Chain</string>
     <string name="custom_config">Custom Config</string>
-    <string name="balancer">Balancer</string>
-    <string name="balancer_settings">Balancer Settings</string>
-    <string name="balancer_type">Type</string>
-    <string name="balancer_strategy">Strategy</string>
     <string name="chain_settings">Chain Settings</string>
     <string name="config_settings">Config Settings</string>
     <string name="circular_reference">Circular reference</string>
@@ -312,9 +311,7 @@
     <string name="enable_log">Enable Log</string>
     <string name="enable_log_sum">For debugging purposes</string>
     <string name="list">List</string>
-    <string name="random">Random</string>
     <string name="leastPing" translatable="false">Ping</string>
-    <string name="probe_interval">Balancer observation interval</string>
     <string name="standard">Standard</string>
     <string name="available" translatable="false">%dms</string>
     <string name="unavailable">Unavailable</string>
@@ -515,7 +512,6 @@
     <string name="xtls_flow">Flow (VLESS Sub-protocol)</string>
     <string name="bypass_lan_in_core">Bypass LAN in Core</string>
     <string name="need_restart">Restart APP to apply changes</string>
-    <string name="use_selector">Use selector</string>
     <string name="front_proxy">Front proxy</string>
     <string name="landing_proxy">Landing Proxy</string>
     <string name="action_shadowtls" translatable="false">ShadowTLS</string>
@@ -610,7 +606,6 @@
     <string name="padding">Padding</string>
     <string name="custom_rule_provider">Custom Rule Provider</string>
     <string name="pin_log">Pin Log</string>
-    <string name="interrupt_selector">(Selector) Interrupt all connections when switch configuration</string>
     <string name="client_type">Client Type</string>
     <string name="done">Done</string>
     <string name="custom_plugin_prefix">Custom plugin prefix</string>
@@ -662,4 +657,11 @@
     <string name="idle_session_timeout">IDLE Session Timeout</string>
     <string name="min_idle_session">Mininum IDLE Session</string>
     <string name="persistent_keepalive_interval">Persistent Keepalive Interval</string>
+    <string name="management">Management</string>
+    <string name="proxy_group">Proxy Group</string>
+    <string name="interrupt_exist_connections">Interrupt Exist Connections</string>
+    <string name="urltest_interval">URLTest Interval</string>
+    <string name="idle_timeout">IDLE Timeout</string>
+    <string name="urltest_tolerance">Tolerance</string>
+    <string name="action_proxy_group">Proxy Group</string>
 </resources>

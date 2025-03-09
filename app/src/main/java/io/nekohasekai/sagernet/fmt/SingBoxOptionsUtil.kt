@@ -1,14 +1,13 @@
 package io.nekohasekai.sagernet.fmt
 
 import io.nekohasekai.sagernet.database.DataStore
-import moe.matsuri.nb4a.SingBoxOptions
-import moe.matsuri.nb4a.SingBoxOptions.DNSRule_Default
-import moe.matsuri.nb4a.SingBoxOptions.DNSRule_Logical
-import moe.matsuri.nb4a.SingBoxOptions.RULE_SET_FORMAT_BINARY
-import moe.matsuri.nb4a.SingBoxOptions.RULE_SET_TYPE_LOCAL
-import moe.matsuri.nb4a.SingBoxOptions.RULE_SET_TYPE_REMOTE
-import moe.matsuri.nb4a.SingBoxOptions.Rule_Default
-import moe.matsuri.nb4a.SingBoxOptions.Rule_Logical
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.DNSRule_Default
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.DNSRule_Logical
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.RULE_SET_FORMAT_BINARY
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.RULE_SET_TYPE_LOCAL
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.RULE_SET_TYPE_REMOTE
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.Rule_Default
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.Rule_Logical
 
 object SingBoxOptionsUtil {
 

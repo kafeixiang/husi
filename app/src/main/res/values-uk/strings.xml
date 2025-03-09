@@ -166,9 +166,6 @@
     <string name="vpn_permission_denied">Відмовлено у дозволі на створення служби VPN</string>
     <string name="reboot_required">Не вдалося запустити службу VPN. Можливо вам необхідно перезавантажити пристрій.</string>
     <string name="select_profile">Обрати профіль</string>
-    <string name="balancer_settings">Налаштування балансеру</string>
-    <string name="balancer_type">Тип</string>
-    <string name="balancer_strategy">Стратегія</string>
     <string name="circular_reference_sum">Маршрут не може містити сам себе.</string>
     <string name="action_import">Імпортувати з буферу обміну</string>
     <string name="action_import_file">Імпортувати з файла</string>
@@ -186,7 +183,6 @@
     <string name="plugin_auto_connect_unlock_only">Цей плагін може не працювати з автопідключенням</string>
     <string name="auto">Авто</string>
     <string name="enable_log_sum">Для налагодження</string>
-    <string name="random">Випадковий</string>
     <string name="unavailable">Недоступний</string>
     <string name="always_show_address">Завжди показувати адресу</string>
     <string name="always_show_address_sum">Завжди показувати адресу сервера на картці конфігурації</string>
@@ -234,7 +230,6 @@
     <string name="domain_strategy_for_direct">Стратегія домену для Прямого</string>
     <string name="domain_strategy_for_server">Стратегія домену для Адреси сервера</string>
     <string name="need_restart">Перезавантажте застосунок для застосування змін</string>
-    <string name="use_selector">Використовувати селектор</string>
     <string name="front_proxy">Зовнішній проксі</string>
     <string name="landing_proxy">Кінцевий проксі</string>
     <string name="protocol_version">Версія протоколу</string>
@@ -298,7 +293,6 @@
     <string name="share">Поділитися</string>
     <string name="add_profile">Додати профіль</string>
     <string name="custom_config">Користувацька конфігурація</string>
-    <string name="balancer">Балансер</string>
     <string name="config_settings">Налаштування конфігурації</string>
     <string name="circular_reference">Циклічне посилання</string>
     <string name="action_create_group">Порожня група</string>
@@ -337,7 +331,6 @@
     <string name="disable">Вимкнути</string>
     <string name="enable_log">Увімкнути журнал</string>
     <string name="list">Список</string>
-    <string name="probe_interval">Інтервал спостереження балансера</string>
     <string name="standard">Стандарт</string>
     <string name="connection_test">Тест підключення</string>
     <string name="connection_test_clear_results">Очистити результати тесту</string>
@@ -522,7 +515,6 @@
     <string name="chain">Ланцюг</string>
     <string name="close">Закрити</string>
     <string name="pin_log">Закріпити лог</string>
-    <string name="interrupt_selector">(Selector) Перервати всі з\'єднання під час зміни конфігурації</string>
     <string name="client_type">Тип клієнта</string>
     <string name="custom_rule_provider">Користувацький постачальник ресурсів правил</string>
     <string name="padding">Відступ</string>

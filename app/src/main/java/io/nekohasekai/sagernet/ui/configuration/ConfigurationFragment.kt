@@ -114,6 +114,7 @@ import io.nekohasekai.sagernet.fmt.config.ConfigBean
 import io.nekohasekai.sagernet.ui.ThemedActivity
 import io.nekohasekai.sagernet.ui.profile.AnyTLSSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.ConfigSettingActivity
+import io.nekohasekai.sagernet.ui.profile.ProxyGroupSettingsActivity
 import moe.matsuri.nb4a.utils.blur
 import moe.matsuri.nb4a.utils.closeQuietly
 import moe.matsuri.nb4a.utils.setOnFocusCancel
@@ -523,6 +524,10 @@ class ConfigurationFragment @JvmOverloads constructor(
 
             R.id.action_new_chain -> {
                 startActivity(Intent(requireActivity(), ChainSettingsActivity::class.java))
+            }
+
+            R.id.action_new_proxy_group -> {
+                startActivity(Intent(requireActivity(), ProxyGroupSettingsActivity::class.java))
             }
 
             R.id.action_clear_traffic_statistics -> runOnDefaultDispatcher {
@@ -1690,7 +1695,11 @@ class ConfigurationFragment @JvmOverloads constructor(
                         }
 
                         val bean = proxyEntity.requireBean()
-                        if (proxyEntity.type == ProxyEntity.TYPE_CHAIN || proxyEntity.mustUsePlugin() || (bean as? ConfigBean)?.type == ConfigBean.TYPE_CONFIG) {
+                        if (
+                            proxyEntity.type == ProxyEntity.TYPE_CHAIN ||
+                            proxyEntity.type == ProxyEntity.TYPE_GROUP ||
+                            proxyEntity.mustUsePlugin() ||
+                            (bean as? ConfigBean)?.type == ConfigBean.TYPE_CONFIG) {
                             popup.menu.removeItem(R.id.action_group_outbound)
                         }
 

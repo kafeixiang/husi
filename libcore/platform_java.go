@@ -11,8 +11,9 @@ type PlatformInterface interface {
 	StartDefaultInterfaceMonitor(listener InterfaceUpdateListener) error
 	CloseDefaultInterfaceMonitor(listener InterfaceUpdateListener) error
 	GetInterfaces() (NetworkInterfaceIterator, error)
+
 	DeviceName() string
 	AnchorSSID() string
-
 	IsForTest() bool
+	GroupCallback(tag string)
 }

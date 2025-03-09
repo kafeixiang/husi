@@ -210,6 +210,9 @@
             android:name="io.nekohasekai.sagernet.ui.profile.ConfigSettingActivity"
             android:configChanges="uiMode" />
         <activity
+            android:name="io.nekohasekai.sagernet.ui.profile.ProxyGroupSettingsActivity"
+            android:configChanges="uiMode" />
+        <activity
             android:name=".ui.GroupSettingsActivity"
             android:configChanges="uiMode" />
         <activity
