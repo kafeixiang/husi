@@ -97,7 +97,6 @@ object Key {
 
     const val APP_TLS_VERSION = "appTLSVersion"
     const val CERT_PROVIDER = "certProvider"
-    const val INTERRUPT_SELECTOR = "interruptSelector"
 
     const val TRAFFIC_DESCENDING = "trafficDescending"
     const val TRAFFIC_SORT_MODE = "trafficSortMode"
@@ -201,6 +200,16 @@ object Key {
     const val PRE_SHARED_KEY = "preSharedKey"
     const val SERVER_PERSISTENT_KEEPALIVE_INTERVAL = "serverPersistentKeepaliveInterval"
 
+    const val SERVER_MANAGEMENT = "serverManagement"
+    const val SERVER_INTERRUPT_EXIST_CONNECTIONS = "serverInterruptExistConnections"
+    const val SERVER_TEST_URL = "serverTestURL"
+    const val SERVER_TEST_INTERVAL = "serverTestInterval"
+    const val SERVER_IDLE_TIMEOUT = "serverIdleTimeout"
+    const val SERVER_TOLERANCE = "serverTolerance"
+    const val SERVER_TYPE = "serverType"
+    const val SERVER_GROUP = "serverGroup"
+    const val SERVER_PROXIES = "serverProxies"
+
     const val ROUTE_NAME = "routeName"
     const val ROUTE_DOMAIN = "routeDomain"
     const val ROUTE_IP = "routeIP"
@@ -223,7 +232,6 @@ object Key {
     const val GROUP_NAME = "groupName"
     const val GROUP_TYPE = "groupType"
     const val GROUP_ORDER = "groupOrder"
-    const val GROUP_IS_SELECTOR = "groupIsSelector"
     const val GROUP_FRONT_PROXY = "groupFrontProxy"
     const val GROUP_LANDING_PROXY = "groupLandingProxy"
 

@@ -34,7 +34,6 @@ import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.ui.ThemedActivity
 import kotlinx.coroutines.*
 import moe.matsuri.nb4a.utils.NGUtil
-import moe.matsuri.nb4a.utils.findGroup
 import java.io.FileDescriptor
 import java.net.InetAddress
 import java.net.Socket
@@ -47,7 +46,6 @@ import kotlin.coroutines.Continuation
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty0
-import com.google.gson.annotations.SerializedName
 
 
 inline fun <T> Iterable<T>.forEachTry(action: (T) -> Unit) {
@@ -216,14 +214,6 @@ fun Fragment.startFilesForResult(
 fun Fragment.needReload() {
     if (DataStore.serviceState.started) {
         snackbar(getString(R.string.need_reload)).setAction(R.string.apply) {
-            // When enabled selector, reload will not restart core.
-            if (SagerDatabase.proxyDao.getById(DataStore.selectedProxy)
-                    ?.findGroup()?.isSelector == true
-            ) {
-                SagerNet.stopService()
-                SagerNet.startService()
-                return@setAction
-            }
             SagerNet.reloadService()
         }.show()
     }

@@ -29,6 +29,7 @@ import io.nekohasekai.sagernet.fmt.hysteria.buildHysteriaConfig
 import io.nekohasekai.sagernet.fmt.hysteria.canUseSingBox
 import io.nekohasekai.sagernet.fmt.hysteria.toUri
 import io.nekohasekai.sagernet.fmt.internal.ChainBean
+import io.nekohasekai.sagernet.fmt.internal.GroupBean
 import io.nekohasekai.sagernet.fmt.juicity.JuicityBean
 import io.nekohasekai.sagernet.fmt.juicity.buildJuicityConfig
 import io.nekohasekai.sagernet.fmt.juicity.toUri
@@ -52,7 +53,6 @@ import io.nekohasekai.sagernet.fmt.v2ray.isTLS
 import io.nekohasekai.sagernet.fmt.v2ray.toUriVMessVLESSTrojan
 import io.nekohasekai.sagernet.fmt.wireguard.WireGuardBean
 import io.nekohasekai.sagernet.ktx.app
-import io.nekohasekai.sagernet.ktx.applyDefaultValues
 import io.nekohasekai.sagernet.ui.profile.ChainSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.DirectSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.HttpSettingsActivity
@@ -71,6 +71,7 @@ import io.nekohasekai.sagernet.ui.profile.WireGuardSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.ConfigSettingActivity
 import io.nekohasekai.sagernet.fmt.shadowtls.ShadowTLSBean
 import io.nekohasekai.sagernet.ui.profile.AnyTLSSettingsActivity
+import io.nekohasekai.sagernet.ui.profile.ProxyGroupSettingsActivity
 import io.nekohasekai.sagernet.ui.profile.ShadowTLSSettingsActivity
 
 @Entity(
@@ -103,6 +104,7 @@ data class ProxyEntity(
     var directBean: DirectBean? = null,
     var anyTLSBean: AnyTLSBean? = null,
     var chainBean: ChainBean? = null,
+    var groupBean: GroupBean? = null,
     var configBean: ConfigBean? = null,
 ) : Serializable() {
 
@@ -124,6 +126,7 @@ data class ProxyEntity(
         const val TYPE_JUICITY = 22
         const val TYPE_DIRECT = 23
         const val TYPE_ANYTLS = 24
+        const val TYPE_GROUP = 25
         const val TYPE_CONFIG = 998
         const val TYPE_NEKO = 999 // Deleted
 
@@ -139,8 +142,6 @@ data class ProxyEntity(
         const val STATUS_UNAVAILABLE = 3
 
         val chainName by lazy { app.getString(R.string.proxy_chain) }
-
-        private val placeHolderBean = SOCKSBean().applyDefaultValues()
 
         @JvmField
         val CREATOR = object : Serializable.CREATOR<ProxyEntity>() {
@@ -221,6 +222,7 @@ data class ProxyEntity(
             TYPE_ANYTLS -> anyTLSBean = KryoConverters.anyTLSDeserialize(byteArray)
             TYPE_CHAIN -> chainBean = KryoConverters.chainDeserialize(byteArray)
             TYPE_CONFIG -> configBean = KryoConverters.configDeserialize(byteArray)
+            TYPE_GROUP -> groupBean = KryoConverters.groupDeserialize(byteArray)
         }
     }
 
@@ -242,39 +244,40 @@ data class ProxyEntity(
         TYPE_ANYTLS -> "AnyTLS"
         TYPE_CHAIN -> chainName
         TYPE_CONFIG -> configBean!!.displayType()
+        TYPE_GROUP -> groupBean!!.displayType()
         else -> "Undefined type $type"
     }
 
     fun displayName() = requireBean().displayName()
     fun displayAddress() = requireBean().displayAddress()
 
-    fun requireBean(): AbstractBean {
-        return when (type) {
-            TYPE_SOCKS -> socksBean
-            TYPE_HTTP -> httpBean
-            TYPE_SS -> ssBean
-            TYPE_VMESS -> vmessBean
-            TYPE_TROJAN -> trojanBean
-            TYPE_MIERU -> mieruBean
-            TYPE_NAIVE -> naiveBean
-            TYPE_HYSTERIA -> hysteriaBean
-            TYPE_SSH -> sshBean
-            TYPE_WG -> wgBean
-            TYPE_TUIC -> tuicBean
-            TYPE_JUICITY -> juicityBean
-            TYPE_DIRECT -> directBean
-            TYPE_ANYTLS -> anyTLSBean
-            TYPE_SHADOWTLS -> shadowTLSBean
-            TYPE_CHAIN -> chainBean
-            TYPE_CONFIG -> configBean
-            else -> error("Undefined type $type")
-        } ?: error("Null ${displayType()} profile")
-    }
+    fun requireBean(): AbstractBean = when (type) {
+        TYPE_SOCKS -> socksBean
+        TYPE_HTTP -> httpBean
+        TYPE_SS -> ssBean
+        TYPE_VMESS -> vmessBean
+        TYPE_TROJAN -> trojanBean
+        TYPE_MIERU -> mieruBean
+        TYPE_NAIVE -> naiveBean
+        TYPE_HYSTERIA -> hysteriaBean
+        TYPE_SSH -> sshBean
+        TYPE_WG -> wgBean
+        TYPE_TUIC -> tuicBean
+        TYPE_JUICITY -> juicityBean
+        TYPE_DIRECT -> directBean
+        TYPE_ANYTLS -> anyTLSBean
+        TYPE_SHADOWTLS -> shadowTLSBean
+        TYPE_CHAIN -> chainBean
+        TYPE_CONFIG -> configBean
+        TYPE_GROUP -> groupBean
+        else -> error("Undefined type $type")
+    } ?: error("Null ${displayType()} profile")
 
     /** Determines if has internal link. */
     fun haveLink(): Boolean = when (type) {
         TYPE_CHAIN -> false
         TYPE_DIRECT -> false
+        TYPE_GROUP -> false
         else -> true
     }
 
@@ -285,6 +288,7 @@ data class ProxyEntity(
         TYPE_SHADOWTLS -> false
         TYPE_CHAIN -> false
         TYPE_CONFIG -> false
+        TYPE_GROUP -> false
         else -> true
     }
 
@@ -381,6 +385,7 @@ data class ProxyEntity(
         anyTLSBean = null
         chainBean = null
         configBean = null
+        groupBean = null
 
         when (bean) {
             is SOCKSBean -> {
@@ -468,6 +473,11 @@ data class ProxyEntity(
                 configBean = bean
             }
 
+            is GroupBean -> {
+                type = TYPE_GROUP
+                groupBean = bean
+            }
+
             else -> error("Undefined type $type")
         }
         return this
@@ -493,6 +503,7 @@ data class ProxyEntity(
                 TYPE_ANYTLS -> AnyTLSSettingsActivity::class.java
                 TYPE_CHAIN -> ChainSettingsActivity::class.java
                 TYPE_CONFIG -> ConfigSettingActivity::class.java
+                TYPE_GROUP -> ProxyGroupSettingsActivity::class.java
                 else -> throw IllegalArgumentException()
             }
         ).apply {

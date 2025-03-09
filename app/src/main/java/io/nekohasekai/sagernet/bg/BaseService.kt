@@ -230,24 +230,6 @@ class BaseService {
                 stopRunner(false, (this as Context).getString(R.string.profile_empty))
             }
 
-            // If in a selector group, call selector instead of reloading it.
-            SagerDatabase.proxyDao.getById(DataStore.selectedProxy)?.let {
-                val currentGroupID = data.proxy?.config?.selectorGroupId ?: return@let
-                if (currentGroupID < 0) return@let // Not selector
-                if (it.groupId != currentGroupID) return@let // Not in the same group
-                if (SagerDatabase.groupDao.getById(it.groupId)?.isSelector != true) {
-                    // Not selector
-                    return@let
-                }
-
-                val tag = data.proxy!!.config.profileTagMap[it.id] ?: return@let
-                if (tag.isNotBlank()) {
-                    // Call selector directly, needn't reload.
-                    data.proxy!!.box.selectOutbound(tag)
-                    return
-                }
-            }
-
             val s = data.state
             when {
                 s == State.Stopped -> startRunner()

@@ -8,9 +8,11 @@ import android.system.OsConstants
 import androidx.annotation.RequiresApi
 import io.nekohasekai.sagernet.SagerNet
 import io.nekohasekai.sagernet.database.DataStore
+import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.ktx.Logs
 import io.nekohasekai.sagernet.ktx.toStringIterator
 import io.nekohasekai.sagernet.ktx.mapX
+import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
 import io.nekohasekai.sagernet.utils.PackageCache
 import libcore.InterfaceUpdateListener
 import libcore.Libcore
@@ -152,6 +154,17 @@ class NativeInterface(val forTest: Boolean) : PlatformInterface {
             interfaces.add(boxInterface)
         }
         return InterfaceArray(interfaces.iterator(), interfaces.size)
+    }
+
+    override fun groupCallback(tag: String) {
+        val data = DataStore.vpnService?.data ?: return
+        runOnDefaultDispatcher {
+            val id = data.proxy!!.config.profileTagMap
+                .filterValues { it == tag }
+                .keys
+                .firstOrNull() ?: return@runOnDefaultDispatcher
+            data.proxy!!.trafficLooper?.selectMain(id)
+        }
     }
 
     override fun isForTest(): Boolean = forTest

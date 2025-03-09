@@ -11,12 +11,32 @@ import io.nekohasekai.sagernet.TunImplementation
 import io.nekohasekai.sagernet.bg.VpnService
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.ProxyEntity
+import io.nekohasekai.sagernet.database.ProxyEntity.Companion.TYPE_CHAIN
 import io.nekohasekai.sagernet.database.ProxyEntity.Companion.TYPE_CONFIG
+import io.nekohasekai.sagernet.database.ProxyEntity.Companion.TYPE_GROUP
 import io.nekohasekai.sagernet.database.RuleEntity
 import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.fmt.shadowtls.ShadowTLSBean
 import io.nekohasekai.sagernet.fmt.shadowtls.buildSingBoxOutboundShadowTLSBean
 import io.nekohasekai.sagernet.fmt.ConfigBuildResult.IndexEntity
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.CacheFileOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.DNSFakeIPOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.DNSOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.DNSRule_Default
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.DNSServerOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.ExperimentalOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.Inbound_DirectOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.Inbound_HTTPMixedOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.Inbound_TunOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.LogOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.MyOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.NTPOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.Outbound_DirectOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.Outbound_SOCKSOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.RouteOptions
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.Rule_Default
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.Rule_Logical
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.User
 import io.nekohasekai.sagernet.fmt.anytls.AnyTLSBean
 import io.nekohasekai.sagernet.fmt.anytls.buildSingBoxOutboundAnyTLSBean
 import io.nekohasekai.sagernet.fmt.config.ConfigBean
@@ -25,6 +45,8 @@ import io.nekohasekai.sagernet.fmt.direct.buildSingBoxOutboundDirectBean
 import io.nekohasekai.sagernet.fmt.hysteria.HysteriaBean
 import io.nekohasekai.sagernet.fmt.hysteria.buildSingBoxOutboundHysteriaBean
 import io.nekohasekai.sagernet.fmt.internal.ChainBean
+import io.nekohasekai.sagernet.fmt.internal.GroupBean
+import io.nekohasekai.sagernet.fmt.internal.buildSingBoxOutboundGroupBean
 import io.nekohasekai.sagernet.fmt.juicity.JuicityBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.ShadowsocksBean
 import io.nekohasekai.sagernet.fmt.shadowsocks.buildSingBoxOutboundShadowsocksBean
@@ -50,26 +72,6 @@ import io.nekohasekai.sagernet.utils.PackageCache
 import libcore.Libcore
 import io.nekohasekai.sagernet.ktx.JSONMap
 import io.nekohasekai.sagernet.ktx.toJsonMap
-import moe.matsuri.nb4a.SingBoxOptions
-import moe.matsuri.nb4a.SingBoxOptions.CacheFileOptions
-import moe.matsuri.nb4a.SingBoxOptions.DNSFakeIPOptions
-import moe.matsuri.nb4a.SingBoxOptions.DNSOptions
-import moe.matsuri.nb4a.SingBoxOptions.DNSServerOptions
-import moe.matsuri.nb4a.SingBoxOptions.ExperimentalOptions
-import moe.matsuri.nb4a.SingBoxOptions.LogOptions
-import moe.matsuri.nb4a.SingBoxOptions.MyOptions
-import moe.matsuri.nb4a.SingBoxOptions.NTPOptions
-import moe.matsuri.nb4a.SingBoxOptions.RouteOptions
-import moe.matsuri.nb4a.SingBoxOptions.User
-import moe.matsuri.nb4a.SingBoxOptions.DNSRule_Default
-import moe.matsuri.nb4a.SingBoxOptions.Inbound_DirectOptions
-import moe.matsuri.nb4a.SingBoxOptions.Inbound_HTTPMixedOptions
-import moe.matsuri.nb4a.SingBoxOptions.Inbound_TunOptions
-import moe.matsuri.nb4a.SingBoxOptions.Outbound_DirectOptions
-import moe.matsuri.nb4a.SingBoxOptions.Outbound_SelectorOptions
-import moe.matsuri.nb4a.SingBoxOptions.Outbound_SOCKSOptions
-import moe.matsuri.nb4a.SingBoxOptions.Rule_Default
-import moe.matsuri.nb4a.SingBoxOptions.Rule_Logical
 import moe.matsuri.nb4a.utils.JavaUtil.gson
 import moe.matsuri.nb4a.utils.listByLineOrComma
 
@@ -105,7 +107,7 @@ class ConfigBuildResult(
     var mainEntId: Long,
     var trafficMap: Map<String, List<ProxyEntity>>,
     var profileTagMap: Map<Long, String>,
-    val selectorGroupId: Long,
+    val hasGroupBean: Boolean,
 ) {
     data class IndexEntity(var chain: LinkedHashMap<Int, ProxyEntity>)
 }
@@ -123,7 +125,7 @@ fun buildConfig(
                 proxy.id,
                 mapOf(TAG_PROXY to listOf(proxy)),
                 mapOf(proxy.id to TAG_PROXY),
-                -1L,
+                false,
             )
         }
     }
@@ -131,33 +133,62 @@ fun buildConfig(
     val trafficMap = HashMap<String, List<ProxyEntity>>()
     val tagMap = HashMap<Long, String>()
     val globalOutbounds = HashMap<Long, String>()
-    val selectorNames = ArrayList<String>()
-    val group = SagerDatabase.groupDao.getById(proxy.groupId)
+    val readableNames = mutableListOf<String>()
     val optionsToMerge = proxy.requireBean().customConfigJson ?: ""
 
     fun ProxyEntity.resolveChainInternal(): MutableList<ProxyEntity> {
         val bean = requireBean()
-        if (bean is ChainBean) {
-            val beans = SagerDatabase.proxyDao.getEntities(bean.proxies)
-            val beansMap = beans.associateBy { it.id }
-            val beanList = ArrayList<ProxyEntity>()
-            for (proxyId in bean.proxies) {
-                val item = beansMap[proxyId] ?: continue
-                beanList.addAll(item.resolveChainInternal())
+        return when (bean) {
+            is ChainBean -> {
+                val beans = SagerDatabase.proxyDao.getEntities(bean.proxies)
+                val beansMap = beans.associateBy { it.id }
+                val beanList = mutableListOf<ProxyEntity>()
+                for (proxyId in bean.proxies) {
+                    val item = beansMap[proxyId] ?: continue
+                    beanList.addAll(item.resolveChainInternal())
+                }
+                beanList.asReversed()
             }
-            return beanList.asReversed()
+
+            is GroupBean -> {
+                val beans = when (bean.type) {
+                    GroupBean.TYPE_LIST -> SagerDatabase.proxyDao.getEntities(bean.proxies)
+                    GroupBean.TYPE_GROUP -> SagerDatabase.proxyDao.getByGroup(bean.groupId)
+                    else -> throw IllegalStateException("invalid group bean type ${bean.type}")
+                }
+
+                val beansMap = beans.associateBy { it.id }
+                val beanList = mutableListOf<ProxyEntity>()
+                for (proxyId in beansMap.keys) {
+                    val item = beansMap[proxyId] ?: continue
+                    if (item.id == id) continue
+                    when (item.type) {
+                        TYPE_GROUP -> error("Nested group bean are not supported")
+                        TYPE_CHAIN -> error("Chain is incompatible with group bean")
+                    }
+                    beanList.add(item)
+                }
+                beanList
+            }
+
+            else -> mutableListOf(this)
         }
-        return mutableListOf(this)
     }
 
-    fun selectorName(name: String): String {
+    /**
+     * Generates a unique name by appending a count to the given name if it already exists in the readableNames list.
+     *
+     * @param name The initial name to be checked and potentially modified.
+     * @return A unique name that does not exist in the readableNames list.
+     */
+    fun generateReadableName(name: String): String {
         var newName = name
         var count = 0
-        while (selectorNames.contains(newName)) {
+        while (readableNames.contains(newName)) {
             count++
             newName = "$name-$count"
         }
-        selectorNames.add(newName)
+        readableNames.add(newName)
         return newName
     }
 
@@ -167,9 +198,11 @@ fun buildConfig(
         val landingProxy = thisGroup?.landingProxy?.let { SagerDatabase.proxyDao.getById(it) }
         val list = resolveChainInternal()
         if (frontProxy != null) {
+            if (type == TYPE_GROUP) error("front proxy with group bean")
             list.add(frontProxy)
         }
         if (landingProxy != null) {
+            if (type == TYPE_GROUP) error("landing proxy with group bean")
             list.add(0, landingProxy)
         }
         return list
@@ -181,7 +214,6 @@ fun buildConfig(
         if (forTest) mapOf() else SagerDatabase.proxyDao.getEntities(extraRules.mapNotNull { rule ->
             rule.outbound.takeIf { it > 0 && it != proxy.id }
         }.toHashSet().toList()).associateBy { it.id }
-    val buildSelector = !forTest && group?.isSelector == true && !forExport
     val userDNSRuleList = mutableListOf<DNSRule_Default>()
     val domainListDNSDirectForce = mutableListOf<String>()
     val bypassDNSBeans = hashSetOf<AbstractBean>()
@@ -322,6 +354,22 @@ fun buildConfig(
             chainId: Long, entity: ProxyEntity,
         ): String {
             val profileList = entity.resolveChain()
+
+            // TODO improve it. This just for experiment.
+            if (entity.type == TYPE_GROUP) {
+                val subOutbounds = profileList.mapX {
+                    buildChain(0, it)
+                }
+                outbounds.add(
+                    0,
+                    buildSingBoxOutboundGroupBean(entity.groupBean!!, subOutbounds).asMap().also {
+                        it["tag"] = TAG_PROXY
+                    },
+                )
+                // impossible to has other situation
+                return TAG_PROXY
+            }
+
             val chainTrafficSet = HashSet<ProxyEntity>().apply {
                 addAll(profileList)
                 add(entity)
@@ -365,11 +413,10 @@ fun buildConfig(
                     tagOut = TAG_PROXY
                 }
 
-                // selector human readable name
-                if (buildSelector && index == 0) {
-                    tagOut = selectorName(bean.displayName())
+                // human readable name
+                if (index == 0) {
+                    tagOut = generateReadableName(bean.displayName())
                 }
-
 
                 // chain rules
                 if (index > 0) {
@@ -519,22 +566,7 @@ fun buildConfig(
             return chainTagOut
         }
 
-        // build outbounds
-        if (buildSelector) {
-            val list = group?.id?.let { SagerDatabase.proxyDao.getByGroup(it) }
-            list?.forEach {
-                tagMap[it.id] = buildChain(it.id, it)
-            }
-            outbounds.add(0, Outbound_SelectorOptions().apply {
-                type = SingBoxOptions.TYPE_SELECTOR
-                tag = TAG_PROXY
-                default_ = tagMap[proxy.id]
-                outbounds = tagMap.values.toList()
-                interrupt_exist_connections = DataStore.interruptSelector
-            }.asMap())
-        } else {
-            buildChain(0, proxy)
-        }
+        buildChain(0, proxy)
         // build outbounds from route item
         extraProxies.forEach { (key, p) ->
             tagMap[key] = buildChain(key, p)
@@ -951,7 +983,7 @@ fun buildConfig(
             proxy.id,
             trafficMap,
             tagMap,
-            if (buildSelector) group!!.id else -1L
+            proxy.type == TYPE_GROUP,
         )
     }
 

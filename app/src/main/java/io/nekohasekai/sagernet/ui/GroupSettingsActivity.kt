@@ -56,7 +56,6 @@ class GroupSettingsActivity(
         DataStore.groupName = name ?: ""
         DataStore.groupType = type
         DataStore.groupOrder = order
-        DataStore.groupIsSelector = isSelector
 
         DataStore.frontProxy = frontProxy
         DataStore.landingProxy = landingProxy
@@ -79,7 +78,6 @@ class GroupSettingsActivity(
         name = DataStore.groupName.takeIf { it.isNotBlank() } ?: "My group"
         type = DataStore.groupType
         order = DataStore.groupOrder
-        isSelector = DataStore.groupIsSelector
 
         frontProxy = if (DataStore.frontProxyTmp == OUTBOUND_POSITION) DataStore.frontProxy else -1
         landingProxy =

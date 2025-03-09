@@ -195,10 +195,6 @@
     <string name="select_profile">انتخاب پروفایل</string>
     <string name="proxy_chain">زنجیره پروکسی</string>
     <string name="custom_config">پیکربندی سفارشی</string>
-    <string name="balancer">متعادل کننده</string>
-    <string name="balancer_settings">تنظیمات متعادل کننده</string>
-    <string name="balancer_type">نوع</string>
-    <string name="balancer_strategy">استراتژی</string>
     <string name="chain_settings">تنظیمات زنجیره ای</string>
     <string name="config_settings">تنظیمات پیکربندی</string>
     <string name="circular_reference">مرجع دایره ای</string>
@@ -280,8 +276,6 @@
     <string name="enable_log">فعال کردن لاگ</string>
     <string name="enable_log_sum">برای اهداف اشکال زدایی</string>
     <string name="list">فهرست</string>
-    <string name="random">تصادفی</string>
-    <string name="probe_interval">فاصله مشاهده متعادل کننده</string>
     <string name="standard">استاندارد</string>
     <string name="unavailable">غیر قابل دسترسی</string>
     <string name="always_show_address">همیشه ادرس نشان داده شود</string>
@@ -455,7 +449,6 @@
     <string name="protocol_version">نسخه پروتکل</string>
     <string name="show_group_in_notification">نمایش اسم گروه در اعلان</string>
     <string name="reset_connections">بازنشانی اتصال‌ها</string>
-    <string name="use_selector">استفاده از انتخابگر</string>
     <string name="share_subscription">هم‌رسانی اشتراک</string>
     <string name="mtu_help">برای تنظیم MTU سفارشی، ترجیح را طولانی فشار دهید.</string>
     <string name="remove_duplicate">حذف سرورهای تکراری</string>
@@ -555,7 +548,6 @@
     <string name="outbound">خروجی</string>
     <string name="chain">زنجیره</string>
     <string name="close">بستن</string>
-    <string name="interrupt_selector">(انتخاب گر) قطع تمام اتصالات هنگام تغییر پیکربندی سوئیچ</string>
     <string name="have_reset_network">تمام شبکه‌ها بازنشانی شده‌اند</string>
     <string name="pin_log">پین کردن لاگ</string>
     <string name="client_type">نوع کاربر</string>

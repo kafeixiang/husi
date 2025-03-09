@@ -11,7 +11,7 @@ import io.nekohasekai.sagernet.fmt.trojan.TrojanBean
 import io.nekohasekai.sagernet.ktx.*
 import libcore.Libcore
 import libcore.URL
-import moe.matsuri.nb4a.SingBoxOptions.*
+import io.nekohasekai.sagernet.fmt.SingBoxOptions.*
 import moe.matsuri.nb4a.utils.listByLineOrComma
 import org.json.JSONObject
 

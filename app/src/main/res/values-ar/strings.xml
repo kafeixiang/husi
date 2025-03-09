@@ -178,10 +178,6 @@
     <string name="circular_reference">مرجع دائري</string>
     <string name="config_settings">إعدادات التكوين</string>
     <string name="chain_settings">إعدادات السلسلة</string>
-    <string name="balancer_strategy">إستراتيجية</string>
-    <string name="balancer_type">اكتب</string>
-    <string name="balancer_settings">إعدادات الموازن</string>
-    <string name="balancer">موازن</string>
     <string name="custom_config">التكوين المخصص</string>
     <string name="proxy_chain">سلسلة البروکسی</string>
     <string name="select_profile">حدد ملف التعريف</string>
@@ -302,8 +298,6 @@
     <string name="always_show_address">اعرض العنوان دائمًا</string>
     <string name="unavailable">غير متوفره</string>
     <string name="standard">معيار</string>
-    <string name="probe_interval">الفاصل الزمني لرصد الموازن</string>
-    <string name="random">عشوائي</string>
     <string name="list">قائمة</string>
     <string name="enable_log_sum">من أجل إصلاح الخلل</string>
     <string name="enable_log">تمكين التقارير</string>

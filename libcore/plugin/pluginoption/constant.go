@@ -1,5 +1,6 @@
 package pluginoption
 
 const (
-	TypeAnyTLS = "anytls"
+	TypeAnyTLS   = "anytls"
+	TypeBalancer = "balancer"
 )

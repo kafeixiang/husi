@@ -1,31 +1,24 @@
 package io.nekohasekai.sagernet.widget
 
-import android.content.Context
-import android.util.AttributeSet
 import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.ktx.mapX
 import rikka.preference.SimpleMenuPreference
 
-class GroupPreference
-@JvmOverloads constructor(
-    context: Context,
-    attrs: AttributeSet? = null,
-    defStyle: Int = androidx.preference.R.attr.dropdownPreferenceStyle,
-) : SimpleMenuPreference(context, attrs, defStyle, 0) {
+fun SimpleMenuPreference.setGroupBean() {
+    val groups = SagerDatabase.groupDao.allGroups()
 
-    init {
-        val groups = SagerDatabase.groupDao.allGroups()
+    entries = groups.mapX { it.displayName() }.toTypedArray()
+    entryValues = groups.mapX { "${it.id}" }.toTypedArray()
 
-        entries = groups.mapX { it.displayName() }.toTypedArray()
-        entryValues = groups.mapX { "${it.id}" }.toTypedArray()
-    }
-
-    override fun getSummary(): CharSequence? {
-        if (!value.isNullOrBlank() && value != "0") {
-            return SagerDatabase.groupDao.getById(value.toLong())?.displayName()
-                ?: super.getSummary()
+    setOnPreferenceChangeListener { _, newValue ->
+        newValue as String
+        var sum: CharSequence? = null
+        if (newValue.isNotBlank() && newValue != "0") {
+            SagerDatabase.groupDao.getById(newValue.toLong())?.displayName()?.let {
+                sum = it
+            }
         }
-        return super.getSummary()
+        summary = sum ?: entries[newValue.toInt()]
+        true
     }
-
 }

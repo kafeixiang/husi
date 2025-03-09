@@ -267,13 +267,7 @@
     <string name="enable_log">启用日志</string>
     <string name="enable_log_sum">调试用途</string>
     <string name="route_rules_official">官方</string>
-    <string name="balancer">负载均衡</string>
-    <string name="balancer_settings">负载均衡设置</string>
-    <string name="balancer_type">类型</string>
-    <string name="balancer_strategy">策略</string>
     <string name="list">列表</string>
-    <string name="random">随机</string>
-    <string name="probe_interval">负载均衡观测间隔</string>
     <string name="standard">标准</string>
     <string name="unavailable">不可用</string>
     <string name="always_show_address">始终显示地址</string>
@@ -459,7 +453,6 @@
     <string name="xtls_flow">Flow（VLESS 子协议）</string>
     <string name="log_level">日志级别</string>
     <string name="need_restart">重新启动应用程序以应用更改</string>
-    <string name="use_selector">启用 selector （免重载切换节点）</string>
     <string name="front_proxy">前置代理</string>
     <string name="landing_proxy">落地代理</string>
     <string name="protocol_version">协议版本</string>
@@ -547,7 +540,6 @@
     <string name="padding">填充</string>
     <string name="custom_rule_provider">自定义规则提供者</string>
     <string name="pin_log">固定日志</string>
-    <string name="interrupt_selector">(Selector) 在切换配置时打断所有连接</string>
     <string name="client_type">客户端类型</string>
     <string name="done">已完成</string>
     <string name="custom_plugin_prefix">自定义插件前缀</string>
@@ -591,4 +583,11 @@
     <string name="idle_session_timeout">空闲会话超时</string>
     <string name="min_idle_session">最小闲置会话数</string>
     <string name="persistent_keepalive_interval">持久性保持活动间隔</string>
+    <string name="management">管理</string>
+    <string name="proxy_group">代理组</string>
+    <string name="interrupt_exist_connections">在切换时打断现有连接</string>
+    <string name="urltest_interval">URLTest 时间间隔</string>
+    <string name="idle_timeout">空闲超时</string>
+    <string name="urltest_tolerance">容差</string>
+    <string name="action_proxy_group">代理组</string>
 </resources>
