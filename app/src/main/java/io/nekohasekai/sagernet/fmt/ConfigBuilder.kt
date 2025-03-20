@@ -452,10 +452,10 @@ fun buildConfig(
 
                 // internal & external
                 currentOutbound.apply {
-                    pastEntity?.requireBean()?.let { bean ->
+                    pastEntity?.requireBean()?.let { pastBean ->
                         // don't loopback
-                        if (defaultServerDomainStrategy != "" && !bean.serverAddress.isIpAddress()) {
-                            domainListDNSDirectForce.add("full:${bean.serverAddress}")
+                        if (defaultServerDomainStrategy != "" && !pastBean.serverAddress.isIpAddress()) {
+                            domainListDNSDirectForce.add("full:${pastBean.serverAddress}")
                         }
 
                         // Set uot here so that naive socks can apply it.
