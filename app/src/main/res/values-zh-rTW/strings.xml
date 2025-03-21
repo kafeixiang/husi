@@ -420,8 +420,8 @@
     <string name="backup_not_file">不是一個備份文件，預計 .json，但 %s</string>
     <string name="packet_encoding">包編碼</string>
     <string name="sekai">世界</string>
-    <string name="app_name">虎兕</string>
-    <string name="app_name_long">匪兕匪虎 率彼曠野</string>
+    <string name="app_name">HUSI</string>
+    <string name="app_name_long">HUSI</string>
     <string name="is_outbound_only">設定的 JSON 是出站</string>
     <string name="save">儲存</string>
     <string name="show_group_in_notification">在通知中顯示組名</string>
@@ -504,7 +504,7 @@
     <string name="no_thanks">不，謝謝</string>
     <string name="action_flash_on">開啟閃光燈</string>
     <string name="location_permission_title">位置許可</string>
-    <string name="location_permission_description">您的路由規則包含 Wi-Fi SSID 或 Wi-Fi BSSID 路由規則。為使其正常運作，虎兕 使用後台位置權限來取得已連接 Wi-Fi 網路的資訊。此資訊僅用於路由目的。</string>
+    <string name="location_permission_description">您的路由規則包含 Wi-Fi SSID 或 Wi-Fi BSSID 路由規則。為使其正常運作，HUSI 使用後台位置權限來取得已連接 Wi-Fi 網路的資訊。此資訊僅用於路由目的。</string>
     <string name="insecure_warn">安全建議</string>
     <string name="hysteria2_provider">Hysteria2 提供者</string>
     <string name="mux_preference">多工設定</string>

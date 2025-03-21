@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">虎兕</string>
-    <string name="app_name_long">匪兕匪虎 率彼旷野</string>
+    <string name="app_name">HUSI</string>
+    <string name="app_name_long">HUSI</string>
     <string name="app_desc">适用于 Android 的代理工具, 使用 Kotlin 编写。</string>
     <string name="project">项目</string>
     <string name="github">源代码</string>
@@ -504,7 +504,7 @@
     <string name="action_flash_off">关闭闪光灯</string>
     <string name="location_permission_title">位置权限</string>
     <string name="no_thanks">不了，谢谢</string>
-    <string name="location_permission_description">您的路由规则包含 Wi-Fi SSID 或 Wi-Fi BSSID 路由规则。为使其正常工作，虎兕 使用后台位置权限获取有关已连接 Wi-Fi 网络的信息。此信息仅用于路由目的。</string>
+    <string name="location_permission_description">您的路由规则包含 Wi-Fi SSID 或 Wi-Fi BSSID 路由规则。为使其正常工作，HUSI 使用后台位置权限获取有关已连接 Wi-Fi 网络的信息。此信息仅用于路由目的。</string>
     <string name="location_permission_background_description">在 Android 10 及更高版本上，需要后台位置权限。选择“始终允许”以授予权限。</string>
     <string name="memory_limit">内存限制</string>
     <string name="insecure_warn">安全建议</string>
