@@ -6,7 +6,7 @@ require (
 	github.com/anytls/sing-anytls v0.0.7
 	github.com/gofrs/uuid/v5 v5.3.1
 	github.com/miekg/dns v1.1.63
-	github.com/sagernet/gomobile v0.1.5
+	github.com/sagernet/gomobile v0.1.6
 	github.com/sagernet/sing v0.6.6-0.20250326051824-d39c2c2fddfa
 	github.com/sagernet/sing-box v1.12.0-beta.1
 	github.com/sagernet/sing-dns v0.4.0
