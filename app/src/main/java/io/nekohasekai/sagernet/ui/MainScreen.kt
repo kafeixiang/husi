@@ -204,20 +204,6 @@ fun MainScreen(
                 }
                 for (info in items1) BuildDrawerItem(info)
                 HorizontalDivider()
-                NavigationDrawerItem(
-                    label = { Text(stringResource(R.string.document)) },
-                    selected = false,
-                    onClick = {
-                        scope.launch {
-                            drawerState.close()
-                        }
-                        uriHandler.openUri("https://github.com/xchacha20-poly1305/husi/wiki")
-                    },
-                    modifier = modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-                    icon = {
-                        Icon(ImageVector.vectorResource(R.drawable.data_usage), null)
-                    },
-                )
                 BuildDrawerItem(
                     DrawerItemInfo(
                         R.string.menu_about,
