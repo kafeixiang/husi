@@ -401,11 +401,6 @@ class MainActivity : ThemedActivity(),
             R.id.nav_traffic -> displayFragment(DashboardFragment())
             R.id.nav_tools -> displayFragment(ToolsFragment())
             R.id.nav_logcat -> displayFragment(LogcatFragment())
-            R.id.nav_faq -> {
-                launchCustomTab("https://github.com/xchacha20-poly1305/husi/wiki")
-                return false
-            }
-
             R.id.nav_about -> displayFragment(AboutFragment())
 
             else -> return false
