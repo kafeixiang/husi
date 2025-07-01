@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/x509"
 	"encoding/pem"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
@@ -110,6 +111,18 @@ func GetCert(address, serverName string, mode int32, proxy string) (cert string,
 		if err != nil {
 			return "", E.Cause(err, "create proxy dialer")
 		}
+	}
+	if target.IsFqdn() {
+		ips, err := net.LookupIP(target.Fqdn)
+		if err != nil {
+			return "", E.Cause(err, "look up ip for ", target.Fqdn)
+		}
+		if len(ips) == 0 {
+			return "", E.New("not found ip for ", target.Fqdn)
+		}
+		target.Addr = M.AddrFromIP(ips[0])
+		serverName = target.Fqdn
+		target.Fqdn = ""
 	}
 	options := scribe.Option{
 		Target: target,
