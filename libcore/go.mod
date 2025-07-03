@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/gofrs/uuid/v5 v5.3.2
 	github.com/miekg/dns v1.1.66
-	github.com/sagernet/gomobile v0.1.6
+	github.com/sagernet/gomobile v0.1.7
 	github.com/sagernet/sing v0.6.11-0.20250521033217-30d675ea099b
 	github.com/sagernet/sing-box v1.12.0-beta.29
 	github.com/sagernet/sing-tun v0.6.10-0.20250620051458-5e343c4b66b2
