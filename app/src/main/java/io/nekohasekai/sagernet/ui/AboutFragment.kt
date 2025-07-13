@@ -197,43 +197,7 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                                             .build())
                                 }
                             }
-                            addItem(
-                                MaterialAboutActionItem.Builder()
-                                    .icon(R.drawable.ic_baseline_card_giftcard_24)
-                                    .text(R.string.sekai)
-                                    .setOnClickAction {
-                                        activityContext.launchCustomTab("https://sekai.icu/sponsors/")
-                                    }
-                                    .build()
-                            )
                         }
-                        .build())
-                .addCard(
-                    MaterialAboutCard.Builder()
-                        .outline(false)
-                        .title(R.string.project)
-                        .addItem(
-                            MaterialAboutActionItem.Builder()
-                                .icon(R.drawable.ic_baseline_sanitizer_24)
-                                .text(R.string.github)
-                                .setOnClickAction {
-                                    activityContext.launchCustomTab(
-                                        "https://github.com/xchacha20-poly1305/husi"
-
-                                    )
-                                }
-                                .build())
-                        .addItem(
-                            MaterialAboutActionItem.Builder()
-                                .icon(R.drawable.baseline_translate_24)
-                                .text(R.string.translate_platform)
-                                .setOnClickAction {
-                                    activityContext.launchCustomTab(
-                                        "https://hosted.weblate.org/projects/husi/husi/"
-
-                                    )
-                                }
-                                .build())
                         .build())
                 .build()
 
