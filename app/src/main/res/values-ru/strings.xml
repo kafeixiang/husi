@@ -338,7 +338,7 @@
     <string name="route_name">Название маршрута</string>
     <string name="delete_route_prompt">Вы уверены, что хотите удалить этот маршрут\?</string>
     <string name="route_add">Создать маршрут</string>
-    <string name="menu_route">Маршрутизация</string>
+    <string name="menu_route">Маршруты</string>
     <string name="metered_summary">Подсказывать системе, что VPN следует рассматривать как сеть с
         лимитным тарифным планом
     </string>
