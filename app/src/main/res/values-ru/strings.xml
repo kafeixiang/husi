@@ -22,8 +22,8 @@
     <string name="connection_test_error_status_code">Код ошибки: #%d</string>
     <string name="connection_test_fail">Интернет недоступен</string>
     <string name="connection_test_error">Ошибка: %s</string>
-    <string name="connection_test_available_http">HTTP-соединение установлено за %d мс</string>
-    <string name="connection_test_available">HTTPS-соединение установлено за %d мс</string>
+    <string name="connection_test_available_http">Успех: HTTP-хендшейк за %d мс</string>
+    <string name="connection_test_available">Успех: HTTPS-хендшейк за %d мс</string>
     <string name="connection_test_testing">Тестирование…</string>
     <string name="speed_detail">Прокси ：%1$s↑ %2$s↓
         \nПрямой ：%3$s↑%4$s↓
@@ -144,7 +144,7 @@
         продолжить обновление\?
     </string>
     <string name="ooc_subscription_token_invalid">Недействительный токен OOCv1</string>
-    <string name="download">Скачать</string>
+    <string name="download">Получено</string>
     <string name="install_from_fdroid">Установить с F-Droid</string>
     <string name="install_from_play_store">Установить из Play Store</string>
     <string name="action_download">СКАЧАТЬ</string>
@@ -239,7 +239,7 @@
     </string>
     <string name="subscriptions">Подписки</string>
     <string name="not_connected">Не подключен</string>
-    <string name="vpn_connected">Подключено, нажмите, чтобы проверить подключение</string>
+    <string name="vpn_connected">Подключено, нажмите для проверки соединения</string>
     <string name="connecting">Подключение…</string>
     <string name="deprecated">Устарело</string>
     <string name="insecure">Ненадежный</string>
@@ -290,7 +290,7 @@
     <string name="vpn_permission_denied">Отказано в разрешении на создание службы VPN</string>
     <string name="vpn_error">%s</string>
     <string name="stopping">Выключение…</string>
-    <string name="stop">Остановить</string>
+    <string name="stop">Стоп</string>
     <string name="service_failed">Не удалось:</string>
     <string name="invalid_server">Неверное имя сервера</string>
     <string name="forward_success">Прокси запустился.</string>
@@ -338,7 +338,7 @@
     <string name="route_name">Название маршрута</string>
     <string name="delete_route_prompt">Вы уверены, что хотите удалить этот маршрут\?</string>
     <string name="route_add">Создать маршрут</string>
-    <string name="menu_route">Маршруты</string>
+    <string name="menu_route">Маршрутизация</string>
     <string name="metered_summary">Подсказывать системе, что VPN следует рассматривать как сеть с
         лимитным тарифным планом
     </string>
@@ -475,7 +475,7 @@
     <string name="share_subscription">Поделиться подпиской</string>
     <string name="protocol_version">Версия протокола</string>
     <string name="front_proxy">Прямой прокси</string>
-    <string name="reset_connections">Сбросить соединения</string>
+    <string name="reset_connections">Сброс соединений</string>
     <string name="remove_duplicate">Удалить дубликаты серверов</string>
     <string name="inbound_password">Пароль пользователя SOCKS5</string>
     <string name="vpn_app_type">Тип приложения</string>
@@ -497,7 +497,7 @@
     <string name="enable_brutal">Включить контроллер перегрузки TCP Brutal</string>
     <string name="release_wake_lock">Отключить WakeLock</string>
     <string name="acquire_wake_lock_summary">Сохранять CPU включенным</string>
-    <string name="action_switch">Переключить</string>
+    <string name="action_switch">Сменить</string>
     <string name="nat_result_hint">Провести проверку NAT</string>
     <string name="acquire_wake_lock">Включить WakeLock</string>
     <string name="resolve_server">Разрешить адрес сервера в соответствии с политикой IPv6</string>
@@ -559,8 +559,8 @@
     <string name="have_reset_network">Все сети были сброшены</string>
     <string name="ensure_close_all">Вы уверены, что хотите закрыть %s соединений?</string>
     <string name="by_inbound">По входящему подключению</string>
-    <string name="by_matched_rule">По совпадающему правилу</string>
-    <string name="upload">Загрузить</string>
+    <string name="by_matched_rule">По совпадению правила</string>
+    <string name="upload">Отправлено</string>
     <string name="inbound">Входящее подключение</string>
     <string name="ip_version">Версия IP</string>
     <string name="outbound">Исходящее подключение</string>
@@ -618,7 +618,7 @@
     <string name="interrupt_exist_connections">Прерывание существующих соединений</string>
     <string name="urltest_interval">Интервал URL-теста</string>
     <string name="idle_timeout">Тайм-аут IDLE</string>
-    <string name="urltest_tolerance">Допуск проверки</string>
+    <string name="urltest_tolerance">Допустимая задержка ответа</string>
     <string name="route_action">Действие маршрутизации</string>
     <string name="prefer_ipv4">Предпочитать IPv4</string>
     <string name="network_strategy">Сетевая стратегия</string>
@@ -642,14 +642,17 @@
     <string name="forced_search_process">Принудительный поиск процесса</string>
     <string name="disable_process_text">Отключить обработку выделенного текста с помощью внешних контекстных меню</string>
     <string name="refresh">Обновить</string>
-    <string name="route_asset_name">Имя ресурса</string>
+    <string name="route_asset_name">Название ресурса (имя файла)</string>
     <string name="invalid_filename">Неверное имя файла</string>
     <string name="add_route_asset">Добавить ресурсы маршрута</string>
     <string name="assets_settings">Данные ресурса</string>
     <string name="import_asset">Импорт ресурсов</string>
     <string name="import_url">Импорт из URL</string>
     <string name="expect_srs">Ожидается, что имя файла заканчивается на \".srs\"</string>
-    <string name="warn_starte_with_geo">Файлы, начинающиеся с \"geosite-\" или \"geoip-\", могут быть удалены.</string>
+    <string name="warn_starte_with_geo">Файлы, имя которых начинается с \"geosite-\" или \"geoip-\", могут быть удалены.</string>
     <string name="duplicate_name">Дубликат имени</string>
     <string name="sniff">Сниффер трафика</string>
+    <string name="saved_to_download">Файл сохранен в каталоге загрузок (Download).</string>
+    <string name="save_to_system">Сохранить в файловой системе</string>
+    <string name="permission_denied">Доступ запрещен (отсутствует разрешение)</string>
 </resources>
