@@ -338,7 +338,7 @@
     <string name="route_name">Название маршрута</string>
     <string name="delete_route_prompt">Вы уверены, что хотите удалить этот маршрут\?</string>
     <string name="route_add">Создать маршрут</string>
-    <string name="menu_route">Маршруты</string>
+    <string name="menu_route">Маршрутизация</string>
     <string name="metered_summary">Подсказывать системе, что VPN следует рассматривать как сеть с
         лимитным тарифным планом
     </string>
@@ -617,7 +617,7 @@
     <string name="proxy_set">Набор прокси</string>
     <string name="interrupt_exist_connections">Прерывание существующих соединений</string>
     <string name="urltest_interval">Интервал URL-теста</string>
-    <string name="idle_timeout">Тайм-аут IDLE</string>
+    <string name="idle_timeout">Тайм-аут до IDLE (прекращения цикла тестирования)</string>
     <string name="urltest_tolerance">Допустимая задержка ответа</string>
     <string name="route_action">Действие маршрутизации</string>
     <string name="prefer_ipv4">Предпочитать IPv4</string>
