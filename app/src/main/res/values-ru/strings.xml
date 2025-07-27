@@ -22,8 +22,8 @@
     <string name="connection_test_error_status_code">Код ошибки: #%d</string>
     <string name="connection_test_fail">Интернет недоступен</string>
     <string name="connection_test_error">Ошибка: %s</string>
-    <string name="connection_test_available_http">Успех: HTTP-хендшейк за %d мс</string>
-    <string name="connection_test_available">Успех: HTTPS-хендшейк за %d мс</string>
+    <string name="connection_test_available_http">Время отклика по HTTP %d мс</string>
+    <string name="connection_test_available">Время отклика по HTTPS %d мс</string>
     <string name="connection_test_testing">Тестирование…</string>
     <string name="speed_detail">Прокси ：%1$s↑ %2$s↓
         \nПрямой ：%3$s↑%4$s↓
@@ -293,7 +293,7 @@
     <string name="stop">Стоп</string>
     <string name="service_failed">Не удалось:</string>
     <string name="invalid_server">Неверное имя сервера</string>
-    <string name="forward_success">Прокси запустился.</string>
+    <string name="forward_success">Прокси запущен.</string>
     <string name="service_proxy">Прокси-сервис</string>
     <string name="service_vpn">VPN-сервис</string>
     <string name="direct_boot_aware_summary">Выбранная вами информация профиля будет менее
@@ -338,7 +338,7 @@
     <string name="route_name">Название маршрута</string>
     <string name="delete_route_prompt">Вы уверены, что хотите удалить этот маршрут\?</string>
     <string name="route_add">Создать маршрут</string>
-    <string name="menu_route">Маршрутизация</string>
+    <string name="menu_route">Маршруты</string>
     <string name="metered_summary">Подсказывать системе, что VPN следует рассматривать как сеть с
         лимитным тарифным планом
     </string>
