@@ -6,5 +6,6 @@
 
     <attr name="materialSwitchPreferenceStyle" format="reference"/>
 
+    <attr name="whiteOrPrimary" format="color" />
     <attr name="selectedColorPrimary" format="color" />
 </resources>

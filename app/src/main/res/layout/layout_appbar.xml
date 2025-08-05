@@ -2,9 +2,9 @@
 <com.google.android.material.appbar.AppBarLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/appbar"
-    android:background="?attr/colorPrimary"
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
+    android:background="?attr/colorPrimary"
     android:elevation="4dp">
 
     <com.google.android.material.appbar.MaterialToolbar
@@ -13,5 +13,6 @@
         android:layout_height="match_parent"
         android:background="?attr/colorPrimary"
         android:touchscreenBlocksFocus="false"
-        app:title="@string/app_name" />
+        app:title="@string/app_name"
+        app:titleTextColor="?attr/whiteOrPrimary" />
 </com.google.android.material.appbar.AppBarLayout>

@@ -4,6 +4,7 @@
     <style name="AppNameAppearanceHusi" parent="TextAppearance.Material3.TitleLarge">
         <item name="android:fontFamily">@font/shuowenxiaozhuan_husi</item>
         <item name="fontFamily">@font/shuowenxiaozhuan_husi</item>
+        <item name="android:textColor">?attr/whiteOrPrimary</item>
     </style>
 
     <style name="AppearanceFoundation.Title" parent="TextAppearance.Material3.TitleMedium">
