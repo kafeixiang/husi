@@ -72,13 +72,6 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
             }
         }
 
-        binding.aboutGithub.setOnClickListener { view ->
-            view.context.launchCustomTab("https://github.com/xchacha20-poly1305/husi")
-        }
-        binding.aboutTranslate.setOnClickListener { view ->
-            view.context.launchCustomTab("https://hosted.weblate.org/projects/husi/husi/")
-        }
-
         binding.license.text = LICENSE
         Linkify.addLinks(binding.license, Linkify.EMAIL_ADDRESSES or Linkify.WEB_URLS)
     }
@@ -89,10 +82,9 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                 && !(requireContext().getSystemService(Context.POWER_SERVICE) as PowerManager)
             .isIgnoringBatteryOptimizations(context.packageName)
         val cards = ArrayList<AboutCard>(
-            2 // App version and SingBox version
-                    + state.plugins.size // Plugins
-                    + if (shouldRequestBatteryOptimizations) 1 else 0 // Battery optimization
-                    + 1 // Sponsor
+            2
+                    + state.plugins.size
+                    + if (shouldRequestBatteryOptimizations) 1 else 0
         ).apply {
             add(AboutCard.AppVersion)
             add(AboutCard.SingBoxVersion)
@@ -102,7 +94,6 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
             if (shouldRequestBatteryOptimizations) {
                 add(AboutCard.BatteryOptimization(requestIgnoreBatteryOptimizations))
             }
-            add(AboutCard.Sponsor)
         }
         adapter.submitList(cards)
     }
@@ -111,7 +102,7 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
         ActivityResultContracts.StartActivityForResult()
     ) {
         if (it.resultCode == Activity.RESULT_OK) lifecycleScope.launch {
-            delay(1000) // Wait for updating battery optimization config
+            delay(1000)
             handleUiState(viewModel.uiState.value)
         }
     }
@@ -131,8 +122,6 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                 return javaClass.hashCode()
             }
         }
-
-        object Sponsor : AboutCard
     }
 
     private class AboutAdapter :
@@ -153,16 +142,12 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                 is AboutCard.AppVersion -> holder.bindAppVersion()
                 is AboutCard.SingBoxVersion -> holder.bindSingBoxVersion()
                 is AboutCard.Plugin -> holder.bindPlugin(item.plugin)
-
                 is AboutCard.BatteryOptimization ->
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         holder.bindBatteryOptimization(item.launcher)
                     }
-
-                is AboutCard.Sponsor -> holder.bindSponsor()
             }
         }
-
     }
 
     private class AboutCardDiffCallback : DiffUtil.ItemCallback<AboutCard>() {
@@ -172,7 +157,6 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                 is AboutCard.SingBoxVersion -> new is AboutCard.SingBoxVersion
                 is AboutCard.Plugin -> new is AboutCard.Plugin && old.plugin.id == new.plugin.id
                 is AboutCard.BatteryOptimization -> new is AboutCard.BatteryOptimization
-                is AboutCard.Sponsor -> new is AboutCard.Sponsor
             }
         }
 
@@ -252,15 +236,6 @@ class AboutFragment : ToolbarFragment(R.layout.layout_about) {
                     action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
                     data = "package:${view.context.packageName}".toUri()
                 })
-            }
-        }
-
-        fun bindSponsor() {
-            binding.aboutCardIcon.setImageResource(R.drawable.ic_baseline_card_giftcard_24)
-            binding.aboutCardTitle.setText(R.string.sekai)
-            binding.aboutCardDescription.isVisible = false
-            binding.root.setOnClickListener { view ->
-                view.context.launchCustomTab("https://sekai.icu/sponsor")
             }
         }
     }
