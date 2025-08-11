@@ -40,12 +40,10 @@ import com.google.accompanist.themeadapter.material3.Mdc3Theme
 import io.nekohasekai.sagernet.BuildConfig
 import io.nekohasekai.sagernet.LICENSE
 import io.nekohasekai.sagernet.R
-import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.databinding.LayoutAboutBinding
 import io.nekohasekai.sagernet.databinding.ViewAboutCardBinding
 import io.nekohasekai.sagernet.ktx.dp2px
 import io.nekohasekai.sagernet.ktx.launchCustomTab
-import io.nekohasekai.sagernet.ktx.snackbar
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import libcore.Libcore
@@ -92,9 +90,7 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
             insets
         }
 
-        binding.aboutRecycler.adapter = AboutAdapter { message ->
-            snackbar(message).show()
-        }.also {
+        binding.aboutRecycler.adapter = AboutAdapter().also {
             adapter = it
         }
 
@@ -102,13 +98,6 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.uiState.collect(::handleUiState)
             }
-        }
-
-        binding.aboutGithub.setOnClickListener { view ->
-            view.context.launchCustomTab("https://github.com/xchacha20-poly1305/husi")
-        }
-        binding.aboutTranslate.setOnClickListener { view ->
-            view.context.launchCustomTab("https://hosted.weblate.org/projects/husi/husi/")
         }
 
         binding.license.text = LICENSE
@@ -121,10 +110,9 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
             !(requireContext().getSystemService(Context.POWER_SERVICE) as PowerManager)
                 .isIgnoringBatteryOptimizations(context.packageName)
         val cards = ArrayList<AboutCard>(
-            2 // App version and SingBox version
-                    + state.plugins.size // Plugins
-                    + if (shouldRequestBatteryOptimizations) 1 else 0 // Battery optimization
-                    + 1 // Sponsor
+            2
+                    + state.plugins.size
+                    + if (shouldRequestBatteryOptimizations) 1 else 0
         ).apply {
             add(AboutCard.AppVersion)
             add(AboutCard.SingBoxVersion)
@@ -134,7 +122,6 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
             if (shouldRequestBatteryOptimizations) {
                 add(AboutCard.BatteryOptimization(requestIgnoreBatteryOptimizations))
             }
-            add(AboutCard.Sponsor)
         }
         adapter.submitList(cards)
     }
@@ -163,11 +150,9 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
                 return javaClass.hashCode()
             }
         }
-
-        object Sponsor : AboutCard
     }
 
-    private class AboutAdapter(val snackbar: (CharSequence) -> Unit) :
+    private class AboutAdapter :
         ListAdapter<AboutCard, AboutPluginHolder>(AboutCardDiffCallback()) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AboutPluginHolder {
@@ -186,10 +171,8 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
                 is AboutCard.SingBoxVersion -> holder.bindSingBoxVersion()
                 is AboutCard.Plugin -> holder.bindPlugin(item.plugin)
                 is AboutCard.BatteryOptimization -> holder.bindBatteryOptimization(item.launcher)
-                is AboutCard.Sponsor -> holder.bindSponsor(snackbar)
             }
         }
-
     }
 
     private class AboutCardDiffCallback : DiffUtil.ItemCallback<AboutCard>() {
@@ -199,7 +182,6 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
                 is AboutCard.SingBoxVersion -> new is AboutCard.SingBoxVersion
                 is AboutCard.Plugin -> new is AboutCard.Plugin && old.plugin.id == new.plugin.id
                 is AboutCard.BatteryOptimization -> new is AboutCard.BatteryOptimization
-                is AboutCard.Sponsor -> new is AboutCard.Sponsor
             }
         }
 
@@ -231,7 +213,6 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
                     }
                 )
             }
-            binding.root.setOnLongClickListener(null)
         }
 
         fun bindSingBoxVersion() {
@@ -245,7 +226,6 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
             binding.root.setOnClickListener { view ->
                 view.context.launchCustomTab("https://github.com/SagerNet/sing-box")
             }
-            binding.root.setOnLongClickListener(null)
         }
 
         fun bindPlugin(plugin: AboutPlugin) {
@@ -281,22 +261,6 @@ class AboutFragment : OnKeyDownFragment(R.layout.layout_about) {
                     action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
                     data = "package:${view.context.packageName}".toUri()
                 })
-            }
-            binding.root.setOnLongClickListener(null)
-        }
-
-        fun bindSponsor(snackbar: (CharSequence) -> Unit) {
-            binding.aboutCardIcon.setImageResource(R.drawable.ic_baseline_card_giftcard_24)
-            binding.aboutCardTitle.setText(R.string.sekai)
-            binding.aboutCardDescription.isVisible = false
-            binding.root.setOnClickListener { view ->
-                view.context.launchCustomTab("https://sekai.icu/sponsor")
-            }
-            binding.root.setOnLongClickListener { view ->
-                val isExpert = !DataStore.isExpert
-                DataStore.isExpert = isExpert
-                snackbar("isExpert: $isExpert")
-                true
             }
         }
     }
