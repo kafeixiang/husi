@@ -35,12 +35,9 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.Code
-import androidx.compose.material.icons.filled.GTranslate
 import androidx.compose.material.icons.filled.LibraryMusic
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Nfc
-import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -306,57 +303,6 @@ private fun AboutScreen(
                                 },
                             )
                         }
-                        CardItem(
-                            icon = { Icon(Icons.Filled.Public, null) },
-                            title = stringResource(R.string.sekai),
-                            onCLick = {
-                                uriHandler.openUri("https://sekai.icu/sponsor")
-                            },
-                            onLongClick = {
-                                val isExpert = !DataStore.isExpert
-                                DataStore.isExpert = isExpert
-                                scope.launch {
-                                    snackbarHostState.showSnackbar(
-                                        message = "isExpert: $isExpert",
-                                        actionLabel = context.getString(android.R.string.ok),
-                                        duration = SnackbarDuration.Short,
-                                    )
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-
-            item("project_card") {
-                OutlinedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                    ) {
-                        Text(
-                            text = stringResource(R.string.project),
-                            modifier = Modifier.padding(16.dp),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-
-                        CardItem(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            icon = { Icon(Icons.Filled.Code, null) },
-                            title = stringResource(R.string.github),
-                            onCLick = { uriHandler.openUri("https://github.com/xchacha20-poly1305/husi") },
-                        )
-                        CardItem(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            icon = { Icon(Icons.Filled.GTranslate, null) },
-                            title = stringResource(R.string.translate_platform),
-                            onCLick = { uriHandler.openUri("https://hosted.weblate.org/projects/husi/husi/") },
-                        )
                     }
                 }
             }
