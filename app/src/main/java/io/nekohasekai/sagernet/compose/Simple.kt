@@ -78,7 +78,6 @@ fun TooltipIconButton(
     }
 }
 
-
 @Composable
 fun TextButton(text: String, onClick: () -> Unit) {
     TextButton(onClick = onClick) {
