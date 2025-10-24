@@ -6,7 +6,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
@@ -16,6 +15,7 @@ import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.tabs.TabLayoutMediator
 import io.nekohasekai.sagernet.R
+import io.nekohasekai.sagernet.compose.SimpleTopAppBar
 import io.nekohasekai.sagernet.compose.SimpleIconButton
 import io.nekohasekai.sagernet.compose.theme.AppTheme
 import io.nekohasekai.sagernet.databinding.LayoutToolsBinding
@@ -38,18 +38,15 @@ class ToolsFragment : OnKeyDownFragment(R.layout.layout_tools) {
         binding.toolbar.setContent {
             @Suppress("DEPRECATION")
             AppTheme {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.menu_tools)) },
-                    navigationIcon = {
-                        SimpleIconButton(
-                            imageVector = Icons.Filled.Menu,
-                            contentDescription = stringResource(R.string.menu),
-                        ) {
-                            (requireActivity() as MainActivity).binding
-                                .drawerLayout.openDrawer(GravityCompat.START)
-                        }
-                    },
-                )
+                // 改为使用 SimpleTopAppBar，自动使用主题色作为背景
+                SimpleTopAppBar(
+                    title = R.string.menu_tools,
+                    navigationIcon = Icons.Filled.Menu,
+                    navigationDescription = stringResource(R.string.menu),
+                ) {
+                    (requireActivity() as MainActivity).binding
+                        .drawerLayout.openDrawer(GravityCompat.START)
+                }
             }
         }
         binding.toolsPager.adapter = ToolsAdapter(tools)

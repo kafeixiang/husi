@@ -33,6 +33,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -121,6 +122,10 @@ class AssetEditActivity : ComposeActivity() {
                             },
                             windowInsets = windowInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                             scrollBehavior = scrollBehavior,
+                            // 使用主题色作为 TopAppBar 背景色
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primary
+                            ),
                         )
                     },
                 ) { innerPadding ->
@@ -188,7 +193,6 @@ class AssetEditActivity : ComposeActivity() {
                 }
             }
         }
-
     }
 
     private fun saveAndExit() {
