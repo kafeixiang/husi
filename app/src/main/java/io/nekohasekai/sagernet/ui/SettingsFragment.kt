@@ -156,6 +156,7 @@ private fun SettingsScreen(
     val windowInsets = WindowInsets.safeDrawing
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
+    val listState = rememberLazyListState()
 
     val density = LocalDensity.current
     var bottomBarHeightDp by remember { mutableStateOf(0.dp) }
@@ -170,6 +171,8 @@ private fun SettingsScreen(
             bottomBar.viewTreeObserver.removeOnGlobalLayoutListener(listener)
         }
     }
+
+    HideOnBottomScrollBehavior(listState = listState, fab = (context as MainActivity).binding.fab, bottomBar = bottomBar)
 
     fun needReload() = scope.launch {
         if (!DataStore.serviceState.started) return@launch
@@ -249,6 +252,7 @@ private fun SettingsScreen(
     ) { innerPadding ->
         ProvidePreferenceLocals {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = innerPadding.calculateStartPadding(LocalLayoutDirection.current),

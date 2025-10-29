@@ -61,23 +61,26 @@ fun HideOnBottomScrollBehavior(
                     currentOffset > previousScrollOffset
                 }
 
-                when {
-                    !isScrollingDown -> {
-                        if (!fab.isVisible) {
-                            fab.show()
-                        }
-                        if (!bottomBar.isVisible) {
-                            bottomBar.performShow()
-                        }
-                    }
-                    isAtBottom && isScrollingDown -> {
+                val shouldHide = isAtBottom || isScrollingDown
+
+                if (shouldHide) {
+                    if (fab.isVisible) {
                         fab.hide(object : FloatingActionButton.OnVisibilityChangedListener() {
                             override fun onHidden(button: FloatingActionButton) {
                                 super.onHidden(button)
                                 button.visibility = View.INVISIBLE
                             }
                         })
+                    }
+                    if (bottomBar.isVisible) {
                         bottomBar.performHide()
+                    }
+                } else {
+                    if (!fab.isVisible) {
+                        fab.show()
+                    }
+                    if (!bottomBar.isVisible) {
+                        bottomBar.performShow()
                     }
                 }
 
