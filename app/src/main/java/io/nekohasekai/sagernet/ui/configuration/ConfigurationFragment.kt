@@ -2,6 +2,7 @@ package io.nekohasekai.sagernet.ui.configuration
 
 import android.content.ClipboardManager
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.SpannableStringBuilder
@@ -37,6 +38,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -386,6 +388,12 @@ class ConfigurationFragment : OnKeyDownFragment {
             @Suppress("DEPRECATION")
             AppTheme {
                 MyTopAppBar(order)
+
+                if (DataStore.appTheme != Theme.BLACK && DataStore.appTheme != Theme.DYNAMIC) {
+                    binding.groupTab.backgroundTintList = ColorStateList.valueOf(MaterialTheme.colorScheme.primaryContainer.toArgb())
+                    binding.groupTab.setTabTextColors(MaterialTheme.colorScheme.onPrimaryContainer.toArgb(), MaterialTheme.colorScheme.onPrimaryContainer.toArgb())
+                    binding.groupTab.setSelectedTabIndicatorColor(MaterialTheme.colorScheme.onPrimaryContainer.toArgb())
+                }
             }
         }
     }
