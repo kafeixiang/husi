@@ -77,6 +77,7 @@ import io.nekohasekai.sagernet.compose.paddingWithNavigation
 import io.nekohasekai.sagernet.compose.setPlainText
 import io.nekohasekai.sagernet.compose.showAndDismissOld
 import io.nekohasekai.sagernet.compose.theme.AppTheme
+import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.databinding.ComposeHolderBinding
 import io.nekohasekai.sagernet.fmt.toUniversalLink
@@ -88,6 +89,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import io.nekohasekai.sagernet.utils.Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
 class GroupFragment : OnKeyDownFragment(R.layout.compose_holder) {
@@ -227,6 +229,12 @@ private fun GroupScreen(
                         },
                     )
                 },
+                    colors = if (DataStore.appTheme == Theme.BLACK || DataStore.appTheme == Theme.DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
             )
         },
         snackbarHost = {

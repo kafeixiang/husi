@@ -62,12 +62,14 @@ import io.nekohasekai.sagernet.compose.SimpleIconButton
 import io.nekohasekai.sagernet.compose.TextButton
 import io.nekohasekai.sagernet.compose.paddingExceptBottom
 import io.nekohasekai.sagernet.compose.theme.AppTheme
+import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.fmt.AbstractBean
 import io.nekohasekai.sagernet.ui.ComposeActivity
 import io.nekohasekai.sagernet.ui.stringResource
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import io.nekohasekai.sagernet.utils.Theme
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 
 @ExperimentalMaterial3Api
@@ -214,6 +216,12 @@ abstract class ProfileSettingsActivity<T : AbstractBean> : ComposeActivity() {
                             },
                             windowInsets = windowInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                             scrollBehavior = scrollBehavior,
+                            colors = if (DataStore.appTheme == Theme.BLACK || DataStore.appTheme == Theme.DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                            )
                         )
                     },
                 ) { innerPadding ->
