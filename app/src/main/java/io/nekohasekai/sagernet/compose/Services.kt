@@ -9,6 +9,10 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.toClipEntry
 import io.nekohasekai.sagernet.R
+import io.nekohasekai.sagernet.ui.StringOrRes
+import io.nekohasekai.sagernet.widget.UndoSnackbarManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 suspend fun Clipboard.setPlainText(text: String) {
     val clipData = ClipData.newPlainText(null, text)
@@ -40,4 +44,47 @@ suspend fun SnackbarHostState.showAndDismissOld(
 ): SnackbarResult {
     currentSnackbarData?.dismiss()
     return showSnackbar(message, actionLabel, withDismissAction, duration)
+}
+
+class ComposeSnackbarAdapter(
+    private val showSnackbar: suspend (message: StringOrRes, actionLabel: StringOrRes) -> SnackbarResult,
+    private val scope: CoroutineScope,
+    private val dismiss: () -> Unit,
+) : UndoSnackbarManager.SnackbarAdapter {
+    private lateinit var message: StringOrRes
+    private lateinit var actionLabel: StringOrRes
+    private lateinit var onAction: (() -> Unit)
+    private lateinit var onDismiss: (() -> Unit)
+
+    override fun setMessage(message: StringOrRes): UndoSnackbarManager.SnackbarAdapter {
+        this.message = message
+        return this
+    }
+
+    override fun setAction(actionLabel: StringOrRes): UndoSnackbarManager.SnackbarAdapter {
+        this.actionLabel = actionLabel
+        return this
+    }
+
+    override fun setOnAction(block: () -> Unit): UndoSnackbarManager.SnackbarAdapter {
+        this.onAction = block
+        return this
+    }
+
+    override fun setOnDismiss(block: () -> Unit): UndoSnackbarManager.SnackbarAdapter {
+        this.onDismiss = block
+        return this
+    }
+
+    override fun show() {
+        scope.launch {
+            val result = showSnackbar(message, actionLabel)
+            when (result) {
+                SnackbarResult.ActionPerformed -> onAction()
+                SnackbarResult.Dismissed -> onDismiss()
+            }
+        }
+    }
+
+    override fun flush() = dismiss()
 }
