@@ -19,6 +19,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,10 +45,12 @@ import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.TrafficSortMode
 import io.nekohasekai.sagernet.compose.SimpleIconButton
 import io.nekohasekai.sagernet.compose.theme.AppTheme
+import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.databinding.LayoutDashboardBinding
 import io.nekohasekai.sagernet.ktx.snackbar
 import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.ui.OnKeyDownFragment
+import io.nekohasekai.sagernet.utils.Theme
 import kotlinx.coroutines.launch
 
 class DashboardFragment : OnKeyDownFragment(R.layout.layout_dashboard) {
@@ -259,6 +262,12 @@ class DashboardFragment : OnKeyDownFragment(R.layout.layout_dashboard) {
                             }
                         }
                     },
+                    colors = if (DataStore.appTheme == Theme.BLACK) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                        actionIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    )
                 )
             }
         }
