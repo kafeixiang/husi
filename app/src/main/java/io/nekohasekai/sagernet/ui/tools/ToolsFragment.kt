@@ -5,8 +5,10 @@ import androidx.compose.ui.res.vectorResource
 import android.os.Bundle
 import android.view.View
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
@@ -18,10 +20,12 @@ import com.google.android.material.tabs.TabLayoutMediator
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.compose.SimpleIconButton
 import io.nekohasekai.sagernet.compose.theme.AppTheme
+import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.databinding.LayoutToolsBinding
 import io.nekohasekai.sagernet.ktx.isExpert
 import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.ui.OnKeyDownFragment
+import io.nekohasekai.sagernet.utils.Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
 class ToolsFragment : OnKeyDownFragment(R.layout.layout_tools) {
@@ -49,6 +53,12 @@ class ToolsFragment : OnKeyDownFragment(R.layout.layout_tools) {
                                 .drawerLayout.openDrawer(GravityCompat.START)
                         }
                     },
+                    colors = if (DataStore.appTheme == Theme.BLACK || DataStore.appTheme == Theme.DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
                 )
             }
         }
