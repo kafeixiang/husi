@@ -5,8 +5,10 @@ import androidx.compose.ui.res.vectorResource
 import android.os.Bundle
 import android.view.View
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
@@ -49,6 +51,11 @@ class ToolsFragment : OnKeyDownFragment(R.layout.layout_tools) {
                                 .drawerLayout.openDrawer(GravityCompat.START)
                         }
                     },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    )
                 )
             }
         }
