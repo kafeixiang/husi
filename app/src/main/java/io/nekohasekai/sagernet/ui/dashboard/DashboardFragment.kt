@@ -1,5 +1,6 @@
 package io.nekohasekai.sagernet.ui.dashboard
 
+import android.content.res.ColorStateList
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import android.os.Bundle
@@ -26,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -33,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isGone
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -47,6 +50,7 @@ import io.nekohasekai.sagernet.compose.SimpleIconButton
 import io.nekohasekai.sagernet.compose.theme.AppTheme
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.databinding.LayoutDashboardBinding
+import io.nekohasekai.sagernet.ktx.dp2pxf
 import io.nekohasekai.sagernet.ktx.snackbar
 import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.ui.OnKeyDownFragment
@@ -69,6 +73,10 @@ class DashboardFragment : OnKeyDownFragment(R.layout.layout_dashboard) {
         super.onViewCreated(view, savedInstanceState)
 
         binding = LayoutDashboardBinding.bind(view)
+        binding.dashboardPager.adapter = TrafficAdapter(this).also {
+            adapter = it
+        }
+
         binding.toolbar.setContent {
             @Suppress("DEPRECATION")
             AppTheme {
@@ -269,8 +277,23 @@ class DashboardFragment : OnKeyDownFragment(R.layout.layout_dashboard) {
                         actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 )
+
+                if (DataStore.appTheme != Theme.BLACK && DataStore.appTheme != Theme.DYNAMIC) {
+                    binding.dashboardTab.backgroundTintList = ColorStateList.valueOf(MaterialTheme.colorScheme.primaryContainer.toArgb())
+                    binding.dashboardTab.setTabTextColors(MaterialTheme.colorScheme.onPrimaryContainer.toArgb(), MaterialTheme.colorScheme.onPrimaryContainer.toArgb())
+                    binding.dashboardTab.setSelectedTabIndicatorColor(MaterialTheme.colorScheme.onPrimaryContainer.toArgb())
+                }
             }
         }
+
+        val hideTab = adapter.itemCount < 2
+        binding.dashboardTab.isGone = hideTab
+        binding.toolbar.elevation = if (hideTab) {
+            0F
+        } else {
+            dp2pxf(4)
+        }
+
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.dashboardTab) { v, insets ->
             val bars = insets.getInsets(
@@ -294,9 +317,6 @@ class DashboardFragment : OnKeyDownFragment(R.layout.layout_dashboard) {
             insets
         }
 
-        binding.dashboardPager.adapter = TrafficAdapter(this).also {
-            adapter = it
-        }
         TabLayoutMediator(binding.dashboardTab, binding.dashboardPager) { tab, position ->
             tab.text = when (position) {
                 POSITION_STATUS -> getString(R.string.traffic_status)

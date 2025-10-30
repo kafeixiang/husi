@@ -1,5 +1,6 @@
 package io.nekohasekai.sagernet.ui.tools
 
+import android.content.res.ColorStateList
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import android.os.Bundle
@@ -9,10 +10,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.stringResource
 import androidx.core.view.GravityCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isGone
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.viewpager2.adapter.FragmentStateAdapter
@@ -22,6 +25,7 @@ import io.nekohasekai.sagernet.compose.SimpleIconButton
 import io.nekohasekai.sagernet.compose.theme.AppTheme
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.databinding.LayoutToolsBinding
+import io.nekohasekai.sagernet.ktx.dp2pxf
 import io.nekohasekai.sagernet.ktx.isExpert
 import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.ui.OnKeyDownFragment
@@ -60,8 +64,23 @@ class ToolsFragment : OnKeyDownFragment(R.layout.layout_tools) {
                         actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 )
+
+                if (DataStore.appTheme != Theme.BLACK && DataStore.appTheme != Theme.DYNAMIC) {
+                    binding.toolsTab.backgroundTintList = ColorStateList.valueOf(MaterialTheme.colorScheme.primaryContainer.toArgb())
+                    binding.toolsTab.setTabTextColors(MaterialTheme.colorScheme.onPrimaryContainer.toArgb(), MaterialTheme.colorScheme.onPrimaryContainer.toArgb())
+                    binding.toolsTab.setSelectedTabIndicatorColor(MaterialTheme.colorScheme.onPrimaryContainer.toArgb())
+                }
+
             }
         }
+        val hideTab = tools.size < 2
+        binding.toolsTab.isGone = hideTab
+        binding.toolbar.elevation = if (hideTab) {
+            0F
+        } else {
+            dp2pxf(4)
+        }
+
         binding.toolsPager.adapter = ToolsAdapter(tools)
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.toolsTab) { v, insets ->
