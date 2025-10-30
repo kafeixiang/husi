@@ -93,6 +93,8 @@ import io.nekohasekai.sagernet.compose.colorForUrlTestDelay
 import io.nekohasekai.sagernet.compose.paddingExceptBottom
 import io.nekohasekai.sagernet.compose.showAndDismissOld
 import io.nekohasekai.sagernet.compose.startFilesForResult
+import io.nekohasekai.sagernet.compose.theme.BLACK
+import io.nekohasekai.sagernet.compose.theme.DYNAMIC
 import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.displayType
 import io.nekohasekai.sagernet.ktx.runOnDefaultDispatcher
@@ -234,7 +236,13 @@ fun ConfigurationScreen(
         }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val topAppBarColors = TopAppBarDefaults.topAppBarColors()
+    // 使用主题感知颜色：黑色或动态主题保留默认值，否则使用基于主容器的颜色
+    val topAppBarColors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+    )
     val appBarContainerColor by animateColorAsState(
         targetValue = lerp(
             topAppBarColors.containerColor,
