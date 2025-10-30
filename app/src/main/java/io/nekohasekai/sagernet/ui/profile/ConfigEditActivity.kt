@@ -73,7 +73,9 @@ import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.compose.SimpleIconButton
 import io.nekohasekai.sagernet.compose.TextButton
 import io.nekohasekai.sagernet.compose.theme.AppTheme
+import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.ui.ComposeActivity
+import io.nekohasekai.sagernet.utils.Theme
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -286,6 +288,12 @@ private fun ConfigEditScreenContent(
                 },
                 windowInsets = windowInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                 scrollBehavior = scrollBehavior,
+                colors = if (DataStore.appTheme == Theme.BLACK || DataStore.appTheme == Theme.DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
             )
         },
         bottomBar = {

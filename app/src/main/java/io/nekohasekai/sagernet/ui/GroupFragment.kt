@@ -22,6 +22,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -77,12 +78,14 @@ import io.nekohasekai.sagernet.compose.paddingWithNavigation
 import io.nekohasekai.sagernet.compose.setPlainText
 import io.nekohasekai.sagernet.compose.showAndDismissOld
 import io.nekohasekai.sagernet.compose.theme.AppTheme
+import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.database.SagerDatabase
 import io.nekohasekai.sagernet.databinding.ComposeHolderBinding
 import io.nekohasekai.sagernet.fmt.toUniversalLink
 import io.nekohasekai.sagernet.ktx.blankAsNull
 import io.nekohasekai.sagernet.ktx.formatTime
 import io.nekohasekai.sagernet.ktx.onIoDispatcher
+import io.nekohasekai.sagernet.utils.Theme
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -227,6 +230,12 @@ private fun GroupScreen(
                         },
                     )
                 },
+                colors = if (DataStore.appTheme == Theme.BLACK || DataStore.appTheme == Theme.DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
             )
         },
         snackbarHost = {
