@@ -108,10 +108,10 @@ fun SimpleTopAppBar(
         },
         windowInsets = windowInsets,
         scrollBehavior = scrollBehavior,
-        colors = if (DataStore.appTheme == Theme.BLACK) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-            titleContentColor = MaterialTheme.colorScheme.onPrimary,
-            navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+        colors = if (DataStore.appTheme == Theme.BLACK || DataStore.appTheme == Theme.DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         )
     )
 }

@@ -20,10 +20,12 @@ import com.google.android.material.tabs.TabLayoutMediator
 import io.nekohasekai.sagernet.R
 import io.nekohasekai.sagernet.compose.SimpleIconButton
 import io.nekohasekai.sagernet.compose.theme.AppTheme
+import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.databinding.LayoutToolsBinding
 import io.nekohasekai.sagernet.ktx.isExpert
 import io.nekohasekai.sagernet.ui.MainActivity
 import io.nekohasekai.sagernet.ui.OnKeyDownFragment
+import io.nekohasekai.sagernet.utils.Theme
 
 @OptIn(ExperimentalMaterial3Api::class)
 class ToolsFragment : OnKeyDownFragment(R.layout.layout_tools) {
@@ -51,10 +53,11 @@ class ToolsFragment : OnKeyDownFragment(R.layout.layout_tools) {
                                 .drawerLayout.openDrawer(GravityCompat.START)
                         }
                     },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        titleContentColor = MaterialTheme.colorScheme.onPrimary,
-                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimary,
+                    colors = if (DataStore.appTheme == Theme.BLACK || DataStore.appTheme == Theme.DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 )
             }
