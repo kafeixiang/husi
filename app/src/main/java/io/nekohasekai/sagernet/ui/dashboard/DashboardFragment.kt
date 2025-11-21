@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -80,7 +81,7 @@ class DashboardFragment : OnKeyDownFragment(R.layout.layout_dashboard) {
                                 value = toolbarState.searchQuery,
                                 onValueChange = { viewModel.setSearchQuery(it) },
                                 placeholder = { Text(stringResource(android.R.string.search_go)) },
-                                modifier = Modifier.fillMaxWidth(),
+                                modifier = Modifier.fillMaxWidth().height(37.dp),
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
                                 keyboardActions = KeyboardActions(onSend = {
