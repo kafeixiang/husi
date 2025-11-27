@@ -75,7 +75,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.7.1")
     implementation("androidx.work:work-runtime-ktx:2.11.0")
     implementation("androidx.work:work-multiprocess:2.11.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.9.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0")
     implementation("org.jetbrains.kotlinx:kotlinx-collections-immutable:0.4.0")
     implementation("androidx.datastore:datastore:1.2.0")
     implementation("androidx.datastore:datastore-preferences:1.1.7")
