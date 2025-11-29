@@ -158,7 +158,7 @@ fun MainScreen(
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
+            ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.75f)) {
                 @Composable
                 fun BuildDrawerItem(info: DrawerItemInfo) {
                     DrawerItem(
