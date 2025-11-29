@@ -212,42 +212,6 @@ fun MainScreen(
                     ),
                 )
                 Spacer(Modifier.height(24.dp))
-                HorizontalDivider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(NavigationDrawerItemDefaults.ItemPadding),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    val tooltipState = rememberTooltipState()
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                            TooltipAnchorPosition.Above,
-                        ),
-                        tooltip = {
-                            PlainTooltip {
-                                Text(stringResource(R.string.close))
-                            }
-                        },
-                        state = tooltipState,
-                    ) {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    drawerState.close()
-                                }
-                            },
-                            modifier = Modifier.size(56.dp),
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.fast_rewind),
-                                contentDescription = stringResource(R.string.close),
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
-                    }
-                }
             }
         },
     ) {
