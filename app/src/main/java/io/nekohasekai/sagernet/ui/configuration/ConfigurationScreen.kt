@@ -129,7 +129,7 @@ fun ConfigurationScreen(
     mainViewModel: MainViewModel,
     onNavigationClick: () -> Unit,
     @StringRes titleRes: Int = R.string.app_name,
-    selectCallback: ((id: Long) -> Unit)?,
+    selectCallback: ((id: Long) -> Unit)? = null,
     connection: SagerConnection? = null,
     vm: ConfigurationScreenViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
@@ -804,21 +804,23 @@ fun ConfigurationScreen(
                 .paddingExceptBottom(innerPadding),
         ) {
             if (hasGroups) {
-                PrimaryScrollableTabRow(
-                    selectedTabIndex = pagerState.currentPage,
-                    edgePadding = 0.dp,
-                    containerColor = appBarContainerColor,
-                ) {
-                    uiState.groups.forEachIndexed { index, group ->
-                        Tab(
-                            text = { Text(group.displayName()) },
-                            selected = pagerState.currentPage == index,
-                            onClick = {
-                                scope.launch {
-                                    pagerState.animateScrollToPage(index)
-                                }
-                            },
-                        )
+                if (uiState.groups.size > 1) { // 只有当分组数量大于1时才显示标签页
+                    PrimaryScrollableTabRow(
+                        selectedTabIndex = pagerState.currentPage,
+                        edgePadding = 0.dp,
+                        containerColor = appBarContainerColor,
+                    ) {
+                        uiState.groups.forEachIndexed { index, group ->
+                            Tab(
+                                text = { Text(group.displayName()) },
+                                selected = pagerState.currentPage == index,
+                                onClick = {
+                                    scope.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                },
+                            )
+                        }
                     }
                 }
 
