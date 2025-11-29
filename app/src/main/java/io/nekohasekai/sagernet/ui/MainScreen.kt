@@ -158,7 +158,7 @@ fun MainScreen(
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
+            ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.75f)) {
                 @Composable
                 fun BuildDrawerItem(info: DrawerItemInfo) {
                     DrawerItem(
@@ -204,20 +204,6 @@ fun MainScreen(
                 }
                 for (info in items1) BuildDrawerItem(info)
                 HorizontalDivider()
-                NavigationDrawerItem(
-                    label = { Text(stringResource(R.string.document)) },
-                    selected = false,
-                    onClick = {
-                        scope.launch {
-                            drawerState.close()
-                        }
-                        uriHandler.openUri("https://github.com/xchacha20-poly1305/husi/wiki")
-                    },
-                    modifier = modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-                    icon = {
-                        Icon(ImageVector.vectorResource(R.drawable.data_usage), null)
-                    },
-                )
                 BuildDrawerItem(
                     DrawerItemInfo(
                         R.string.menu_about,
@@ -226,42 +212,6 @@ fun MainScreen(
                     ),
                 )
                 Spacer(Modifier.height(24.dp))
-                HorizontalDivider()
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(NavigationDrawerItemDefaults.ItemPadding),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    val tooltipState = rememberTooltipState()
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                            TooltipAnchorPosition.Above,
-                        ),
-                        tooltip = {
-                            PlainTooltip {
-                                Text(stringResource(R.string.close))
-                            }
-                        },
-                        state = tooltipState,
-                    ) {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    drawerState.close()
-                                }
-                            },
-                            modifier = Modifier.size(56.dp),
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.fast_rewind),
-                                contentDescription = stringResource(R.string.close),
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
-                    }
-                }
             }
         },
     ) {
