@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,6 +38,8 @@ import io.nekohasekai.sagernet.database.DataStore
 import io.nekohasekai.sagernet.ktx.readableUrlTestError
 import io.nekohasekai.sagernet.ui.MainViewModel
 import io.nekohasekai.sagernet.ui.URLTestStatus
+import io.nekohasekai.sagernet.compose.theme.BLACK
+import io.nekohasekai.sagernet.compose.theme.DYNAMIC
 import kotlinx.coroutines.flow.map
 
 @Composable
@@ -60,6 +63,17 @@ fun StatsBar(
         label = "statsBarOffset",
     )
 
+    val statsBarColors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) {
+        TopAppBarDefaults.topAppBarColors().containerColor
+    } else {
+        TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ).containerColor
+    }
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -72,7 +86,7 @@ fun StatsBar(
                     Modifier
                 },
             ),
-        color = MaterialTheme.colorScheme.surface,
+        color = statsBarColors,
         tonalElevation = 4.dp,
     ) {
         Column(
