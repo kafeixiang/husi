@@ -63,15 +63,18 @@ fun StatsBar(
         label = "statsBarOffset",
     )
 
-    val statsBarColors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) {
-        TopAppBarDefaults.topAppBarColors().containerColor
+    // 优化：只根据是否为 BLACK / DYNAMIC 判断是否使用自定义 containerColor。
+    // Surface 这里只需要 container color，因此直接取 Color 即可；如果后来需要完整的 TopAppBarColors，
+    // 可以改成返回 TopAppBarDefaults.topAppBarColors(...)
+    val colorScheme = MaterialTheme.colorScheme
+    val isCustomTheme = DataStore.appTheme != BLACK && DataStore.appTheme != DYNAMIC
+
+    val statsBarColor = if (isCustomTheme) {
+        // 排除了 BLACK 和 DYNAMIC，剩余主题都使用 primaryContainer / onPrimaryContainer 等颜色
+        colorScheme.primaryContainer
     } else {
-        TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        ).containerColor
+        // BLACK 或 DYNAMIC 使用 TopAppBar 的默认容器色（保持与系统 TopAppBar 默认一致）
+        TopAppBarDefaults.topAppBarColors().containerColor
     }
 
     Surface(
@@ -86,7 +89,7 @@ fun StatsBar(
                     Modifier
                 },
             ),
-        color = statsBarColors,
+        color = statsBarColor,
         tonalElevation = 4.dp,
     ) {
         Column(
