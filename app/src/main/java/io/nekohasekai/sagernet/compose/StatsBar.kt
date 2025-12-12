@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -63,18 +62,12 @@ fun StatsBar(
         label = "statsBarOffset",
     )
 
-    // 优化：只根据是否为 BLACK / DYNAMIC 判断是否使用自定义 containerColor。
-    // Surface 这里只需要 container color，因此直接取 Color 即可；如果后来需要完整的 TopAppBarColors，
-    // 可以改成返回 TopAppBarDefaults.topAppBarColors(...)
+    // 优化：BLACK 和 DYNAMIC 使用 surface，其他主题使用 primaryContainer
     val colorScheme = MaterialTheme.colorScheme
-    val isCustomTheme = DataStore.appTheme != BLACK && DataStore.appTheme != DYNAMIC
-
-    val statsBarColor = if (isCustomTheme) {
-        // 排除了 BLACK 和 DYNAMIC，剩余主题都使用 primaryContainer / onPrimaryContainer 等颜色
-        colorScheme.primaryContainer
+    val statsBarColor = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) {
+        colorScheme.surface
     } else {
-        // BLACK 或 DYNAMIC 使用 TopAppBar 的默认容器色（保持与系统 TopAppBar 默认一致）
-        TopAppBarDefaults.topAppBarColors().containerColor
+        colorScheme.primaryContainer
     }
 
     Surface(
