@@ -236,13 +236,19 @@ fun ConfigurationScreen(
         }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    // 使用主题感知颜色：黑色或动态主题保留默认值，否则使用基于主容器的颜色
-    val topAppBarColors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
-        containerColor = MaterialTheme.colorScheme.primaryContainer,
-        titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        navigationIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        actionIconContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-    )
+
+    //  优化后的代码：使用 remember 防止重复计算和闪屏
+    val topAppBarColors = remember(DataStore.appTheme) {
+        val isBlackOrDynamic = DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC
+        TopAppBarDefaults.topAppBarColors(
+            containerColor = if (isBlackOrDynamic) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primaryContainer,
+            titleContentColor = if (isBlackOrDynamic) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimaryContainer,
+            navigationIconContentColor = if (isBlackOrDynamic) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onPrimaryContainer,
+            actionIconContentColor = if (isBlackOrDynamic) MaterialTheme.colorScheme.onSurface else MaterialTheme. colorScheme.onPrimaryContainer,
+            scrolledContainerColor = if (isBlackOrDynamic) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.primaryContainer,
+        )
+    }
+
     val appBarContainerColor by animateColorAsState(
         targetValue = lerp(
             topAppBarColors.containerColor,
