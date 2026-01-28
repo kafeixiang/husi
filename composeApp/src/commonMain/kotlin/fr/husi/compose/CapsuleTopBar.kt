@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.dp
 
 private val CapsuleSize get() = 44.dp
 private val CapsuleBarVerticalPadding get() = 8.dp
-private val CapsuleBarHeight get() = CapsuleSize + CapsuleBarVerticalPadding * 2
+private val CapsuleBarHeight get() = CapsuleSize + (CapsuleBarVerticalPadding * 2)
 
 @Composable
 fun CapsuleTopBar(
@@ -67,44 +67,47 @@ fun CapsuleTopBar(
     capsuleSpacing: Dp = 8.dp,
 ) {
     SetHeightOffsetLimit(scrollBehavior)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(windowInsets)
-            .then(
-                scrollBehavior?.let {
-                    Modifier.nestedScroll(it.nestedScrollConnection)
-                } ?: Modifier,
-            ),
-    ) {
-        Row(
-            modifier = Modifier
+    HusiTopBarColorProvider(scrollBehavior) {
+        Box(
+            modifier = modifier
+                .husiTopBarBackground(scrollBehavior)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(capsuleSpacing),
-            verticalAlignment = Alignment.CenterVertically,
+                .windowInsetsPadding(windowInsets)
+                .then(
+                    scrollBehavior?.let {
+                        Modifier.nestedScroll(it.nestedScrollConnection)
+                    } ?: Modifier,
+                ),
         ) {
-            if (navigationIcon != null) {
-                CircularCapsule {
-                    navigationIcon()
-                }
-            }
-
-            if (title != null) {
-                Box(modifier = Modifier.weight(1f)) {
-                    PillCapsule {
-                        title()
-                    }
-                }
-            } else {
-                Spacer(modifier = Modifier.weight(1f))
-            }
-
             Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(capsuleSpacing),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                actions()
+                if (navigationIcon != null) {
+                    CircularCapsule {
+                        navigationIcon()
+                    }
+                }
+
+                if (title != null) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        PillCapsule {
+                            title()
+                        }
+                    }
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(capsuleSpacing),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    actions()
+                }
             }
         }
     }
@@ -206,37 +209,48 @@ fun CapsuleSearchTopBar(
     capsuleSpacing: Dp = 8.dp,
 ) {
     SetHeightOffsetLimit(scrollBehavior)
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(windowInsets),
-    ) {
-        Row(
-            modifier = Modifier
+    HusiTopBarColorProvider(scrollBehavior) {
+        Box(
+            modifier = modifier
+                .husiTopBarBackground(scrollBehavior)
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(capsuleSpacing),
-            verticalAlignment = Alignment.CenterVertically,
+                .windowInsetsPadding(windowInsets),
         ) {
-            if (navigationIcon != null) {
-                CapsuleCircular {
-                    navigationIcon()
-                }
-            }
-
-            CapsuleSearchPill(
-                modifier = Modifier.weight(1f),
-                onClick = onSearchPillClick,
-                onLongClick = onSearchPillLongPress,
-            ) {
-                inputField()
-            }
-
             Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(capsuleSpacing),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                actions()
+                if (navigationIcon != null) {
+                    CapsuleCircular {
+                        navigationIcon()
+                    }
+                }
+
+                CapsuleSearchPill(
+                    modifier = Modifier
+                        .weight(1f)
+                        .then(
+                            if (onSearchPillLongPress != null) {
+                                Modifier.consumeOnlyLongPress(onSearchPillLongPress)
+                            } else {
+                                Modifier
+                            },
+                        ),
+                    onClick = onSearchPillClick,
+                    onLongClick = onSearchPillLongPress,
+                ) {
+                    inputField()
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(capsuleSpacing),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    actions()
+                }
             }
         }
     }
@@ -252,7 +266,7 @@ fun CapsuleSearchInputField(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
 ) {
-    val showCenteredPlaceholder = searchBarState.currentValue == SearchBarValue.Collapsed &&
+    val showCenteredPlaceholder = (searchBarState.currentValue == SearchBarValue.Collapsed) &&
             textFieldState.text.isEmpty()
     Box(
         modifier = modifier
