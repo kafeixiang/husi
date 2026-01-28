@@ -175,7 +175,7 @@ jobs:
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
           echo "${{ secrets.LOCAL_PROPERTIES }}" >> local.properties
           ./gradlew :composeApp:exportLibraryDefinitions
-          ./gradlew clean androidApp:assembleFossDebug
+          KEYSTORE_PASS="${{ secrets.KEYSTORE_PASS }}" ALIAS_NAME="${{ secrets.ALIAS_NAME }}" ALIAS_PASS="${{ secrets.ALIAS_PASS}}" ./gradlew clean androidApp:assembleFossDebug
           APK=$(find androidApp/build/outputs/apk -name '*arm64-v8a*.apk')
           APK=$(dirname $APK)
           rm $APK/output-metadata.json
@@ -258,3 +258,30 @@ jobs:
           name: "desktop-jar-${{ steps.artifact_target.outputs.safe }}"
           if-no-files-found: error
           path: composeApp/build/compose/jars/*.jar
+  release:
+    name: Publish Release
+    if: github.event.inputs.release != 'y'
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Download Artifacts
+        uses: actions/download-artifact@v6
+        with:
+          name: APKs
+          path: artifacts/
+      - name: Set Release Tag
+        run: |
+          echo "RELEASE_TAG=${{ github.ref_name }}-DEBUG" >> $GITHUB_ENV
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir apks
+          find artifacts -name "*.apk" -exec cp {} apks \;
+          gh release create "${{ env.RELEASE_TAG }}" --title "${{ env.RELEASE_TAG }}" --prerelease \
+            --notes $'# :memo: Release Notes\n\n* Fixes and improvements.' || echo "Release already exists"
+          gh release upload "${{ env.RELEASE_TAG }}" ./apks/* --clobber
