@@ -392,6 +392,18 @@ fun SettingsScreen(
                         key = Key.APP_THEME,
                         title = { Text(stringResource(Res.string.theme)) },
                     )
+                    item(Key.THEMED_TOP_BAR, PreferenceType.SWITCH) {
+                        val value by DataStore.configurationStore
+                            .booleanFlow(Key.THEMED_TOP_BAR, false)
+                            .collectAsStateWithLifecycle(false)
+                        SwitchPreference(
+                            value = value,
+                            onValueChange = { DataStore.themedTopBar = it },
+                            title = { Text("浮光跃彩") },
+                            icon = { Icon(vectorResource(Res.drawable.color_lens), null) },
+                            summary = { Text("让顶部工具栏随主题灵动起舞") },
+                        )
+                    }
                     item(Key.NIGHT_THEME, PreferenceType.LIST) {
                         fun nightString(index: Int): StringResource = when (index) {
                             0 -> Res.string.follow_system

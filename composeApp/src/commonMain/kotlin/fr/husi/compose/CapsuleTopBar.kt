@@ -51,7 +51,7 @@ import androidx.compose.ui.unit.dp
 
 private val CapsuleSize get() = 44.dp
 private val CapsuleBarVerticalPadding get() = 8.dp
-private val CapsuleBarHeight get() = CapsuleSize + CapsuleBarVerticalPadding * 2
+private val CapsuleBarHeight get() = CapsuleSize + (CapsuleBarVerticalPadding * 2)
 
 @Composable
 fun CapsuleTopBar(
@@ -66,6 +66,7 @@ fun CapsuleTopBar(
     SetHeightOffsetLimit(scrollBehavior)
     Box(
         modifier = modifier
+            .husiTopBarBackground(scrollBehavior) // <--- 全文件唯一修改，仅此一行
             .fillMaxWidth()
             .windowInsetsPadding(windowInsets)
             .then(
@@ -202,6 +203,7 @@ fun CapsuleSearchTopBar(
     SetHeightOffsetLimit(scrollBehavior)
     Box(
         modifier = modifier
+            .husiTopBarBackground(scrollBehavior) // <--- 同理，仅此一行
             .fillMaxWidth()
             .windowInsetsPadding(windowInsets),
     ) {
@@ -242,7 +244,7 @@ fun CapsuleSearchInputField(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
 ) {
-    val showCenteredPlaceholder = searchBarState.currentValue == SearchBarValue.Collapsed &&
+    val showCenteredPlaceholder = (searchBarState.currentValue == SearchBarValue.Collapsed) &&
             textFieldState.text.isEmpty()
     Box(
         modifier = modifier
