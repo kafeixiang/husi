@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import fr.husi.compose.material3.Icon
 import fr.husi.compose.material3.IconButton
 import androidx.compose.material3.PlainTooltip
@@ -25,6 +26,9 @@ import fr.husi.resources.app_name
 import fr.husi.resources.menu
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
+import fr.husi.database.DataStore
 
 @Composable
 fun SimpleIconButton(
@@ -98,6 +102,9 @@ fun SimpleTopAppBar(
         navigationIcon = navigationIcon,
         windowInsets = windowInsets,
         scrollBehavior = scrollBehavior,
+        colors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        )
     )
 }
 

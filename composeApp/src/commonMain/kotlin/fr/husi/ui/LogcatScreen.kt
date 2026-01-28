@@ -94,6 +94,9 @@ import io.github.oikvpqya.compose.fastscroller.rememberScrollbarAdapter
 import kotlinx.coroutines.launch
 import kotlin.math.max
 import fr.husi.resources.*
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
+import fr.husi.database.DataStore
 
 @Composable
 fun LogcatScreen(
@@ -237,6 +240,9 @@ fun LogcatScreen(
                 },
                 windowInsets = windowInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                 scrollBehavior = scrollBehavior,
+                colors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarState) },

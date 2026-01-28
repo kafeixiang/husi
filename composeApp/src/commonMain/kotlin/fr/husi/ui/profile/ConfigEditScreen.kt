@@ -134,6 +134,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
+import fr.husi.database.DataStore
 import kotlin.random.Random
 
 @Composable
@@ -445,6 +448,13 @@ private fun ConfigEditScreenContent(
                 },
                 windowInsets = windowInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                 scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) {
+                        MaterialTheme.colorScheme.surface
+                    } else {
+                        MaterialTheme.colorScheme.primaryContainer
+                    }
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

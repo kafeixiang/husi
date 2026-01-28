@@ -115,6 +115,10 @@ import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.TextFieldPreference
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
+import fr.husi.database.DataStore
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 internal fun GroupSettingsScreen(
@@ -179,6 +183,9 @@ internal fun GroupSettingsScreen(
                 },
                 windowInsets = windowInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                 scrollBehavior = scrollBehavior,
+                colors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                )
             )
         },
     ) { innerPadding ->

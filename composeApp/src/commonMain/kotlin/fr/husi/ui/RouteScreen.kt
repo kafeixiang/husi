@@ -124,6 +124,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
 
 
 @Composable
@@ -242,6 +244,9 @@ fun RouteScreen(
                 },
                 windowInsets = windowInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                 scrollBehavior = scrollBehavior,
+                colors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                )
             )
         },
         snackbarHost = { SnackbarHost(snackbarState) },

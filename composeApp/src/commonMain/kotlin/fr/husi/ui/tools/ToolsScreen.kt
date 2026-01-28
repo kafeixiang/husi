@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import fr.husi.compose.material3.PrimaryTabRow
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -53,7 +55,8 @@ import fr.husi.ui.getStringOrRes
 import kotlinx.coroutines.launch
 import fr.husi.resources.*
 import fr.husi.repository.resolveRepository
-
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
 private const val PAGE_NETWORK = 0
 private const val PAGE_BACKUP = 1
 private const val PAGE_DEBUG = 2
@@ -80,7 +83,10 @@ fun ToolsScreen(
     var bottomVisible by remember { mutableStateOf(true) }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val topAppBarColors = TopAppBarDefaults.topAppBarColors()
+    // 使用主题感知颜色：黑色或动态主题保留默认值，否则使用基于主容器的颜色
+    val topAppBarColors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+    )
     val appBarContainerColor by animateColorAsState(
         targetValue = lerp(
             topAppBarColors.containerColor,

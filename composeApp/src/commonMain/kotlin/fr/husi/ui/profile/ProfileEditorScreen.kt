@@ -91,6 +91,9 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.random.Random
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
+import fr.husi.database.DataStore
 
 @Composable
 fun ProfileEditorScreen(
@@ -430,6 +433,9 @@ internal fun <T : AbstractBean> ProfileSettingsScreenScaffold(
                 },
                 windowInsets = windowInsets.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
                 scrollBehavior = scrollBehavior,
+                colors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) TopAppBarDefaults.topAppBarColors() else TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                )
             )
         },
     ) { innerPadding ->

@@ -46,6 +46,7 @@ import fr.husi.compose.material3.Surface
 import fr.husi.compose.material3.Switch
 import fr.husi.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
@@ -323,6 +324,7 @@ internal fun AppListScaffold(
     snackbarMessage: StringOrRes?,
     onNavigationClick: () -> Unit,
     modifier: Modifier = Modifier,
+    topAppBarColors: TopAppBarColors = TopAppBarDefaults.topAppBarColors(),
     extraTopBarContent: @Composable () -> Unit = {},
     dropdownMenuItems: @Composable (onDismiss: () -> Unit) -> Unit = {},
 ) {
@@ -367,7 +369,7 @@ internal fun AppListScaffold(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            val colors = TopAppBarDefaults.topAppBarColors()
+            val colors = topAppBarColors
             val isScrolled = scrollBehavior.state.overlappedFraction > 0
             val containerColor = if (isScrolled) {
                 colors.scrolledContainerColor

@@ -4,6 +4,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import fr.husi.compose.material3.Icon
 import fr.husi.compose.material3.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -23,6 +25,9 @@ import fr.husi.results.LocalResultEventBus
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
 import kotlin.random.Random
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
+import fr.husi.database.DataStore
 
 @Composable
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
@@ -61,6 +66,13 @@ internal actual fun AppListScreen(
         snackbarMessage = uiState.snackbarMessage,
         onNavigationClick = ::saveAndExit,
         modifier = modifier,
+        topAppBarColors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) {
+            TopAppBarDefaults.topAppBarColors()
+        } else {
+            TopAppBarDefaults.topAppBarColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        },
         dropdownMenuItems = { onDismiss ->
             DropdownMenuItem(
                 text = { Text(stringResource(Res.string.invert_selections)) },

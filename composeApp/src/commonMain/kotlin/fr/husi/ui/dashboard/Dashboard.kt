@@ -83,6 +83,9 @@ import fr.husi.compose.SimpleIconButton
 import fr.husi.compose.StatsBar
 import fr.husi.compose.TextButton
 import fr.husi.compose.paddingExceptBottom
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
+import fr.husi.database.DataStore
 import fr.husi.ui.MainViewModel
 import fr.husi.ui.MainViewModelUiEvent
 import fr.husi.ui.getStringOrRes
@@ -151,7 +154,17 @@ fun DashboardScreen(
         )
     }
     val scrollBehavior = SearchBarDefaults.enterAlwaysSearchBarScrollBehavior()
-    val appBarWithSearchColors = SearchBarDefaults.appBarWithSearchColors()
+
+    // 针对搜索栏和普通工具栏分别处理颜色逻辑
+    val appBarWithSearchColors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) {
+        SearchBarDefaults.appBarWithSearchColors()
+    } else {
+        SearchBarDefaults.appBarWithSearchColors(
+            appBarContainerColor = MaterialTheme.colorScheme.primaryContainer,
+            scrolledAppBarContainerColor = MaterialTheme.colorScheme.primaryContainer,
+        )
+    }
+
     val overlappedFraction by remember(scrollBehavior) {
         derivedStateOf {
             if (scrollBehavior.scrollOffsetLimit != 0f) {
@@ -363,10 +376,16 @@ fun DashboardScreen(
                                 onClick = onDrawerClick,
                             )
                         },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = Color.Transparent,
-                            scrolledContainerColor = Color.Transparent,
-                        ),
+                        colors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) {
+                            TopAppBarDefaults.topAppBarColors(
+                                containerColor = Color.Transparent,
+                                scrolledContainerColor = Color.Transparent,
+                            )
+                        } else {
+                            TopAppBarDefaults.topAppBarColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            )
+                        },
                         windowInsets = windowInsets.only(WindowInsetsSides.Horizontal),
                     )
                 }

@@ -98,6 +98,8 @@ import fr.husi.compose.material3.PrimaryScrollableTabRow
 import fr.husi.compose.material3.Tab
 import fr.husi.compose.material3.Text
 import fr.husi.compose.paddingExceptBottom
+import fr.husi.compose.theme.BLACK
+import fr.husi.compose.theme.DYNAMIC
 import fr.husi.database.DataStore
 import fr.husi.database.ProxyEntity
 import fr.husi.database.displayType
@@ -276,7 +278,15 @@ fun ConfigurationScreen(
     var showOrderMenu by remember { mutableStateOf(false) }
     val searchBarState = rememberSearchBarState()
     val searchTextFieldState = vm.searchTextFieldState
-    val appBarWithSearchColors = SearchBarDefaults.appBarWithSearchColors()
+
+    val appBarWithSearchColors = if (DataStore.appTheme == BLACK || DataStore.appTheme == DYNAMIC) {
+        SearchBarDefaults.appBarWithSearchColors()
+    } else {
+        SearchBarDefaults.appBarWithSearchColors(
+            appBarContainerColor = MaterialTheme.colorScheme.primaryContainer,
+        )
+    }
+
     val searchInputField: @Composable () -> Unit = {
         SearchBarDefaults.InputField(
             textFieldState = searchTextFieldState,
