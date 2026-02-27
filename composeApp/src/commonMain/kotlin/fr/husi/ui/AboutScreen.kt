@@ -56,13 +56,10 @@ import fr.husi.resources.build
 import fr.husi.resources.build_environment
 import fr.husi.resources.arrow_back
 import fr.husi.resources.back
-import fr.husi.resources.code
 import fr.husi.resources.copy_success
 import fr.husi.resources.data_usage
 import fr.husi.resources.document
-import fr.husi.resources.g_translate
 import fr.husi.resources.gavel
-import fr.husi.resources.github
 import fr.husi.resources.ignore_battery_optimizations
 import fr.husi.resources.ignore_battery_optimizations_sum
 import fr.husi.resources.library_music
@@ -70,7 +67,6 @@ import fr.husi.resources.menu_about
 import fr.husi.resources.oss_licenses
 import fr.husi.resources.project
 import fr.husi.resources.shuowenxiaozhuan_husi
-import fr.husi.resources.translate_platform
 import fr.husi.resources.version_x
 import io.github.oikvpqya.compose.fastscroller.material3.defaultMaterialScrollbarStyle
 import io.github.oikvpqya.compose.fastscroller.rememberScrollbarAdapter
@@ -237,36 +233,6 @@ fun AboutScreen(
                                 style = MaterialTheme.typography.titleMedium,
                             )
 
-                            CardItem(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                icon = { Icon(vectorResource(Res.drawable.code), null) },
-                                title = stringResource(Res.string.github),
-                                onClick = { uriHandler.openUri("https://github.com/xchacha20-poly1305/husi") },
-                            )
-                            CardItem(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                icon = {
-                                    Icon(
-                                        vectorResource(Res.drawable.data_usage),
-                                        null,
-                                    )
-                                },
-                                title = stringResource(Res.string.document),
-                                onClick = {
-                                    uriHandler.openUri("https://github.com/xchacha20-poly1305/husi/wiki")
-                                },
-                            )
-                            CardItem(
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                                icon = {
-                                    Icon(
-                                        vectorResource(Res.drawable.g_translate),
-                                        null,
-                                    )
-                                },
-                                title = stringResource(Res.string.translate_platform),
-                                onClick = { uriHandler.openUri("https://hosted.weblate.org/projects/husi/husi/") },
-                            )
                             CardItem(
                                 modifier = Modifier.padding(horizontal = 16.dp),
                                 icon = {
