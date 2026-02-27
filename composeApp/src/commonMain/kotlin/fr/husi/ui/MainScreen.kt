@@ -306,18 +306,7 @@ private fun MainScreenContent(
                 )
             }
             for (info in items1) BuildDrawerItem(info)
-            HorizontalDivider(modifier = Modifier.padding(vertical = dividerPadding))
-            DrawerItem(
-                label = { Text(stringResource(Res.string.document)) },
-                selected = false,
-                onClick = {
-                    closeDrawer()
-                    uriHandler.openUri("https://codeberg.org/xchacha20-poly1305/husi/wiki")
-                },
-                icon = {
-                    Icon(vectorResource(Res.drawable.data_usage), null)
-                },
-            )
+            HorizontalDivider()
             BuildDrawerItem(
                 DrawerItemInfo(
                     Res.string.menu_about,
@@ -327,37 +316,6 @@ private fun MainScreenContent(
             )
             if (drawerStateHolder.canCollapse) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = dividerPadding))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 28.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    val tooltipState = rememberTooltipState()
-                    TooltipBox(
-                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                            TooltipAnchorPosition.Above,
-                        ),
-                        tooltip = {
-                            PlainTooltip {
-                                Text(stringResource(Res.string.close))
-                            }
-                        },
-                        state = tooltipState,
-                    ) {
-                        IconButton(
-                            onClick = ::closeDrawer,
-                            modifier = Modifier.size(56.dp),
-                        ) {
-                            Icon(
-                                imageVector = vectorResource(Res.drawable.fast_rewind),
-                                contentDescription = stringResource(Res.string.close),
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
-                    }
-                }
             }
         },
     ) {
