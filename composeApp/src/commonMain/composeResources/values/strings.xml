@@ -778,6 +778,10 @@
     <string name="tun_auto_redirect">Tun auto redirect</string>
     <string name="no_plugin_found">No plugin found!</string>
     <string name="traffic_pattern">Traffic Pattern</string>
+    <string name="plugin_set">Set</string>
+    <string name="plugin_not_set">Not set</string>
+    <string name="plugin_simple_obfuscation">Simple obfuscation</string>
+    <string name="plugin_v2ray_plugin">v2ray-plugin</string>
     <string name="route_invert">Invert Match</string>
     <string name="latency">Latency</string>
     <string name="select_file">Select File</string>
