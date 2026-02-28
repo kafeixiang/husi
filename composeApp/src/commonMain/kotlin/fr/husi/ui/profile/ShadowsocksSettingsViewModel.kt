@@ -57,7 +57,7 @@ internal class ShadowsocksSettingsViewModel : ProfileEditorViewModel<Shadowsocks
                 muxStrategy = serverMuxStrategy,
                 muxPadding = serverMuxPadding,
                 pluginName = plugin.substringBefore(";"),
-                pluginConfig = plugin.substringAfter(";"),
+                pluginConfig = plugin.substringAfter(";", ""),
                 udpOverTcp = udpOverTcp,
             )
         }
@@ -140,7 +140,10 @@ internal class ShadowsocksSettingsViewModel : ProfileEditorViewModel<Shadowsocks
     }
 
     fun setPluginName(name: String) {
-        _uiState.update { it.copy(pluginName = name) }
+        _uiState.update {
+            if (it.pluginName == name) it
+            else it.copy(pluginName = name, pluginConfig = "")
+        }
     }
 
     fun setPluginConfig(config: String) {
