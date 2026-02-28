@@ -2,15 +2,26 @@ package fr.husi.ui.profile
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import fr.husi.compose.material3.Icon
 import fr.husi.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import fr.husi.compose.MultilineTextField
 import fr.husi.compose.PasswordPreference
 import fr.husi.compose.PreferenceCategory
@@ -52,6 +63,7 @@ import fr.husi.resources.view_in_ar
 import fr.husi.ui.NavRoutes
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
+import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.TextFieldPreference
 import org.jetbrains.compose.resources.stringResource
@@ -72,13 +84,41 @@ fun ShadowsocksSettingsScreen(
         ShadowsocksSettingsViewModel()
     }
 
+    var showPluginGui by remember { mutableStateOf<String?>(null) }
+
     ProfileSettingsScreenScaffold(
         title = Res.string.profile_config,
         viewModel = viewModel,
         onResult = onResult,
         onOpenConfigEditor = onOpenConfigEditor,
     ) { uiState, scrollTo ->
-        shadowsocksSettings(uiState as ShadowsocksUiState, viewModel, scrollTo)
+        shadowsocksSettings(uiState as ShadowsocksUiState, viewModel, scrollTo) { pluginId ->
+            showPluginGui = pluginId
+        }
+    }
+
+    if (showPluginGui != null) {
+        val uiState = viewModel.uiState.collectAsState().value
+        Dialog(
+            onDismissRequest = { showPluginGui = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                if (showPluginGui == "obfs-local") {
+                    ObfsLocalConfigScreen(
+                        initialConfig = uiState.pluginConfig,
+                        onSave = { viewModel.setPluginConfig(it); showPluginGui = null },
+                        onBack = { showPluginGui = null }
+                    )
+                } else if (showPluginGui == "v2ray-plugin") {
+                    V2RayPluginConfigScreen(
+                        initialConfig = uiState.pluginConfig,
+                        onSave = { viewModel.setPluginConfig(it); showPluginGui = null },
+                        onBack = { showPluginGui = null }
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -86,6 +126,7 @@ private fun LazyListScope.shadowsocksSettings(
     uiState: ShadowsocksUiState,
     viewModel: ShadowsocksSettingsViewModel,
     scrollTo: (key: String) -> Unit,
+    onOpenGui: (String) -> Unit
 ) {
     val encryptionMethods = listOf(
         "2022-blake3-aes-128-gcm",
@@ -255,19 +296,29 @@ private fun LazyListScope.shadowsocksSettings(
         )
     }
     item("plugin_config") {
-        TextFieldPreference(
-            value = uiState.pluginConfig,
-            onValueChange = { viewModel.setPluginConfig(it) },
-            title = { Text(stringResource(Res.string.plugin_configure)) },
-            textToValue = { it },
-            enabled = uiState.pluginName.isNotBlank(),
-            icon = { Icon(vectorResource(Res.drawable.settings), null) },
-            summary = { Text(contentOrUnset(uiState.pluginConfig)) },
-            valueToText = { it },
-            textField = { value, onValueChange, onOk ->
-                MultilineTextField(value, onValueChange, onOk)
-            },
-        )
+        if (uiState.pluginName == "obfs-local" || uiState.pluginName == "v2ray-plugin") {
+            Preference(
+                onClick = { onOpenGui(uiState.pluginName) },
+                title = { Text(stringResource(Res.string.plugin_configure)) },
+                icon = { Icon(vectorResource(Res.drawable.settings), null) },
+                summary = { Text(contentOrUnset(uiState.pluginConfig)) },
+                enabled = uiState.pluginName.isNotBlank(),
+            )
+        } else {
+            TextFieldPreference(
+                value = uiState.pluginConfig,
+                onValueChange = { viewModel.setPluginConfig(it) },
+                title = { Text(stringResource(Res.string.plugin_configure)) },
+                textToValue = { it },
+                enabled = uiState.pluginName.isNotBlank(),
+                icon = { Icon(vectorResource(Res.drawable.settings), null) },
+                summary = { Text(contentOrUnset(uiState.pluginConfig)) },
+                valueToText = { it },
+                textField = { value, onValueChange, onOk ->
+                    MultilineTextField(value, onValueChange, onOk)
+                },
+            )
+        }
     }
 
     item("category_experimental") {
