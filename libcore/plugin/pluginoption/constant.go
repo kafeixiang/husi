@@ -9,6 +9,7 @@ const (
 	TypeJuicity     = "juicity"
 	TypeTrustTunnel = "trusttunnel"
 	TypeAnchor      = "anchor"
+	TypeSSR         = "ssr"
 )
 
 func ProxyDisplayName(proxyType string) string {
@@ -17,6 +18,8 @@ func ProxyDisplayName(proxyType string) string {
 		return "Juicity"
 	case TypeTrustTunnel:
 		return "TrustTunnel"
+	case TypeSSR:
+		return "ShadowsocksR"
 	default:
 		return C.ProxyDisplayName(proxyType)
 	}
