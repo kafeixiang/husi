@@ -116,6 +116,7 @@ import fr.husi.resources.action_mieru
 import fr.husi.resources.action_naive
 import fr.husi.resources.action_shadowquic
 import fr.husi.resources.action_shadowsocks
+import fr.husi.resources.action_ssr
 import fr.husi.resources.action_shadowtls
 import fr.husi.resources.action_socks
 import fr.husi.resources.action_ssh
@@ -349,6 +350,7 @@ fun ConfigurationScreen(
             Res.string.action_socks to ProxyEntity.TYPE_SOCKS,
             Res.string.action_http to ProxyEntity.TYPE_HTTP,
             Res.string.action_shadowsocks to ProxyEntity.TYPE_SS,
+            Res.string.action_ssr to ProxyEntity.TYPE_SSR,
             Res.string.action_vmess to ProxyEntity.TYPE_VMESS,
             Res.string.action_vless to ProxyEntity.TYPE_VLESS,
             Res.string.action_trojan to ProxyEntity.TYPE_TROJAN,
