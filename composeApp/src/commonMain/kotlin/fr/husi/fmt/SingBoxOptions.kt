@@ -31,6 +31,7 @@ object SingBoxOptions {
     const val TYPE_HYSTERIA2 = "hysteria2"
     const val TYPE_SHADOWSOCKS = "shadowsocks"
     const val TYPE_SNELL = "snell"
+    const val TYPE_SSR = "ssr"
     const val TYPE_SOCKS = "socks"
     const val TYPE_SSH = "ssh"
     const val TYPE_TROJAN = "trojan"
@@ -299,6 +300,8 @@ object SingBoxOptions {
         // Generate note: option type:  public TUICInboundOptions TUICOptions;
 
         // Generate note: option type:  public Hysteria2InboundOptions Hysteria2Options;
+
+        // Generate note: option type:  public ShadowsocksROutboundOptions ShadowsocksROptions;
 
     }
 
@@ -3011,6 +3014,31 @@ object SingBoxOptions {
         @JvmField
         var interrupt_exist_connections: Boolean? = null
 
+    }
+
+    @KxsSerializable
+    open class Outbound_ShadowsocksROptions : Outbound() {
+        @JvmField var server: String? = null
+        @JvmField var server_port: Int? = null
+        @JvmField var method: String? = null
+        @JvmField var password: String? = null
+        @JvmField var protocol: String? = null
+        @JvmField var protocol_param: String? = null
+        @JvmField var obfs: String? = null
+        @JvmField var obfs_param: String? = null
+        @JvmField var network: MutableList<String>? = null
+
+        @JvmField var detour: String? = null
+        @JvmField var bind_interface: String? = null
+        @JvmField var inet4_bind_address: String? = null
+        @JvmField var inet6_bind_address: String? = null
+        @JvmField var routing_mark: Int? = null
+        @JvmField var reuse_addr: Boolean? = null
+        @JvmField var connect_timeout: String? = null
+        @JvmField var tcp_fast_open: Boolean? = null
+        @JvmField var network_strategy: String? = null
+        @JvmField var network_type: MutableList<String>? = null
+        @JvmField var fallback_network_type: MutableList<String>? = null
     }
 
     @KxsSerializable
