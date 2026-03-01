@@ -196,6 +196,12 @@ fun ProfileEditorScreen(
             onResult = onResult,
             onOpenConfigEditor = onOpenConfigEditor,
         )
+            ProxyEntity.TYPE_SSR -> SSRSettingsScreen(
+                profileId = profileId,
+                isSubscription = isSubscription,
+                onResult = onResult,
+                onOpenConfigEditor = onOpenConfigEditor,
+            )
 
         ProxyEntity.TYPE_JUICITY -> JuicitySettingsScreen(
             profileId = profileId,

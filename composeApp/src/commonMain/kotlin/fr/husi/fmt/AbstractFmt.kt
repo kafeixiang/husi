@@ -56,6 +56,9 @@ import fr.husi.fmt.shadowquic.ShadowQUICBean
 import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.shadowsocks.buildSingBoxOutboundShadowsocksBean
 import fr.husi.fmt.shadowsocks.parseShadowsocksOutbound
+import fr.husi.fmt.ssr.SSRBean
+import fr.husi.fmt.ssr.buildSingBoxOutboundSSRBean
+import fr.husi.fmt.ssr.parseSSROutbound
 import fr.husi.fmt.shadowtls.ShadowTLSBean
 import fr.husi.fmt.snell.SnellBean
 import fr.husi.fmt.snell.buildSingBoxOutboundSnellBean
@@ -123,6 +126,7 @@ fun AbstractBean.toJsonStringKxs(): String = when (this) {
     is OpenVPNBean -> kxs.encodeToString(this)
     is ShadowQUICBean -> kxs.encodeToString(this)
     is ShadowsocksBean -> kxs.encodeToString(this)
+    is SSRBean -> kxs.encodeToString(this)
     is ShadowTLSBean -> kxs.encodeToString(this)
     is SnellBean -> kxs.encodeToString(this)
     is SOCKSBean -> kxs.encodeToString(this)
@@ -147,6 +151,8 @@ fun buildSingBoxOutbound(bean: AbstractBean): String = when (bean) {
         kxs.encodeToString(buildSingBoxOutboundShadowsocksBean(bean).apply { tag = bean.name })
     is SnellBean ->
         kxs.encodeToString(buildSingBoxOutboundSnellBean(bean).apply { tag = bean.name })
+    is SSRBean ->
+        kxs.encodeToString(buildSingBoxOutboundSSRBean(bean).apply { tag = bean.name })
     is SOCKSBean -> kxs.encodeToString(buildSingBoxOutboundSocksBean(bean).apply { tag = bean.name })
     is SSHBean -> kxs.encodeToString(buildSingBoxOutboundSSHBean(bean).apply { tag = bean.name })
     is TuicBean -> kxs.encodeToString(buildSingBoxOutboundTuicBean(bean).apply { tag = bean.name })
@@ -213,6 +219,8 @@ fun parseOutbound(json: JSONMap): AbstractBean? = when (json["type"].toString())
     TYPE_SHADOWSOCKS -> parseShadowsocksOutbound(json)
 
     TYPE_SNELL -> parseSnellOutbound(json)
+
+    "ssr" -> parseSSROutbound(json)
 
     TYPE_VMESS, TYPE_VLESS, TYPE_TROJAN -> parseStandardV2RayOutbound(json)
 
