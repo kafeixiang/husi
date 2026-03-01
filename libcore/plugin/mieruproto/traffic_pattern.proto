@@ -19,7 +19,7 @@ syntax = "proto3";
 
 package mieruproto;
 
-option go_package = "libcore/plugin/mieruproto;mieruproto";
+option go_package = "github.com/xchacha20-poly1305/husi/github.com/xchacha20-poly1305/husi/libcore/v2/v2/plugin/mieruproto;mieruproto";
 
 message TrafficPattern {
 
