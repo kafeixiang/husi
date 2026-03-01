@@ -42,6 +42,8 @@ import fr.husi.fmt.shadowquic.ShadowQUICBean
 import fr.husi.fmt.shadowquic.buildShadowQUICConfig
 import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.shadowsocks.toUri
+import fr.husi.fmt.ssr.SSRBean
+import fr.husi.fmt.ssr.toUri
 import fr.husi.fmt.shadowtls.ShadowTLSBean
 import fr.husi.fmt.socks.SOCKSBean
 import fr.husi.fmt.socks.toUri
@@ -76,6 +78,7 @@ data class ProxyEntity(
     var socksBean: SOCKSBean? = null,
     var httpBean: HttpBean? = null,
     var ssBean: ShadowsocksBean? = null,
+    var ssrBean: SSRBean? = null,
     var vmessBean: VMessBean? = null,
     var vlessBean: VLESSBean? = null,
     var trojanBean: TrojanBean? = null,
@@ -100,6 +103,7 @@ data class ProxyEntity(
         const val TYPE_SOCKS = 0
         const val TYPE_HTTP = 1
         const val TYPE_SS = 2
+        const val TYPE_SSR = 3
         const val TYPE_VMESS = 4
         const val TYPE_VLESS = 5
         const val TYPE_TROJAN = 6
@@ -199,6 +203,7 @@ data class ProxyEntity(
             TYPE_SOCKS -> socksBean = KryoConverters.socksDeserialize(byteArray)
             TYPE_HTTP -> httpBean = KryoConverters.httpDeserialize(byteArray)
             TYPE_SS -> ssBean = KryoConverters.shadowsocksDeserialize(byteArray)
+            TYPE_SSR -> ssrBean = KryoConverters.ssrDeserialize(byteArray)
             TYPE_VMESS -> vmessBean = KryoConverters.vmessDeserialize(byteArray)
             TYPE_VLESS -> vlessBean = KryoConverters.vlessDeserialize(byteArray)
             TYPE_TROJAN -> trojanBean = KryoConverters.trojanDeserialize(byteArray)
@@ -237,6 +242,7 @@ data class ProxyEntity(
             TYPE_SOCKS -> socksBean
             TYPE_HTTP -> httpBean
             TYPE_SS -> ssBean
+            TYPE_SSR -> ssrBean
             TYPE_VMESS -> vmessBean
             TYPE_VLESS -> vlessBean
             TYPE_TROJAN -> trojanBean
@@ -284,6 +290,7 @@ data class ProxyEntity(
             is SOCKSBean -> toUri()
             is HttpBean -> toUri()
             is ShadowsocksBean -> toUri()
+            is SSRBean -> toUri()
             is VMessBean -> toUriVMessVLESSTrojan()
             is VLESSBean -> toUriVMessVLESSTrojan()
             is TrojanBean -> toUriVMessVLESSTrojan()
@@ -302,6 +309,7 @@ data class ProxyEntity(
         TYPE_MIERU -> true
         TYPE_JUICITY -> true
         TYPE_SHADOWQUIC -> true
+        TYPE_SSR -> true
         else -> false
     }
 
@@ -388,6 +396,7 @@ data class ProxyEntity(
         socksBean = null
         httpBean = null
         ssBean = null
+        ssrBean = null
         vmessBean = null
         vlessBean = null
         trojanBean = null
@@ -421,6 +430,11 @@ data class ProxyEntity(
             is ShadowsocksBean -> {
                 type = TYPE_SS
                 ssBean = bean
+            }
+
+            is SSRBean -> {
+                type = TYPE_SSR
+                ssrBean = bean
             }
 
             is VMessBean -> {

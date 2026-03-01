@@ -4,6 +4,7 @@ import (
 	"libcore/plugin/http"
 	"libcore/plugin/juicity"
 	"libcore/plugin/plugindns"
+	"libcore/plugin/ssr"
 	"libcore/plugin/trusttunnel"
 	"libcore/plugin/vless"
 
@@ -16,6 +17,7 @@ func registerPluginsOutbound(registry *outbound.Registry) {
 	juicity.RegisterOutbound(registry)
 	vless.RegisterOutbound(registry)
 	trusttunnel.RegisterOutbound(registry)
+	ssr.RegisterOutbound(registry)
 }
 
 func registerPluginsDNSTransport(registry *dns.TransportRegistry) {
