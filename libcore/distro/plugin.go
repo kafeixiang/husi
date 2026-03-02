@@ -3,6 +3,7 @@ package distro
 import (
 	"libcore/plugin/http"
 	"libcore/plugin/juicity"
+	"libcore/plugin/mieru"
 	"libcore/plugin/plugindns"
 	"libcore/plugin/ssr"
 	"libcore/plugin/trusttunnel"
@@ -15,6 +16,7 @@ import (
 func registerPluginsOutbound(registry *outbound.Registry) {
 	http.RegisterOutbound(registry)
 	juicity.RegisterOutbound(registry)
+	mieru.RegisterOutbound(registry)
 	vless.RegisterOutbound(registry)
 	trusttunnel.RegisterOutbound(registry)
 	ssr.RegisterOutbound(registry)

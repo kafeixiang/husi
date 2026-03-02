@@ -178,6 +178,24 @@ private fun LazyListScope.mieruSettings(
             valueToText = { AnnotatedString(stringResource(muxSummary(it))) },
         )
     }
+    item("handshake_mode") {
+        fun handshakeSummary(mode: Int): String = when (mode) {
+            0 -> "DEFAULT"
+            1 -> "STANDARD (1-RTT)"
+            2 -> "NO_WAIT (0-RTT)"
+            else -> "UNKNOWN"
+        }
+        ListPreference(
+            value = uiState.handshakeMode,
+            values = intListN(3),
+            onValueChange = { viewModel.setHandshakeMode(it) },
+            title = { Text("Handshake Mode") },
+            icon = { Icon(vectorResource(Res.drawable.compare_arrows), null) },
+            summary = { Text(handshakeSummary(uiState.handshakeMode)) },
+            type = ListPreferenceType.DROPDOWN_MENU,
+            valueToText = { AnnotatedString(handshakeSummary(it)) },
+        )
+    }
     item("traffic_pattern") {
         TextFieldPreference(
             value = uiState.trafficPattern,
