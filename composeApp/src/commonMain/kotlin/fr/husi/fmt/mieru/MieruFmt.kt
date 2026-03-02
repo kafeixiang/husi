@@ -20,6 +20,9 @@ package fr.husi.fmt.mieru
 
 import fr.husi.ktx.blankAsNull
 import fr.husi.ktx.isIpAddress
+import fr.husi.fmt.SingBoxOptions
+import fr.husi.fmt.parseBoxOutbound
+import fr.husi.ktx.JSONMap
 import fr.husi.ktx.queryParameterNotBlank
 import fr.husi.ktx.toJsonMapKxs
 import fr.husi.ktx.toJsonStringKxs
@@ -36,13 +39,20 @@ fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
             },
         ),
         "servers" to listOf(
-            mutableMapOf<String, Any>(
+            mutableMapOf<String, Any?>(
                 "portBindings" to listOf(
                     mapOf(
                         "port" to finalPort,
                         "protocol" to protocol.uppercase(),
                     ),
                 ),
+                "mtu" to mtu,
+                "multiplexing" to mieruMuxToString(serverMuxNumber)?.let { mapOf("level" to it) },
+                "handshakeMode" to mieruHandshakeToString(handshakeMode),
+                "heartbeatInterval" to heartbeatInterval.takeIf { it > 0 },
+                "heartbeatJitter" to heartbeatJitter.takeIf { it > 0.0 },
+                "userHint" to userHint.takeIf { it.isNotBlank() },
+                "trafficPattern" to trafficPattern.takeIf { it.isNotBlank() && it != "1" },
             ).also {
                 // mieru refuses to parse a domain name in the ipAddress field.
                 if (finalAddress.isIpAddress()) {
@@ -54,10 +64,10 @@ fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
         ),
         "mtu" to mtu,
         "multiplexing" to mieruMuxToString(serverMuxNumber)?.let { mapOf("level" to it) },
-        // "handshakeMode" to "HANDSHAKE_NO_WAIT",
-        // https://github.com/enfein/mieru/issues/254
-        // Mieru TCP mux long-time mutex holding + no wait = bug.
-        "handshakeMode" to "HANDSHAKE_STANDARD",
+        "handshakeMode" to mieruHandshakeToString(handshakeMode),
+        "heartbeatInterval" to heartbeatInterval.takeIf { it > 0 },
+        "heartbeatJitter" to heartbeatJitter.takeIf { it > 0.0 },
+        "userHint" to userHint.takeIf { it.isNotBlank() },
     )
     trafficPattern.blankAsNull()?.let { trafficPattern ->
         profile["trafficPattern"] = runCatching {
@@ -111,6 +121,18 @@ fun MieruBean.toUri(): String = Libcore.newURL("mierus").apply {
     serverMuxNumber.takeIf { it > 0 }?.let {
         addQueryParameter("multiplexing", mieruMuxToString(it))
     }
+    handshakeMode.takeIf { it > 0 }?.let {
+        addQueryParameter("handshake_mode", mieruHandshakeToString(it))
+    }
+    heartbeatInterval.takeIf { it > 0 }?.let {
+        addQueryParameter("heartbeat_interval", it.toString())
+    }
+    heartbeatJitter.takeIf { it > 0.0 }?.let {
+        addQueryParameter("heartbeat_jitter", it.toString())
+    }
+    userHint.takeIf { it.isNotBlank() }?.let {
+        addQueryParameter("user_hint", it)
+    }
     trafficPattern.blankAsNull()?.let { trafficPattern ->
         val base64TrafficPattern = runCatching {
             Libcore.encodeMieruTrafficPattern(trafficPattern)
@@ -121,18 +143,65 @@ fun MieruBean.toUri(): String = Libcore.newURL("mierus").apply {
     }
 }.string
 
-private fun parseMieruMux(link: String): Int? = when (link) {
-    "MULTIPLEXING_OFF" -> 0
-    "MULTIPLEXING_LOW" -> 1
-    "MULTIPLEXING_MEDIUM" -> 2
-    "MULTIPLEXING_HIGH" -> 3
+internal fun parseMieruMux(link: String): Int? = when (link.uppercase()) {
+    "MULTIPLEXING_OFF", "OFF" -> 0
+    "MULTIPLEXING_LOW", "LOW" -> 1
+    "MULTIPLEXING_MIDDLE", "MIDDLE", "MULTIPLEXING_MEDIUM", "MEDIUM" -> 2
+    "MULTIPLEXING_HIGH", "HIGH" -> 3
+    else -> link.toIntOrNull()
+}
+
+internal fun mieruMuxToString(level: Int): String? = when (level) {
+    0 -> "MULTIPLEXING_OFF"
+    1 -> "MULTIPLEXING_LOW"
+    2 -> "MULTIPLEXING_MIDDLE"
+    3 -> "MULTIPLEXING_HIGH"
     else -> null
 }
 
-private fun mieruMuxToString(level: Int): String? = when (level) {
-    // 0 -> "MULTIPLEXING_OFF"
-    1 -> "MULTIPLEXING_LOW"
-    2 -> "MULTIPLEXING_MEDIUM"
-    3 -> "MULTIPLEXING_HIGH"
+internal fun parseMieruHandshake(mode: String): Int? = when (mode.uppercase()) {
+    "HANDSHAKE_DEFAULT", "DEFAULT" -> 0
+    "HANDSHAKE_STANDARD", "STANDARD" -> 1
+    "HANDSHAKE_NO_WAIT", "0-RTT", "NO_WAIT" -> 2
+    else -> mode.toIntOrNull()
+}
+
+internal fun mieruHandshakeToString(mode: Int): String? = when (mode) {
+    0 -> "HANDSHAKE_DEFAULT"
+    1 -> "HANDSHAKE_STANDARD"
+    2 -> "HANDSHAKE_NO_WAIT"
     else -> null
+}
+
+fun buildSingBoxOutboundMieruBean(bean: MieruBean): SingBoxOptions.Outbound_MieruOptions {
+    return SingBoxOptions.Outbound_MieruOptions().apply {
+        type = SingBoxOptions.TYPE_MIERU
+        server = bean.serverAddress
+        server_port = bean.serverPort
+        transport = bean.protocol.uppercase()
+        username = bean.username
+        password = bean.password
+        multiplexing = mieruMuxToString(bean.serverMuxNumber)
+        handshake_mode = mieruHandshakeToString(bean.handshakeMode)
+        heartbeat_interval = bean.heartbeatInterval.takeIf { it > 0 }?.let { "${it}s" }
+        heartbeat_jitter = bean.heartbeatJitter.takeIf { it > 0.0 }
+        user_hint = bean.userHint.takeIf { it.isNotBlank() }
+        traffic_pattern = bean.trafficPattern.takeIf { it.isNotBlank() && it != "1" }
+    }
+}
+
+fun parseMieruOutbound(json: JSONMap): MieruBean = MieruBean().apply {
+    parseBoxOutbound(json) { key, value ->
+        when (key) {
+            "transport" -> protocol = value.toString().uppercase()
+            "username" -> username = value.toString()
+            "password" -> password = value.toString()
+            "multiplexing" -> serverMuxNumber = parseMieruMux(value.toString()) ?: 0
+            "handshake_mode" -> handshakeMode = parseMieruHandshake(value.toString()) ?: 0
+            "heartbeat_interval" -> heartbeatInterval = value.toString().removeSuffix("s").toIntOrNull() ?: 0
+            "heartbeat_jitter" -> heartbeatJitter = value.toString().toDoubleOrNull() ?: 0.0
+            "user_hint" -> userHint = value.toString()
+            "traffic_pattern" -> trafficPattern = value.toString()
+        }
+    }
 }

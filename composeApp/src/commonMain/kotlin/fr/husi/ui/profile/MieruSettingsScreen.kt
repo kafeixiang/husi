@@ -228,6 +228,72 @@ private fun LazyListScope.mieruSettings(
             },
         )
         PreferenceDivider()
+        fun handshakeSummary(mode: Int): String = when (mode) {
+            1 -> "STANDARD (1-RTT)"
+            2 -> "NO_WAIT (0-RTT)"
+            else -> "DEFAULT"
+        }
+        ListPreference(
+            value = uiState.handshakeMode,
+            values = intListN(3),
+            onValueChange = { viewModel.setHandshakeMode(it) },
+            title = { Text("Handshake Mode") },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.compare_arrows,
+                    color = IconMaskColors.IconLightYellow,
+                )
+            },
+            summary = { Text(handshakeSummary(uiState.handshakeMode)) },
+            type = ListPreferenceType.DROPDOWN_MENU,
+            valueToText = { AnnotatedString(handshakeSummary(it)) },
+        )
+        PreferenceDivider()
+        TextFieldPreference(
+            value = uiState.heartbeatInterval,
+            onValueChange = { viewModel.setHeartbeatInterval(it) },
+            title = { Text("Heartbeat Interval") },
+            textToValue = { it.toIntOrNull() ?: 0 },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.compare_arrows,
+                    color = IconMaskColors.IconLightPink,
+                )
+            },
+            summary = { Text(if (uiState.heartbeatInterval > 0) "${uiState.heartbeatInterval}s" else "DEFAULT") },
+            valueToText = { it.toString() },
+            textField = { value, onValueChange, onOk ->
+                UIntegerTextField(value, onValueChange, onOk)
+            },
+        )
+        PreferenceDivider()
+        TextFieldPreference(
+            value = uiState.heartbeatJitter,
+            onValueChange = { viewModel.setHeartbeatJitter(it) },
+            title = { Text("Heartbeat Jitter") },
+            textToValue = { it.toDoubleOrNull() ?: 0.0 },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.compare_arrows,
+                    color = IconMaskColors.IconLightPink,
+                )
+            },
+            summary = { Text(if (uiState.heartbeatJitter > 0.0) uiState.heartbeatJitter.toString() else "DEFAULT") },
+            valueToText = { it.toString() },
+        )
+        PreferenceDivider()
+        TextFieldPreference(
+            value = uiState.userHint,
+            onValueChange = { viewModel.setUserHint(it) },
+            title = { Text("User Hint") },
+            textToValue = { it },
+            icon = {
+                MaskedIcon(Res.drawable.person, color = IconMaskColors.IconCyan)
+            },
+            summary = { Text(contentOrUnset(uiState.userHint)) },
+            valueToText = { it },
+        )
+        PreferenceDivider()
         TextFieldPreference(
             value = uiState.trafficPattern,
             onValueChange = viewModel::setTrafficPattern,

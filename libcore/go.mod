@@ -5,10 +5,11 @@ go 1.26
 require (
 	filippo.io/age v1.3.1
 	github.com/anytls/sing-anytls v0.0.11
+	github.com/enfein/mieru/v3 v3.33.0
 	github.com/exclavenetwork/sing-juicity v0.2.0-beta.3
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/klauspost/compress v1.19.0
-	github.com/metacubex/mihomo v1.19.20
+	github.com/metacubex/mihomo v1.19.27
 	github.com/miekg/dns v1.1.72
 	github.com/sagernet/sing v0.8.12-0.20260702081104-2ded2af32d3d
 	github.com/sagernet/sing-box v1.14.0-alpha.42.0.20260710094548-793e6feb262f
@@ -45,7 +46,7 @@ require (
 require (
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/ajg/form v1.5.1 // indirect
-	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/caddyserver/certmagic v0.25.3-0.20260421143802-60d9d8b415d6 // indirect
 	github.com/caddyserver/zerossl v0.1.5 // indirect
 	github.com/database64128/netx-go v0.1.1 // indirect
@@ -84,7 +85,7 @@ require (
 	github.com/metacubex/sing v0.5.7 // indirect
 	github.com/metacubex/utls v1.8.4 // indirect
 	github.com/mholt/acmez/v3 v3.1.6 // indirect
-	github.com/pierrec/lz4/v4 v4.1.21 // indirect
+	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/sagernet/bbolt v0.0.0-20231014093535-ea5cb2fe9f0a // indirect

@@ -21,6 +21,10 @@ internal data class MieruUiState(
     val mtu: Int = 1400,
     val muxNumber: Int = 0,
     val trafficPattern: String = "",
+    val handshakeMode: Int = 0,
+    val heartbeatInterval: Int = 0,
+    val heartbeatJitter: Double = 0.0,
+    val userHint: String = "",
 ) : ProfileEditorUiState
 
 @Stable
@@ -44,6 +48,10 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
                 mtu = mtu,
                 muxNumber = serverMuxNumber,
                 trafficPattern = trafficPattern,
+                handshakeMode = handshakeMode,
+                heartbeatInterval = heartbeatInterval,
+                heartbeatJitter = heartbeatJitter,
+                userHint = userHint,
             )
         }
     }
@@ -61,6 +69,10 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
         mtu = state.mtu
         serverMuxNumber = state.muxNumber
         trafficPattern = state.trafficPattern
+        handshakeMode = state.handshakeMode
+        heartbeatInterval = state.heartbeatInterval
+        heartbeatJitter = state.heartbeatJitter
+        userHint = state.userHint
     }
 
     override fun setCustomConfig(config: String) {
@@ -109,6 +121,22 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
 
     fun setTrafficPattern(trafficPattern: String) {
         uiState.update { it.copy(trafficPattern = trafficPattern) }
+    }
+
+    fun setHandshakeMode(mode: Int) {
+        uiState.update { it.copy(handshakeMode = mode) }
+    }
+
+    fun setHeartbeatInterval(interval: Int) {
+        uiState.update { it.copy(heartbeatInterval = interval) }
+    }
+
+    fun setHeartbeatJitter(jitter: Double) {
+        uiState.update { it.copy(heartbeatJitter = jitter) }
+    }
+
+    fun setUserHint(hint: String) {
+        uiState.update { it.copy(userHint = hint) }
     }
 
 }
