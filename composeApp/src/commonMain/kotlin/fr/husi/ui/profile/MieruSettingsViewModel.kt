@@ -21,6 +21,7 @@ internal data class MieruUiState(
     val mtu: Int = 1400,
     val muxNumber: Int = 0,
     val trafficPattern: String = "",
+    val handshakeMode: Int = 0,
 ) : ProfileEditorUiState
 
 @Stable
@@ -44,6 +45,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
                 mtu = mtu,
                 muxNumber = serverMuxNumber,
                 trafficPattern = trafficPattern,
+                handshakeMode = handshakeMode,
             )
         }
     }
@@ -61,6 +63,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
         mtu = state.mtu
         serverMuxNumber = state.muxNumber
         trafficPattern = state.trafficPattern
+        handshakeMode = state.handshakeMode
     }
 
     override fun setCustomConfig(config: String) {
@@ -109,6 +112,10 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
 
     fun setTrafficPattern(trafficPattern: String) {
         _uiState.update { it.copy(trafficPattern = trafficPattern) }
+    }
+
+    fun setHandshakeMode(mode: Int) {
+        _uiState.update { it.copy(handshakeMode = mode) }
     }
 
 }
