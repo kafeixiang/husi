@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	TypeJuicity     = "juicity"
-	TypeTrustTunnel = "trusttunnel"
+	TypeJuicity      = "juicity"
+	TypeTrustTunnel  = "trusttunnel"
+	TypeShadowsocksR = "shadowsocksr"
 )
 
 func ProxyDisplayName(proxyType string) string {
@@ -16,6 +17,8 @@ func ProxyDisplayName(proxyType string) string {
 		return "Juicity"
 	case TypeTrustTunnel:
 		return "TrustTunnel"
+	case TypeShadowsocksR:
+		return "ShadowsocksR"
 	default:
 		return C.ProxyDisplayName(proxyType)
 	}

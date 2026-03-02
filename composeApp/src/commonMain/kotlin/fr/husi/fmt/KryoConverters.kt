@@ -18,6 +18,7 @@ import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.shadowtls.ShadowTLSBean
 import fr.husi.fmt.socks.SOCKSBean
 import fr.husi.fmt.ssh.SSHBean
+import fr.husi.fmt.ssr.ShadowsocksRBean
 import fr.husi.fmt.trojan.TrojanBean
 import fr.husi.fmt.trusttunnel.TrustTunnelBean
 import fr.husi.fmt.tuic.TuicBean
@@ -82,6 +83,13 @@ class KryoConverters {
         fun shadowsocksDeserialize(bytes: ByteArray?): ShadowsocksBean? {
             if (bytes?.isNotEmpty() != true) return null
             return deserialize(ShadowsocksBean(), bytes)
+        }
+
+        @TypeConverter
+        @JvmStatic
+        fun shadowsocksRDeserialize(bytes: ByteArray?): ShadowsocksRBean? {
+            if (bytes?.isNotEmpty() != true) return null
+            return deserialize(ShadowsocksRBean(), bytes)
         }
 
         @TypeConverter

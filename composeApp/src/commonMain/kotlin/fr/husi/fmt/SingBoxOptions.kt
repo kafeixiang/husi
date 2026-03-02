@@ -40,6 +40,7 @@ object SingBoxOptions {
     const val TYPE_WIREGUARD = "wireguard"
     const val TYPE_SHADOWTLS = "shadowtls"
     const val TYPE_ANYTLS = "anytls"
+    const val TYPE_SSR = "shadowsocksr"
     const val TYPE_NAIVE = "naive"
     const val TYPE_TRUST_TUNNEL = "trusttunnel"
 
@@ -358,6 +359,30 @@ object SingBoxOptions {
 
         // Generate note: option type:  public LogicalDNSRule LogicalOptions;
 
+    }
+
+    @KxsSerializable
+    open class ShadowsocksROutboundOptions : SingBoxOption() {
+        @JvmField
+        var server: String? = null
+        @JvmField
+        var server_port: Int? = null
+        @JvmField
+        var method: String? = null
+        @JvmField
+        var password: String? = null
+        @JvmField
+        var obfs: String? = null
+        @JvmField
+        var obfs_param: String? = null
+        @JvmField
+        var protocol: String? = null
+        @JvmField
+        var protocol_param: String? = null
+        @JvmField
+        var network: String? = null
+        @JvmField
+        var shadowsocksr: String? = null
     }
 
     @KxsSerializable

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
@@ -54,6 +55,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -437,6 +439,17 @@ fun ConfigurationScreen(
                                         showAddManualMenu = false
                                         openProfileEditor?.invoke(
                                             ProxyEntity.TYPE_SS,
+                                            -1L,
+                                            false,
+                                        ) {}
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("ShadowsocksR") },
+                                    onClick = {
+                                        showAddManualMenu = false
+                                        openProfileEditor?.invoke(
+                                            ProxyEntity.TYPE_SSR,
                                             -1L,
                                             false,
                                         ) {}

@@ -12,6 +12,7 @@ import fr.husi.fmt.naive.parseNaive
 import fr.husi.fmt.parseUniversal
 import fr.husi.fmt.shadowsocks.parseShadowsocks
 import fr.husi.fmt.socks.parseSOCKS
+import fr.husi.fmt.ssr.parseShadowsocksR
 import fr.husi.fmt.trojan.parseTrojan
 import fr.husi.fmt.trusttunnel.parseTrustTunnel
 import fr.husi.fmt.tuic.parseTuic
@@ -39,9 +40,13 @@ fun String.b64EncodeOneLine(): String {
 }
 
 fun String.b64Decode(): ByteArray {
-    // padding 自动处理，不用理
+    // padding 自动处理
     // URLSafe 需要替换这两个，不要用 UrlSafe 否则处理非 Safe 的时候会乱码
-    val str = replace("-", "+").replace("_", "/")
+    var str = trim().replace("-", "+").replace("_", "/")
+    val pad = str.length % 4
+    if (pad > 0) {
+        str += "====".substring(pad)
+    }
 
     val decoders = listOf(
         Base64.Default,
@@ -170,6 +175,15 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
                 }
             }
 
+            "ssr" -> {
+                Logs.d("Try parse shadowsocksr link: $this")
+                runCatching {
+                    entities.add(parseShadowsocksR(this))
+                }.onFailure {
+                    Logs.w(it)
+                }
+            }
+
             "naive+https", "naive+quic" -> {
                 Logs.d("Try parse naive link: $this")
                 runCatching {
@@ -246,10 +260,10 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
     }
 
     for (link in links) {
-        link.parseLink(entities)
+        if (link.isNotBlank()) link.parseLink(entities)
     }
     for (link in linksByLine) {
-        link.parseLink(entitiesByLine)
+        if (link.isNotBlank()) link.parseLink(entitiesByLine)
     }
     var isBadLink = false
     if (entities.onEach { it.initializeDefaultValues() }.size == entitiesByLine.onEach { it.initializeDefaultValues() }.size) run test@{

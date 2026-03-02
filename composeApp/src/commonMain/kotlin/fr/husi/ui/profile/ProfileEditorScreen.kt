@@ -176,6 +176,13 @@ fun ProfileEditorScreen(
             onOpenConfigEditor = onOpenConfigEditor,
         )
 
+            ProxyEntity.TYPE_SSR -> ShadowsocksRSettingsScreen(
+                profileId = profileId,
+                isSubscription = isSubscription,
+                onResult = onResult,
+                onOpenConfigEditor = onOpenConfigEditor,
+            )
+
         ProxyEntity.TYPE_NAIVE -> NaiveSettingsScreen(
             profileId = profileId,
             isSubscription = isSubscription,

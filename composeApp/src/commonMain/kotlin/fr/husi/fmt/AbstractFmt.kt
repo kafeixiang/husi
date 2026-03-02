@@ -54,6 +54,9 @@ import fr.husi.fmt.socks.parseSocksOutbound
 import fr.husi.fmt.ssh.SSHBean
 import fr.husi.fmt.ssh.buildSingBoxOutboundSSHBean
 import fr.husi.fmt.ssh.parseSSHOutbound
+import fr.husi.fmt.ssr.ShadowsocksRBean
+import fr.husi.fmt.ssr.buildSingBoxOutboundShadowsocksRBean
+import fr.husi.fmt.ssr.parseShadowsocksROutbound
 import fr.husi.fmt.trojan.TrojanBean
 import fr.husi.fmt.trusttunnel.TrustTunnelBean
 import fr.husi.fmt.trusttunnel.buildSingBoxOutboundTrustTunnelBean
@@ -89,6 +92,7 @@ fun AbstractBean.toJsonStringKxs(): String = when (this) {
     is NaiveBean -> kxs.encodeToString(this)
     is ShadowQUICBean -> kxs.encodeToString(this)
     is ShadowsocksBean -> kxs.encodeToString(this)
+    is ShadowsocksRBean -> kxs.encodeToString(this)
     is ShadowTLSBean -> kxs.encodeToString(this)
     is SOCKSBean -> kxs.encodeToString(this)
     is SSHBean -> kxs.encodeToString(this)
@@ -110,6 +114,8 @@ fun buildSingBoxOutbound(bean: AbstractBean): String = when (bean) {
         buildSingBoxOutboundHysteriaBean(bean).apply { tag = bean.name }.toJsonStringKxs()
     is ShadowsocksBean ->
         kxs.encodeToString(buildSingBoxOutboundShadowsocksBean(bean).apply { tag = bean.name })
+    is ShadowsocksRBean ->
+        buildSingBoxOutboundShadowsocksRBean(bean).apply { this["tag"] = bean.name }.toJsonStringKxs()
     is SOCKSBean -> kxs.encodeToString(buildSingBoxOutboundSocksBean(bean).apply { tag = bean.name })
     is SSHBean -> kxs.encodeToString(buildSingBoxOutboundSSHBean(bean).apply { tag = bean.name })
     is TuicBean -> kxs.encodeToString(buildSingBoxOutboundTuicBean(bean).apply { tag = bean.name })
@@ -170,6 +176,8 @@ fun parseOutbound(json: JSONMap): AbstractBean? = when (json["type"].toString())
     TYPE_HTTP -> parseHttpOutbound(json)
 
     TYPE_SHADOWSOCKS -> parseShadowsocksOutbound(json)
+
+    "shadowsocksr" -> parseShadowsocksROutbound(json)
 
     TYPE_VMESS, TYPE_VLESS, TYPE_TROJAN -> parseStandardV2RayOutbound(json)
 

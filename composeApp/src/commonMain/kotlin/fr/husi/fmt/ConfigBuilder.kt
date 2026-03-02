@@ -56,6 +56,8 @@ import fr.husi.fmt.socks.SOCKSBean
 import fr.husi.fmt.socks.buildSingBoxOutboundSocksBean
 import fr.husi.fmt.ssh.SSHBean
 import fr.husi.fmt.ssh.buildSingBoxOutboundSSHBean
+import fr.husi.fmt.ssr.ShadowsocksRBean
+import fr.husi.fmt.ssr.buildSingBoxOutboundShadowsocksRBean
 import fr.husi.fmt.trusttunnel.TrustTunnelBean
 import fr.husi.fmt.trusttunnel.buildSingBoxOutboundTrustTunnelBean
 import fr.husi.fmt.tuic.TuicBean
@@ -514,6 +516,8 @@ fun buildConfig(
                         is SOCKSBean -> buildSingBoxOutboundSocksBean(bean).asKxsMap()
 
                         is ShadowsocksBean -> buildSingBoxOutboundShadowsocksBean(bean).asKxsMap()
+
+                        is ShadowsocksRBean -> buildSingBoxOutboundShadowsocksRBean(bean)
 
                         is WireGuardBean -> buildSingBoxEndpointWireGuardBean(bean).asKxsMap()
 
