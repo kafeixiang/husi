@@ -14,11 +14,6 @@ import (
 	"libcore/plugin/ssr/internal/tools"
 )
 
-type (
-	hmacMethod       func(key, data []byte) []byte
-	hashDigestMethod func([]byte) []byte
-)
-
 func init() {
 	register("auth_aes128_md5", newAuthAES128MD5, 9)
 	register("auth_aes128_sha1", newAuthAES128SHA1, 9)
@@ -69,6 +64,8 @@ func (a *authAES128) initUserData() {
 	if len(params) > 1 {
 		if userID, err := strconv.ParseUint(params[0], 10, 32); err == nil {
 			binary.LittleEndian.PutUint32(a.userID[:], uint32(userID))
+			// SSR 协议规范：protocol_param 的 key 部分直接作为原始字节处理，不应随意进行 Base64 解码
+			// 之前的“健壮解码”逻辑会导致类似 "NkrLwX" 这种合法的 Base64 字符串被误解码，从而导致 Key 错误。
 			a.userKey = a.hashDigest([]byte(params[1]))
 		}
 	}
@@ -260,7 +257,8 @@ func (a *authAES128) packAuthData(poolBuf *bytes.Buffer, data []byte) {
 	poolBuf.WriteByte(byte(mathRand.Intn(256)))
 	poolBuf.Write(a.hmac(macKey, poolBuf.Bytes())[:6])
 	poolBuf.Write(a.userID[:])
-	err := a.authData.putEncryptedData(poolBuf, a.userKey, [2]int{packedAuthDataLength, randDataLength}, a.salt)
+
+	err := a.authData.putEncryptedData(poolBuf, a.userKey, [2]int{packedAuthDataLength, randDataLength}, a.salt, a.hmac)
 	if err != nil {
 		poolBuf.Reset()
 		return

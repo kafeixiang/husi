@@ -6,7 +6,6 @@ import (
 	"crypto/cipher"
 	"crypto/md5"
 	"crypto/rand"
-	"encoding/base64"
 	"encoding/binary"
 	mathRand "math/rand"
 	"sync"
@@ -14,6 +13,9 @@ import (
 
 	"libcore/plugin/ssr/internal/pool"
 )
+
+type hmacMethod func(key, data []byte) []byte
+type hashDigestMethod func([]byte) []byte
 
 type Base struct {
 	Key      []byte
@@ -52,7 +54,7 @@ func (a *authData) putAuthData(buf *bytes.Buffer) {
 	binary.Write(buf, binary.LittleEndian, a.connectionID)
 }
 
-func (a *authData) putEncryptedData(b *bytes.Buffer, userKey []byte, paddings [2]int, salt string) error {
+func (a *authData) putEncryptedData(b *bytes.Buffer, userKey []byte, paddings [2]int, salt string, hmac hmacMethod) error {
 	encrypt := pool.Get(16)
 	defer pool.Put(encrypt)
 	binary.LittleEndian.PutUint32(encrypt, uint32(time.Now().Unix()))
@@ -61,7 +63,9 @@ func (a *authData) putEncryptedData(b *bytes.Buffer, userKey []byte, paddings [2
 	binary.LittleEndian.PutUint16(encrypt[12:], uint16(paddings[0]))
 	binary.LittleEndian.PutUint16(encrypt[14:], uint16(paddings[1]))
 
-	cipherKey := kdf(base64.StdEncoding.EncodeToString(userKey)+salt, 16)
+	// SSR 规范：使用 HMAC 派生 AES 密钥
+	cipherKey := hmac(userKey, []byte(salt))[:16]
+
 	block, err := aes.NewCipher(cipherKey)
 	if err != nil {
 		return err

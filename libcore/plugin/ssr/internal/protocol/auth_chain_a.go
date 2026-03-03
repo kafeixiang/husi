@@ -211,7 +211,9 @@ func (a *authChainA) packAuthData(poolBuf *bytes.Buffer, data []byte) {
 	a.initRC4Cipher()
 	poolBuf.Write(a.lastClientHash[:8])
 	binary.Write(poolBuf, binary.LittleEndian, binary.LittleEndian.Uint32(a.userID[:])^binary.LittleEndian.Uint32(a.lastClientHash[8:12]))
-	err := a.putEncryptedData(poolBuf, a.userKey, [2]int{a.Overhead, 0}, a.salt)
+
+	// 修改点：传入 tools.HmacMD5 修复函数签名不匹配问题
+	err := a.putEncryptedData(poolBuf, a.userKey, [2]int{a.Overhead, 0}, a.salt, tools.HmacMD5)
 	if err != nil {
 		poolBuf.Reset()
 		return

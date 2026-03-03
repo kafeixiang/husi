@@ -59,20 +59,23 @@ class AndroidPlatformInterface : PlatformInterface {
         destinationAddress: String,
         destinationPort: Int,
     ): ConnectionOwner {
-        try {
-            val uid = androidRepo.connectivity.getConnectionOwnerUid(
+        val uid = try {
+            androidRepo.connectivity.getConnectionOwnerUid(
                 ipProtocol,
                 InetSocketAddress(sourceAddress, sourcePort),
                 InetSocketAddress(destinationAddress, destinationPort),
             )
-            if (uid == Process.INVALID_UID) error("android: connection owner not found")
-            PackageCache.awaitLoadSync()
-            val packages = PackageCache.uidMap[uid]
-            return ConnectionOwner(uid, packages?.firstOrNull().orEmpty())
         } catch (e: Exception) {
-            Logs.e(e)
-            throw e
+            Process.INVALID_UID
         }
+        
+        if (uid == Process.INVALID_UID) {
+            return ConnectionOwner(Process.INVALID_UID, "")
+        }
+        
+        PackageCache.awaitLoadSync()
+        val packages = PackageCache.uidMap[uid]
+        return ConnectionOwner(uid, packages?.firstOrNull().orEmpty())
     }
 
     override fun readWIFIState(): WIFIState? {

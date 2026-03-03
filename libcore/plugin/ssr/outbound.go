@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"crypto/rc4"
 	"net"
+	"strings"
 
 	"libcore/plugin/pluginoption"
 	"libcore/plugin/ssr/internal/obfs"
@@ -22,6 +23,8 @@ import (
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+	"golang.org/x/crypto/chacha20"
+	"golang.org/x/crypto/salsa20"
 )
 
 func RegisterOutbound(registry *outbound.Registry) {
@@ -59,27 +62,33 @@ func (o *Outbound) DialContext(ctx context.Context, network string, destination 
 
 	var key []byte
 	var ivSize int
-	method := o.options.Method
+	method := strings.ToLower(o.options.Method)
 	password := o.options.Password
 
-	switch method {
-	case "aes-128-cfb", "aes-128-ctr":
+	switch {
+	case strings.Contains(method, "aes-128"):
 		key = kdf(password, 16)
 		ivSize = 16
-	case "aes-192-cfb", "aes-192-ctr":
+	case strings.Contains(method, "aes-192"):
 		key = kdf(password, 24)
 		ivSize = 16
-	case "aes-256-cfb", "aes-256-ctr":
+	case strings.Contains(method, "aes-256"):
 		key = kdf(password, 32)
 		ivSize = 16
-	case "rc4-md5":
+	case method == "rc4-md5":
 		key = kdf(password, 16)
 		ivSize = 16
-	case "none", "":
+	case method == "chacha20-ietf":
+		key = kdf(password, 32)
+		ivSize = 12
+	case method == "chacha20", method == "salsa20":
+		key = kdf(password, 32)
+		ivSize = 8
+	case method == "none", method == "":
 		key = kdf(password, 16)
 		ivSize = 0
 	default:
-		key = kdf(password, 16)
+		key = kdf(password, 32)
 		ivSize = 16
 	}
 
@@ -101,7 +110,7 @@ func (o *Outbound) DialContext(ctx context.Context, network string, destination 
 	}
 	conn = obfsImpl.StreamConn(conn)
 
-	// 2. Shadowsocks Cipher layer (Using standard Go crypto since we don't want external libs)
+	// 2. Shadowsocks Cipher layer
 	var iv []byte
 	if method != "none" && method != "" {
 		iv = make([]byte, ivSize)
@@ -114,32 +123,50 @@ func (o *Outbound) DialContext(ctx context.Context, network string, destination 
 			return nil, err
 		}
 
-		var streamBlock cipher.Block
-		streamBlock, err = aes.NewCipher(key)
-		if err != nil {
-			common.Close(conn)
-			return nil, err
-		}
-
-		var encrypter, decrypter cipher.Stream
+		var enc, dec cipher.Stream
 		switch {
 		case method == "rc4-md5":
 			h := md5.New()
 			h.Write(key)
 			h.Write(iv)
 			rc4Key := h.Sum(nil)
-			encrypter, _ = rc4.NewCipher(rc4Key)
-			decrypter, _ = rc4.NewCipher(rc4Key)
-		case method[len(method)-3:] == "cfb":
-			encrypter = cipher.NewCFBEncrypter(streamBlock, iv)
-			decrypter = cipher.NewCFBDecrypter(streamBlock, iv)
-		case method[len(method)-3:] == "ctr":
-			encrypter = cipher.NewCTR(streamBlock, iv)
-			decrypter = cipher.NewCTR(streamBlock, iv)
+			enc, _ = rc4.NewCipher(rc4Key)
+			dec, _ = rc4.NewCipher(rc4Key)
+		case strings.HasSuffix(method, "cfb"):
+			block, _ := aes.NewCipher(key)
+			enc = cipher.NewCFBEncrypter(block, iv)
+			dec = cipher.NewCFBDecrypter(block, iv)
+		case strings.HasSuffix(method, "ctr"):
+			block, _ := aes.NewCipher(key)
+			enc = cipher.NewCTR(block, iv)
+			dec = cipher.NewCTR(block, iv)
+		case method == "chacha20-ietf":
+			c1, err1 := chacha20.NewUnauthenticatedCipher(key, iv)
+			if err1 != nil {
+				common.Close(conn)
+				return nil, err1
+			}
+			enc = c1
+			c2, _ := chacha20.NewUnauthenticatedCipher(key, iv)
+			dec = c2
+		case method == "chacha20":
+			nonce := make([]byte, 12)
+			copy(nonce[4:], iv)
+			c1, err1 := chacha20.NewUnauthenticatedCipher(key, nonce)
+			if err1 != nil {
+				common.Close(conn)
+				return nil, err1
+			}
+			enc = c1
+			c2, _ := chacha20.NewUnauthenticatedCipher(key, nonce)
+			dec = c2
+		case method == "salsa20":
+			enc = &salsa20Stream{key: key, nonce: iv}
+			dec = &salsa20Stream{key: key, nonce: iv}
 		}
 
-		if encrypter != nil {
-			conn = &shadowConn{Conn: conn, enc: encrypter, dec: decrypter}
+		if enc != nil {
+			conn = &shadowConn{Conn: conn, enc: enc, dec: dec}
 		}
 	}
 
@@ -175,8 +202,6 @@ func (o *Outbound) ListenPacket(ctx context.Context, destination M.Socksaddr) (n
 		return nil, err
 	}
 
-	// SSR UDP implementation usually skips shadowsocks stream cipher
-	// and uses protocol-specific packet encapsulation.
 	key := kdf(o.options.Password, 16)
 
 	protocolName := o.options.Protocol
@@ -232,4 +257,15 @@ func (c *shadowConn) Read(b []byte) (int, error) {
 func (c *shadowConn) Write(b []byte) (int, error) {
 	c.enc.XORKeyStream(b, b)
 	return c.Conn.Write(b)
+}
+
+type salsa20Stream struct {
+	key   []byte
+	nonce []byte
+}
+
+func (s *salsa20Stream) XORKeyStream(dst, src []byte) {
+	var nonce [8]byte
+	copy(nonce[:], s.nonce)
+	salsa20.XORKeyStream(dst, src, nonce[:], (*[32]byte)(s.key))
 }

@@ -2,10 +2,12 @@ package fr.husi.fmt.ssr
 
 import fr.husi.fmt.parseBoxOutbound
 import fr.husi.ktx.JSONMap
+import fr.husi.ktx.b64Decode
 import fr.husi.ktx.b64DecodeToString
 import fr.husi.ktx.b64EncodeUrlSafe
 import fr.husi.ktx.blankAsNull
 import fr.husi.ktx.getStr
+import kotlin.io.encoding.Base64
 
 val supportedShadowsocksRMethod = arrayOf(
     "rc4-md5",
@@ -25,11 +27,47 @@ val supportedShadowsocksRObfs = arrayOf(
     "plain", "http_simple", "http_post", "tls1.2_ticket_auth", "random_head"
 )
 
+/**
+ * SSR 专用的 Base64 解码。
+ * SSR 链接内部的参数解码逻辑比较混乱，通常需要尝试多种方式。
+ */
+private fun String.ssrParamDecode(): String {
+    if (this.isBlank()) return ""
+    // 1. 尝试 URL Safe 解码（不带手动替换）
+    try {
+        return Base64.UrlSafe.decode(this).decodeToString()
+    } catch (_: Exception) {}
+    
+    // 2. 尝试标准解码（不带手动替换）
+    try {
+        return Base64.Default.decode(this).decodeToString()
+    } catch (_: Exception) {}
+
+    // 3. 尝试带手动替换的解码 (ktx 版本)
+    try {
+        val decoded = this.b64DecodeToString()
+        // 检查解码结果是否包含不可见字符，如果是，可能不应该解码
+        if (decoded.any { it.code < 32 && it != '\n' && it != '\r' && it != '\t' }) {
+             // 含有过多不可见字符，怀疑是解码错误
+        } else {
+            return decoded
+        }
+    } catch (_: Exception) {}
+
+    // 4. 最后回退到原始字符串
+    return this
+}
+
 fun parseShadowsocksR(url: String): ShadowsocksRBean {
-    // https://github.com/shadowsocksrr/shadowsocks-rss/wiki/SSR-QRcode-scheme
+    // ssr://host:port:protocol:method:obfs:base64pass/?obfsparam=base64&protoparam=base64&remarks=base64
     val b64 = url.substringAfter("ssr://")
     val decoded = b64.b64DecodeToString()
-    val params = decoded.split(":")
+    
+    val queryIndex = decoded.lastIndexOf("/?")
+    val mainPart = if (queryIndex != -1) decoded.substring(0, queryIndex) else decoded
+    val queryPart = if (queryIndex != -1) decoded.substring(queryIndex + 2) else ""
+
+    val params = mainPart.split(":")
     if (params.size < 6) error("invalid url")
 
     val bean = ShadowsocksRBean().apply {
@@ -41,14 +79,12 @@ fun parseShadowsocksR(url: String): ShadowsocksRBean {
             "tls1.2_ticket_fastauth" -> "tls1.2_ticket_auth"
             else -> it.takeIf { it in supportedShadowsocksRObfs } ?: "plain"
         }
-        val lastPart = params[params.size - 1]
-        val passwordB64 = lastPart.substringBefore("/")
-        password = passwordB64.b64DecodeToString()
+        // 密码通常是必须解码的
+        password = params[params.size - 1].ssrParamDecode()
     }
 
-    val queryPart = params[params.size - 1].substringAfter("/", "")
     if (queryPart.isNotBlank()) {
-        val pairs = queryPart.removePrefix("?").split("&")
+        val pairs = queryPart.split("&")
         for (pair in pairs) {
             val keyValue = pair.split("=", limit = 2)
             if (keyValue.size != 2) continue
@@ -56,12 +92,17 @@ fun parseShadowsocksR(url: String): ShadowsocksRBean {
             val value = keyValue[1]
             if (value.isBlank()) continue
             
-            runCatching {
-                when (key) {
-                    "obfsparam" -> bean.obfsParam = value.b64DecodeToString()
-                    "protoparam" -> bean.protocolParam = value.b64DecodeToString()
-                    "remarks" -> bean.name = value.b64DecodeToString()
+            when (key) {
+                "obfsparam" -> bean.obfsParam = value.ssrParamDecode()
+                "protoparam" -> {
+                    // 特殊处理 protoparam: 如果包含冒号且冒号前是数字，通常是明文 UID:KEY，不要解码
+                    if (value.contains(":") && value.substringBefore(":").all { it.isDigit() }) {
+                        bean.protocolParam = value
+                    } else {
+                        bean.protocolParam = value.ssrParamDecode()
+                    }
                 }
+                "remarks" -> bean.name = value.ssrParamDecode()
             }
         }
     }
@@ -83,7 +124,7 @@ fun ShadowsocksRBean.toUri(): String {
 
 fun buildSingBoxOutboundShadowsocksRBean(bean: ShadowsocksRBean): MutableMap<String, Any?> {
     return mutableMapOf(
-        "type" to "shadowsocksr",
+        "type" to "ssr",
         "server" to bean.serverAddress,
         "server_port" to bean.serverPort,
         "method" to bean.method,
@@ -92,7 +133,7 @@ fun buildSingBoxOutboundShadowsocksRBean(bean: ShadowsocksRBean): MutableMap<Str
         "obfs_param" to bean.obfsParam.blankAsNull(),
         "protocol" to bean.protocol,
         "protocol_param" to bean.protocolParam.blankAsNull(),
-        "network" to bean.network,
+        "network" to bean.network.split(",").filter { it.isNotBlank() },
     )
 }
 
