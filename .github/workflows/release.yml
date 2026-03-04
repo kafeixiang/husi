@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing release tag
-        required: true
+        description: Release tag (leave empty to auto-generate from husi.properties)
+        required: false
         type: string
       no-publish:
         description: Build artifacts without publishing a GitHub Release
@@ -155,6 +155,10 @@ jobs:
         run: make libcore_desktop DESKTOP_TARGETS=linux/amd64,linux/arm64,windows/amd64,windows/arm64,darwin/amd64,darwin/arm64 JNI_INCLUDE="$JNI_INCLUDE" DARWIN_SDK="$MACOS_SDK_PATH"
       - name: Generate about libraries metadata
         run: make aboutlibraries_go aboutlibraries_desktop
+      - name: Ensure release tag exists locally
+        run: |
+          VERSION_NAME=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
+          git tag -f "v${VERSION_NAME}"
       - name: Build desktop packages
         run: |
           make desktop_package_linux DESKTOP_TARGET=linux/amd64
@@ -174,18 +178,26 @@ jobs:
     if: ${{ !inputs.no-publish }}
     runs-on: ubuntu-26.04
     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
       - uses: actions/download-artifact@v8
         with:
           path: release-artifacts
+      - name: Set Release Tag
+        run: |
+          VERSION_NAME=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "RELEASE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+            echo "RELEASE_TAG=${BRANCH_NAME}-v${VERSION_NAME}" >> $GITHUB_ENV
+          fi
       - name: Publish GitHub Release
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+          TAG: ${{ inputs.tag || env.RELEASE_TAG }}
         run: |
           mapfile -d '' files < <(find release-artifacts -type f -print0)
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" "${files[@]}" --clobber
-          else
-            gh release create "$RELEASE_TAG" "${files[@]}" --generate-notes --prerelease
-          fi
+          gh release create "$TAG" "${files[@]}" --title "$TAG" --generate-notes --prerelease || \
+          gh release upload "$TAG" "${files[@]}" --clobber
