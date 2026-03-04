@@ -21,6 +21,7 @@ interface Repository {
     val cacheDir: File
     val filesDir: File
     val externalAssetsDir: File
+    fun resolveDatabaseFile(name: String): File
 
     suspend fun getString(resource: StringResource): String
     suspend fun getString(resource: StringResource, vararg formatArgs: Any): String

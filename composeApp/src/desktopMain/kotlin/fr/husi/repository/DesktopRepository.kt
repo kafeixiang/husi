@@ -10,11 +10,11 @@ import org.jetbrains.compose.resources.getString as getComposeString
 val desktopRepo get() = repo as DesktopRepository
 
 class DesktopRepository(
-    dataDir: File = File(System.getProperty("user.home"), ".husi"),
-    override val isMainProcess: Boolean = true,
-    override val isBgProcess: Boolean = true,
+    val dataDir: File = File(System.getProperty("user.home"), ".husi").also { it.mkdirs() },
 ) : Repository {
 
+    override val isMainProcess: Boolean = true
+    override val isBgProcess: Boolean = true
     private val osName = System.getProperty("os.name")?.lowercase().orEmpty()
 
     override val isAndroid = false
@@ -40,6 +40,10 @@ class DesktopRepository(
 
     override val externalAssetsDir: File by lazy {
         dataDir.resolve("external").apply { mkdirs() }
+    }
+
+    override fun resolveDatabaseFile(name: String): File {
+        return dataDir.resolve(name)
     }
 
     override suspend fun getString(resource: StringResource) = getComposeString(resource)

@@ -27,5 +27,8 @@ class PluginEntity(
 
         @Query("DELETE FROM plugins WHERE pluginId = :pluginId")
         suspend fun delete(pluginId: String): Int
+
+        @Query("DELETE FROM plugins")
+        suspend fun reset()
     }
 }

@@ -104,7 +104,7 @@ open class SagerRepository(
         (serviceContext.getExternalFilesDir(null) ?: filesDir).apply { mkdirs() }
     }
 
-    override fun getDatabasePath(name: String): File {
+    override fun resolveDatabaseFile(name: String): File {
         return serviceContext.getDatabasePath(name)
     }
 

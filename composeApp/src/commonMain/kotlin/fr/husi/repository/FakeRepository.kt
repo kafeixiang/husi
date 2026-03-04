@@ -23,6 +23,9 @@ class FakeRepository : Repository {
     override val cacheDir = tempRoot.resolve("cache").apply { mkdirs() }
     override val filesDir = tempRoot.resolve("files").apply { mkdirs() }
     override val externalAssetsDir = tempRoot.resolve("external").apply { mkdirs() }
+    override fun resolveDatabaseFile(name: String): File {
+        return tempRoot.resolve(name)
+    }
 
     override suspend fun getString(resource: StringResource) = getComposeString(resource)
     override suspend fun getString(resource: StringResource, vararg formatArgs: Any) =

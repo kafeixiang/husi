@@ -19,7 +19,6 @@ interface AndroidRepository : Repository {
     val packageManager: PackageManager
 
     val noBackupFilesDir: File
-    fun getDatabasePath(name: String): File
 
     suspend fun updateNotificationChannels()
 }
