@@ -18,24 +18,28 @@ enum class DesktopPlatform(
     private val aliases: Set<String>,
     val composeDependencyId: String,
     val nativeNames: Set<String>,
+    val jnaName: String,
 ) {
     Linux(
         id = "linux",
         aliases = setOf("linux"),
         composeDependencyId = "linux",
         nativeNames = setOf("linux"),
+        jnaName = "linux",
     ),
     Darwin(
         id = "darwin",
         aliases = setOf("darwin", "macos", "mac", "osx"),
         composeDependencyId = "macos",
         nativeNames = setOf("osx", "darwin"),
+        jnaName = "darwin",
     ),
     Windows(
         id = "windows",
         aliases = setOf("windows", "win"),
         composeDependencyId = "windows",
         nativeNames = setOf("windows"),
+        jnaName = "win32",
     ),
     ;
 
@@ -64,6 +68,7 @@ enum class DesktopArch(
     val composeDependencyId: String,
     val packageJarArchToken: String,
     val nativeNames: Set<String>,
+    val jnaName: String,
 ) {
     Amd64(
         id = "amd64",
@@ -71,6 +76,7 @@ enum class DesktopArch(
         composeDependencyId = "x64",
         packageJarArchToken = "x64",
         nativeNames = setOf("x64", "amd64"),
+        jnaName = "x86-64",
     ),
     Arm64(
         id = "arm64",
@@ -78,6 +84,7 @@ enum class DesktopArch(
         composeDependencyId = "arm64",
         packageJarArchToken = "arm64",
         nativeNames = setOf("arm64", "aarch64"),
+        jnaName = "aarch64",
     ),
     ;
 
@@ -105,6 +112,10 @@ data class DesktopTarget(
                     listOf("natives/${platformName}_${archName}/", "natives/${platformName}-${archName}/")
                 }
             }.toSet()
+    val jnaNativeKeepPrefixes: Set<String> =
+        setOf(
+            "com/sun/jna/${platform.jnaName}-${arch.jnaName}/",
+        )
 
     override fun toString(): String = id
 
@@ -415,13 +426,25 @@ dependencies {
 
 tasks.matching { it.name == "packageUberJarForCurrentOS" }.configureEach {
     if (this is Jar) {
-        // Exclude other platform's sqlite library from androidx-sqlite-bundled's family bucket
+        // Exclude non-target native binaries from dependency family buckets.
 
         val nativeKeepPrefixes = desktopTarget.nativeKeepPrefixes
+        val jnaNativeKeepPrefixes = desktopTarget.jnaNativeKeepPrefixes
 
         eachFile {
             val entryPath = path
             if (entryPath.startsWith("natives/") && nativeKeepPrefixes.none(entryPath::startsWith)) {
+                exclude()
+                return@eachFile
+            }
+
+            val isJnaNativeBinary =
+                entryPath.startsWith("com/sun/jna/") &&
+                    (entryPath.endsWith(".so") ||
+                        entryPath.endsWith(".dll") ||
+                        entryPath.endsWith(".jnilib") ||
+                        entryPath.endsWith(".a"))
+            if (isJnaNativeBinary && jnaNativeKeepPrefixes.none(entryPath::startsWith)) {
                 exclude()
             }
         }
