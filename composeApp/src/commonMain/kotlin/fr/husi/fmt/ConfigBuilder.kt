@@ -191,15 +191,9 @@ fun buildConfig(
             thisGroup?.landingProxy?.let { runBlocking { SagerDatabase.proxyDao.getById(it) } }
         val list = resolveChainInternal()
         if (frontProxy != null) {
-            if (type == ProxyEntity.TYPE_PROXY_SET) {
-                error("front proxy with proxy set")
-            }
             list.add(frontProxy)
         }
         if (landingProxy != null) {
-            if (type == ProxyEntity.TYPE_PROXY_SET) {
-                error("landing proxy with proxy set")
-            }
             list.add(0, landingProxy)
         }
         return list
@@ -387,11 +381,16 @@ fun buildConfig(
             val chainTag = "c-$chainId"
 
             val isProxySet = entity.type == ProxyEntity.TYPE_PROXY_SET
-
-            val proxySetChildren = if (isProxySet) {
-                LinkedHashSet<String>()
+            val outboundsByTag = HashMap<String, JSONMap>()
+            val proxySetFrontProxyId: Long?
+            val proxySetLandingProxyId: Long?
+            if (isProxySet) {
+                val thisGroup = runBlocking { SagerDatabase.groupDao.getById(entity.groupId).first() }
+                proxySetFrontProxyId = thisGroup?.frontProxy?.takeIf { it > 0L }
+                proxySetLandingProxyId = thisGroup?.landingProxy?.takeIf { it > 0L }
             } else {
-                null
+                proxySetFrontProxyId = null
+                proxySetLandingProxyId = null
             }
 
             fun ProxyEntity.resolveProxySetMembers(): List<ProxyEntity> {
@@ -402,7 +401,6 @@ fun buildConfig(
 
             fun addReadableName(name: String): String {
                 if (readableNames.add(name)) {
-                    proxySetChildren?.add(name)
                     return name
                 }
                 var count = 0
@@ -411,7 +409,6 @@ fun buildConfig(
                     count++
                     newName = "$name-$count"
                 }
-                proxySetChildren?.add(newName)
                 return newName
             }
 
@@ -533,15 +530,11 @@ fun buildConfig(
                         is TrustTunnelBean -> buildSingBoxOutboundTrustTunnelBean(bean).asKxsMap()
 
                         is ProxySetBean -> {
-                            val tags = if (proxySetChildren != null) {
-                                proxySetChildren.toList().filterNot { it == tagOut }
-                            } else {
-                                val memberTags = LinkedHashSet<String>()
-                                for (member in proxyEntity.resolveProxySetMembers()) {
-                                    memberTags.add(reserveTag(member))
-                                }
-                                memberTags.toList().filterNot { it == tagOut }
+                            val memberTags = LinkedHashSet<String>()
+                            for (member in proxyEntity.resolveProxySetMembers()) {
+                                memberTags.add(reserveTag(member))
                             }
+                            val tags = memberTags.toList().filterNot { it == tagOut }
                             buildSingBoxOutboundProxySetBean(bean, tags).asKxsMap()
                         }
 
@@ -604,6 +597,7 @@ fun buildConfig(
 
                 currentOutbound["tag"] = tagOut
                 tagMap[proxyEntity.id] = tagOut
+                outboundsByTag[tagOut] = currentOutbound
 
                 // External proxy need a direct inbound to forward the traffic
                 // For external proxy software, their traffic must goes to sing-box to use protected fd.
@@ -657,16 +651,53 @@ fun buildConfig(
                 }
             }
 
-            // If this is proxy set, migrate it to the new list's top.
-            // Then the structure is clear and make sure tagProxy is the first.
+            val trafficEntities = chainTrafficSet.toMutableList()
             if (isProxySet) {
-                outbounds!!.add(
-                    outbounds!!.size - profileList.size,
-                    outbounds!!.removeAt(outbounds!!.lastIndex),
-                )
+                val proxySetTag = reservedTags[entity.id] ?: chainTagOut
+                val proxySetMemberTags = LinkedHashSet<String>()
+                for (member in entity.resolveProxySetMembers()) {
+                    proxySetMemberTags.add(reserveTag(member))
+                }
+
+                val frontTag = proxySetFrontProxyId?.let { reservedTags[it] }
+                if (frontTag != null) {
+                    for (memberTag in proxySetMemberTags) {
+                        if (memberTag == frontTag) continue
+                        outboundsByTag[memberTag]?.set("detour", frontTag)
+                    }
+                }
+
+                val landingTag = proxySetLandingProxyId?.let { reservedTags[it] }
+                if (landingTag != null && landingTag != proxySetTag) {
+                    outboundsByTag[landingTag]?.set("detour", proxySetTag)
+                    if (chainId == 0L) {
+                        mainTag = landingTag
+                    }
+                } else if (chainId == 0L) {
+                    mainTag = proxySetTag
+                }
+
+                chainTagOut = proxySetTag
+
+                // Keep selector above its children.
+                val chunkStart = outbounds!!.size - profileList.size
+                val proxySetIndex = outbounds!!.indexOfLast { it["tag"] == proxySetTag }
+                if (proxySetIndex in chunkStart..outbounds!!.lastIndex) {
+                    outbounds!!.add(chunkStart, outbounds!!.removeAt(proxySetIndex))
+                }
+
+                val mainFlowId = if (landingTag != null) {
+                    proxySetLandingProxyId
+                } else {
+                    entity.id
+                }
+                val mainIndex = trafficEntities.indexOfFirst { it.id == mainFlowId }
+                if (mainIndex >= 0 && mainIndex != trafficEntities.lastIndex) {
+                    trafficEntities.add(trafficEntities.removeAt(mainIndex))
+                }
             }
 
-            trafficMap[chainTagOut] = chainTrafficSet.toList()
+            trafficMap[chainTagOut] = trafficEntities
             return chainTagOut
         }
 
