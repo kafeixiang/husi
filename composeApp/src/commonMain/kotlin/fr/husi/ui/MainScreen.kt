@@ -248,74 +248,76 @@ private fun MainScreenContent(
     NavigationDrawer(
         drawerStateHolder = drawerStateHolder,
         drawerContent = {
-            @Composable
-            fun BuildDrawerItem(info: DrawerItemInfo) {
-                DrawerItem(
-                    info = info,
-                    closeDrawer = ::closeDrawer,
-                    selectedDrawerRoute = selectedDrawerRoute,
-                    onNavigate = navigator::navigateToDrawerRoute,
-                )
-            }
+            Column(Modifier.fillMaxWidth(0.75f)) {
+                @Composable
+                fun BuildDrawerItem(info: DrawerItemInfo) {
+                    DrawerItem(
+                        info = info,
+                        closeDrawer = ::closeDrawer,
+                        selectedDrawerRoute = selectedDrawerRoute,
+                        onNavigate = navigator::navigateToDrawerRoute,
+                    )
+                }
 
-            val dividerPadding = 4.dp
-            val items0 = remember {
-                persistentListOf(
-                    DrawerItemInfo(
-                        Res.string.menu_configuration,
-                        Res.drawable.description,
-                        NavRoutes.Configuration,
-                    ),
-                    DrawerItemInfo(
-                        Res.string.menu_group,
-                        Res.drawable.view_list,
-                        NavRoutes.Groups,
-                    ),
-                    DrawerItemInfo(
-                        Res.string.menu_route,
-                        Res.drawable.directions,
-                        NavRoutes.Route,
-                    ),
-                    DrawerItemInfo(
-                        Res.string.settings,
-                        Res.drawable.settings,
-                        NavRoutes.Settings,
-                    ),
-                    DrawerItemInfo(
-                        Res.string.plugin,
-                        Res.drawable.nfc,
-                        NavRoutes.Plugin,
-                    ),
-                )
-            }
-            for (info in items0) BuildDrawerItem(info)
-            HorizontalDivider(modifier = Modifier.padding(vertical = dividerPadding))
-            val items1 = remember {
-                persistentListOf(
-                    DrawerItemInfo(Res.string.menu_log, Res.drawable.bug_report, NavRoutes.Log),
-                    DrawerItemInfo(
-                        Res.string.menu_dashboard,
-                        Res.drawable.transform,
-                        NavRoutes.Dashboard,
-                    ),
-                    DrawerItemInfo(
-                        Res.string.menu_tools,
-                        Res.drawable.construction,
-                        NavRoutes.Tools,
-                    ),
-                )
-            }
-            for (info in items1) BuildDrawerItem(info)
-            HorizontalDivider()
-            BuildDrawerItem(
-                DrawerItemInfo(
-                    Res.string.menu_about,
-                    Res.drawable.info,
-                    NavRoutes.About,
-                ),
-            )
-            if (drawerStateHolder.canCollapse) {
+                val dividerPadding = 4.dp
+                val items0 = remember {
+                    persistentListOf(
+                        DrawerItemInfo(
+                            Res.string.menu_configuration,
+                            Res.drawable.description,
+                            NavRoutes.Configuration,
+                        ),
+                        DrawerItemInfo(
+                            Res.string.menu_group,
+                            Res.drawable.view_list,
+                            NavRoutes.Groups,
+                        ),
+                        DrawerItemInfo(
+                            Res.string.menu_route,
+                            Res.drawable.directions,
+                            NavRoutes.Route,
+                        ),
+                        DrawerItemInfo(
+                            Res.string.settings,
+                            Res.drawable.settings,
+                            NavRoutes.Settings,
+                        ),
+                        DrawerItemInfo(
+                            Res.string.plugin,
+                            Res.drawable.nfc,
+                            NavRoutes.Plugin,
+                        ),
+                    )
+                }
+                for (info in items0) BuildDrawerItem(info)
                 HorizontalDivider(modifier = Modifier.padding(vertical = dividerPadding))
+                val items1 = remember {
+                    persistentListOf(
+                        DrawerItemInfo(Res.string.menu_log, Res.drawable.bug_report, NavRoutes.Log),
+                        DrawerItemInfo(
+                            Res.string.menu_dashboard,
+                            Res.drawable.transform,
+                            NavRoutes.Dashboard,
+                        ),
+                        DrawerItemInfo(
+                            Res.string.menu_tools,
+                            Res.drawable.construction,
+                            NavRoutes.Tools,
+                        ),
+                    )
+                }
+                for (info in items1) BuildDrawerItem(info)
+                HorizontalDivider()
+                BuildDrawerItem(
+                    DrawerItemInfo(
+                        Res.string.menu_about,
+                        Res.drawable.info,
+                        NavRoutes.About,
+                    ),
+                )
+                if (drawerStateHolder.canCollapse) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = dividerPadding))
+                }
             }
         },
     ) {
