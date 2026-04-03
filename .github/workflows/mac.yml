@@ -1,0 +1,156 @@
+name: Build macOS (Cross-Compile)
+
+on:
+  push:
+    branches: [ main, dev*, TB* ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, dev ]
+
+jobs:
+  build-macos:
+    name: Build macOS (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [arm64, amd64]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version: '1.26.1'
+          cache: false
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'gradle'
+
+      - name: Set up Zig
+        uses: mlugg/setup-zig@v2
+        with:
+          version: 0.15.0
+
+      - name: Install Packaging Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y genisoimage zstd libarchive-tools
+
+      - name: Download macOS 14.5 SDK
+        run: |
+          mkdir -p $HOME/macos-sdk
+          SDK_VER="14.5"
+          SDK_URL="https://github.com/joseluisq/macosx-sdks/releases/download/${SDK_VER}/MacOSX${SDK_VER}.sdk.tar.xz"
+          curl -L "$SDK_URL" -o "MacOSX${SDK_VER}.sdk.tar.xz"
+          tar -xJ -f "MacOSX${SDK_VER}.sdk.tar.xz" -C $HOME/macos-sdk
+          echo "DARWIN_SDKROOT=$HOME/macos-sdk/MacOSX${SDK_VER}.sdk" >> $GITHUB_ENV
+          echo "DARWIN_MACOSX_DEPLOYMENT_TARGET=12.0" >> $GITHUB_ENV
+
+      - name: Global Environment Hijack and Mock
+        run: |
+          # 1. 自动补全 Git Tag 满足 package.sh 校验
+          VERSION=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git tag "v$VERSION" || true
+          
+          # 2. 劫持 Go 命令：解决交叉编译下的链接路径和 32 位校验冲突
+          mkdir -p $HOME/bin
+          REAL_GO=$(which go)
+          cat <<EOF > $HOME/bin/go
+          #!/bin/bash
+          if [ "\$GOOS" == "darwin" ]; then
+              unset GO386
+              # 关键修复：注入 -install_name 和 RPATH 解决 macOS 载入 dylib 时的闪退
+              export CGO_LDFLAGS="\$CGO_LDFLAGS -isysroot \$DARWIN_SDKROOT -mmacosx-version-min=12.0 -Wl,-install_name,@rpath/libgojni.dylib -Wl,-rpath,@loader_path/. -framework Security -framework CoreFoundation -framework CoreGraphics -framework CoreText -framework Foundation -framework AppKit -framework IOKit -framework OpenDirectory -framework CFNetwork -framework CoreServices -framework Network -framework SystemConfiguration -framework CryptoTokenKit -framework LocalAuthentication"
+          fi
+          exec "$REAL_GO" "\$@"
+          EOF
+          chmod +x $HOME/bin/go
+          echo "$HOME/bin" >> $GITHUB_PATH
+          
+          # 3. 构造虚假 JDK 满足 anja 校验
+          mkdir -p $HOME/fake-jdk/include/darwin
+          cp -r $JAVA_HOME/include/* $HOME/fake-jdk/include/
+          cp -r $JAVA_HOME/include/linux/* $HOME/fake-jdk/include/darwin/
+          mkdir -p $HOME/fake-jdk/bin
+          ln -s $JAVA_HOME/bin/java $HOME/fake-jdk/bin/java
+          echo "FAKE_JAVA_HOME=$HOME/fake-jdk" >> $GITHUB_ENV
+
+          # 4. 修复 macOS AWT Menu 不支持 mnemonic 导致的崩溃
+          # sed -i 's/val supportAdvancedTray = PlatformInfo.isMacOs/val supportAdvancedTray = false/g' composeApp/src/desktopMain/kotlin/fr/husi/DesktopMain.kt
+
+      - name: Build libcore for macOS ${{ matrix.arch }}
+        env:
+          DARWIN_SDKROOT: ${{ env.DARWIN_SDKROOT }}
+          JAVA_HOME: ${{ env.FAKE_JAVA_HOME }}
+        run: |
+          ./run lib core --desktop --desktoptargets darwin/${{ matrix.arch }} --jniinclude ${{ env.FAKE_JAVA_HOME }}/include
+
+      - name: Upload libcore Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: libcore-jar-${{ matrix.arch }}
+          path: composeApp/libs/libcore-desktop-darwin-${{ matrix.arch }}.jar
+
+      - name: Build launcher for macOS ${{ matrix.arch }}
+        run: |
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            ZIG_TARGET="aarch64-macos"
+          else
+            ZIG_TARGET="x86_64-macos"
+          fi
+          cd launcher
+          zig build -Doptimize=ReleaseSmall -Dtarget=${ZIG_TARGET} -Dpackage-name=fr.husi
+          cd ..
+
+      - name: Build desktop uber JAR for macOS ${{ matrix.arch }}
+        run: |
+          export BUILD_PLUGIN=none
+          # 显式指定打包架构，确保 jar 内部包含正确的 natives
+          ./gradlew -p composeApp packageUberJarForCurrentOS -PdesktopTarget=darwin/${{ matrix.arch }} \
+            -Dorg.gradle.jvmargs="-Xmx4096m"
+
+      - name: Package macOS DMG
+        run: |
+          # 修正 package.sh 时间戳格式并移除不兼容参数
+          sed -i 's/+.%Y%m%d%H%M%S.00+0000/+%Y%m%d%H%M%S00/g' release/macos/package.sh
+          sed -i '/-modification-date/d' release/macos/package.sh
+          ./release/macos/package.sh --target darwin/${{ matrix.arch }}
+
+      - name: Upload DMG as artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: husi-macos-${{ matrix.arch }}-dmg
+          path: composeApp/build/compose/packages/macos/*.dmg
+          retention-days: 30
+
+      - name: Set Release Tag
+        if: github.event_name == 'push'
+        run: |
+          VERSION=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            echo "RELEASE_TAG=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          else
+            echo "RELEASE_TAG=${GITHUB_REF_NAME}-${VERSION}" >> $GITHUB_ENV
+          fi
+
+      - name: Create and Upload Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ env.RELEASE_TAG }}" --title "${{ env.RELEASE_TAG }}" --prerelease \
+            --notes $'# :memo: Release Notes\n\n* Fixes and improvements.' \
+            composeApp/build/compose/packages/macos/*.dmg || \
+          gh release upload "${{ env.RELEASE_TAG }}" composeApp/build/compose/packages/macos/*.dmg --clobber
