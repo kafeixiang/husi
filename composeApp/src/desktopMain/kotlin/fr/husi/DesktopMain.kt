@@ -177,7 +177,12 @@ fun main(args: Array<String>) {
                 state = windowState,
                 visible = windowVisible,
                 title = stringResource(Res.string.app_name),
-                icon = painterResource(Res.drawable.ic_service_active),
+                icon = if (PlatformInfo.isMacOs) {
+                    // Already set native dock icon in launcher
+                    null
+                } else {
+                    painterResource(Res.drawable.ic_service_active)
+                },
             ) {
                 AppTheme {
                     MainScreen(moveToBackground = {})
