@@ -26,7 +26,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import fr.husi.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
@@ -34,8 +33,6 @@ import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import fr.husi.compose.material3.Surface
-import fr.husi.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -80,6 +77,10 @@ import fr.husi.compose.SimpleTopAppBar
 import fr.husi.compose.StatsBar
 import fr.husi.compose.TextButton
 import fr.husi.compose.UIntegerTextField
+import fr.husi.compose.ValidatedTextField
+import fr.husi.compose.material3.Icon
+import fr.husi.compose.material3.Surface
+import fr.husi.compose.material3.Text
 import fr.husi.compose.rememberScrollHideState
 import fr.husi.compose.theme.DEFAULT
 import fr.husi.compose.theme.themeString
@@ -89,10 +90,12 @@ import fr.husi.database.DataStore
 import fr.husi.database.SagerDatabase
 import fr.husi.ktx.contentOrUnset
 import fr.husi.ktx.intListN
+import fr.husi.ktx.isIpAddress
 import fr.husi.ktx.onIoDispatcher
 import fr.husi.ktx.restartApplication
 import fr.husi.ktx.runOnDefaultDispatcher
 import fr.husi.ktx.showAndDismissOld
+import fr.husi.libcore.Libcore
 import fr.husi.logLevelString
 import fr.husi.platform.PlatformInfo
 import fr.husi.repository.resolveRepository
@@ -108,6 +111,8 @@ import fr.husi.resources.apply
 import fr.husi.resources.apps
 import fr.husi.resources.auto
 import fr.husi.resources.blurred_address
+import fr.husi.resources.bootstrap_dns
+import fr.husi.resources.bootstrap_dns_ip_only
 import fr.husi.resources.bug_report
 import fr.husi.resources.cag_dns
 import fr.husi.resources.cag_misc
@@ -1071,6 +1076,57 @@ fun SettingsScreen(
                             },
                             summary = { Text(contentOrUnset(value)) },
                             valueToText = { it },
+                        )
+                    }
+                    item(Key.BOOTSTRAP_DNS, PreferenceType.TEXT_FIELD) {
+                        val defaultValue = if (PlatformInfo.isMacOs) "223.5.5.5" else "local"
+                        val value by DataStore.configurationStore
+                            .stringFlow(Key.BOOTSTRAP_DNS, defaultValue)
+                            .collectAsStateWithLifecycle(defaultValue)
+
+                        suspend fun validateBootstrapDns(text: String): String? {
+                            val trimmed = text.trim()
+                            if (trimmed.isEmpty() || trimmed == "local") return null
+                            val host = try {
+                                if (!trimmed.contains("://")) {
+                                    trimmed
+                                } else {
+                                    Libcore.parseURL(trimmed).host
+                                }
+                            } catch (_: Exception) {
+                                return resolveRepository().getString(Res.string.bootstrap_dns_ip_only)
+                            }
+                            return if (host.isIpAddress()) {
+                                null
+                            } else {
+                                resolveRepository().getString(Res.string.bootstrap_dns_ip_only)
+                            }
+                        }
+
+                        TextFieldPreference(
+                            value = value,
+                            onValueChange = {
+                                DataStore.bootstrapDns = it
+                                needReload()
+                            },
+                            title = { Text(stringResource(Res.string.bootstrap_dns)) },
+                            textToValue = { it },
+                            icon = {
+                                Icon(
+                                    vectorResource(Res.drawable.dns),
+                                    null,
+                                )
+                            },
+                            summary = { Text(contentOrUnset(value)) },
+                            valueToText = { it },
+                            textField = { textFieldValue, onTextFieldValueChange, onOk ->
+                                ValidatedTextField(
+                                    value = textFieldValue,
+                                    onValueChange = onTextFieldValueChange,
+                                    onOk = onOk,
+                                    validator = ::validateBootstrapDns,
+                                )
+                            },
                         )
                     }
                     item(Key.DOMAIN_STRATEGY_FOR_DIRECT, PreferenceType.LIST) {

@@ -21,6 +21,7 @@ import fr.husi.ktx.long
 import fr.husi.ktx.parsePort
 import fr.husi.ktx.string
 import fr.husi.ktx.stringSet
+import fr.husi.platform.PlatformInfo
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
@@ -115,6 +116,14 @@ object DataStore {
 
     var remoteDns by configurationStore.string(Key.REMOTE_DNS) { "tcp://dns.google" }
     var directDns by configurationStore.string(Key.DIRECT_DNS) { "local" }
+    var bootstrapDns by configurationStore.string(Key.BOOTSTRAP_DNS) {
+        if (PlatformInfo.isMacOs) {
+            // Sometimes local is not working on macOS.
+            "223.5.5.5"
+        } else {
+            "local"
+        }
+    }
     var domainStrategyForDirect by configurationStore.string(Key.DOMAIN_STRATEGY_FOR_DIRECT)
     var domainStrategyForServer by configurationStore.string(Key.DOMAIN_STRATEGY_FOR_SERVER)
     var enableFakeDns by configurationStore.boolean(Key.ENABLE_FAKE_DNS) { false }

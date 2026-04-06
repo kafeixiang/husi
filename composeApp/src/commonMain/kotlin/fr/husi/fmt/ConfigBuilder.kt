@@ -38,7 +38,6 @@ import fr.husi.fmt.anytls.buildSingBoxOutboundAnyTLSBean
 import fr.husi.fmt.config.ConfigBean
 import fr.husi.fmt.direct.DirectBean
 import fr.husi.fmt.direct.buildSingBoxOutboundDirectBean
-import fr.husi.platform.PlatformInfo
 import fr.husi.fmt.hysteria.HysteriaBean
 import fr.husi.fmt.hysteria.buildSingBoxOutboundHysteriaBean
 import fr.husi.fmt.internal.ChainBean
@@ -67,7 +66,6 @@ import fr.husi.fmt.wireguard.WireGuardBean
 import fr.husi.fmt.wireguard.buildSingBoxEndpointWireGuardBean
 import fr.husi.ktx.JSONMap
 import fr.husi.ktx.asKxsMap
-import fr.husi.ktx.toJsonObjectKxs
 import fr.husi.ktx.blankAsNull
 import fr.husi.ktx.defaultOr
 import fr.husi.ktx.isIpAddress
@@ -79,10 +77,13 @@ import fr.husi.ktx.reverse
 import fr.husi.ktx.showToast
 import fr.husi.ktx.toJsonElementKxs
 import fr.husi.ktx.toJsonMapKxs
+import fr.husi.ktx.toJsonObjectKxs
 import fr.husi.libcore.Libcore
 import fr.husi.logLevelString
+import fr.husi.platform.PlatformInfo
 import fr.husi.repository.resolveRepository
-import fr.husi.resources.*
+import fr.husi.resources.Res
+import fr.husi.resources.route_need_vpn
 import fr.husi.utils.PackageResolver
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -223,6 +224,27 @@ fun buildConfig(
         .mapNotNull { dns -> dns.trim().takeIf { it.isNotBlank() && !it.startsWith("#") } }
     val directDNS = DataStore.directDns.split("\n")
         .mapNotNull { dns -> dns.trim().takeIf { it.isNotBlank() && !it.startsWith("#") } }
+    val bootstrapDNS = DataStore.bootstrapDns.split("\n")
+        .firstNotNullOfOrNull { dns ->
+            dns.trim().takeIf { it.isNotBlank() && !it.startsWith("#") }
+        }
+        ?.let { dns ->
+            if (dns == "local") {
+                dns
+            } else {
+                val url = if (!dns.contains("://")) {
+                    Libcore.newURL(SingBoxOptions.DNS_TYPE_UDP).apply {
+                        fullHost = dns
+                    }
+                } else {
+                    Libcore.parseURL(dns)
+                }
+                if (!url.host.isIpAddress()) {
+                    error("bootstrap DNS must use an IP address or local")
+                }
+                dns
+            }
+        }
     val localDNSPort = DataStore.localDNSPort.takeIf { it > 0 }
     val useFakeDns by lazy { !forTest && DataStore.enableFakeDns }
     val fakeDNSForAll by lazy { useFakeDns && DataStore.fakeDNSForAll }
@@ -1065,9 +1087,18 @@ fun buildConfig(
 
         // underlyingDns
         dns!!.servers!!.add(
-            NewDNSServerOptions_LocalDNSServerOptions().apply {
-                tag = TAG_DNS_LOCAL
-                type = SingBoxOptions.DNS_TYPE_LOCAL
+            if (bootstrapDNS == null) {
+                NewDNSServerOptions_LocalDNSServerOptions().apply {
+                    tag = TAG_DNS_LOCAL
+                    type = SingBoxOptions.DNS_TYPE_LOCAL
+                }
+            } else {
+                buildDNSServer(
+                    bootstrapDNS,
+                    null,
+                    TAG_DNS_LOCAL,
+                    DomainResolveOptions(),
+                )
             },
         )
 
