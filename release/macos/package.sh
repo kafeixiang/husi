@@ -9,6 +9,7 @@ DESKTOP_METADATA_FILE="$ROOT_DIR/release/desktop/package-metadata.sh"
 JAR_DIR_DEFAULT="$ROOT_DIR/composeApp/build/compose/jars"
 OUTPUT_DIR_DEFAULT="$ROOT_DIR/composeApp/build/compose/packages/macos"
 PREBUILT_ICON_DEFAULT="$ROOT_DIR/release/macos/desktop/icon.icns"
+PREBUILT_DOCK_ICON_DEFAULT="$ROOT_DIR/release/macos/desktop/icon.png"
 PACKAGE_NAME_PLACEHOLDER="__HUSI_PACKAGE_NAME__"
 APP_NAME_PLACEHOLDER="__HUSI_APP_NAME__"
 APP_DESCRIPTION_PLACEHOLDER="__HUSI_APP_DESCRIPTION__"
@@ -296,9 +297,14 @@ require_tools() {
 
 resolve_icon_asset() {
     ICON_ICNS="$PREBUILT_ICON_DEFAULT"
+    DOCK_ICON_PNG="$PREBUILT_DOCK_ICON_DEFAULT"
 
     if [[ ! -f "$ICON_ICNS" ]]; then
         error "Missing bundled icon asset: $ICON_ICNS"
+        exit 1
+    fi
+    if [[ ! -f "$DOCK_ICON_PNG" ]]; then
+        error "Missing dock icon asset: $DOCK_ICON_PNG"
         exit 1
     fi
 }
@@ -411,6 +417,7 @@ prepare_app_bundle() {
     local plist_file="$contents_dir/Info.plist"
     local executable_name="$PACKAGE_NAME"
     local icon_name="${PACKAGE_NAME}.icns"
+    local dock_icon_name="${PACKAGE_NAME}.png"
     local bundle_version
     bundle_version="$(normalize_macos_bundle_version "$VERSION_NAME")"
 
@@ -421,6 +428,7 @@ prepare_app_bundle() {
     cp "$ROOT_DIR/release/linux/desktop/desktop-java-opts.conf" "$macos_dir/desktop-java-opts.conf.template"
     cp "$ROOT_DIR/release/linux/desktop/desktop-app-args.conf" "$macos_dir/desktop-app-args.conf.template"
     cp "$ICON_ICNS" "$resources_dir/$icon_name"
+    cp "$DOCK_ICON_PNG" "$resources_dir/$dock_icon_name"
 
     render_template \
         "$plist_template" \

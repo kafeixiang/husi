@@ -316,7 +316,7 @@ fn resolveMacOSAppBundleOptions(allocator: mem.Allocator, runtime: RuntimePaths)
         dock_name = try allocator.dupe(u8, bundle_name);
     }
 
-    const dock_icon_candidate = try std.fmt.allocPrint(allocator, "{s}/Resources/{s}.icns", .{ runtime.app_root, husi_package_name });
+    const dock_icon_candidate = try std.fmt.allocPrint(allocator, "{s}/Resources/{s}.png", .{ runtime.app_root, husi_package_name });
     const dock_icon_path = if (fileExists(dock_icon_candidate)) dock_icon_candidate else blk: {
         allocator.free(dock_icon_candidate);
         break :blk null;

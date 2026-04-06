@@ -52,7 +52,9 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import java.awt.Desktop
+import java.awt.Taskbar
 import java.io.File
+import javax.imageio.ImageIO
 import javax.swing.JOptionPane
 import kotlin.system.exitProcess
 
@@ -63,6 +65,7 @@ private const val PreferenceNodeName = "/fr/husi/preference"
 
 fun main(args: Array<String>) {
     registerMacOSOpenUriHandler()
+    configureMacOSDockIcon()
     val desktopArgs = parseDesktopStartupArgs(args)
     initDesktopRuntime(desktopArgs)
     for (link in desktopArgs.deepLinks) {
@@ -177,7 +180,12 @@ fun main(args: Array<String>) {
                 state = windowState,
                 visible = windowVisible,
                 title = stringResource(Res.string.app_name),
-                icon = painterResource(Res.drawable.ic_service_active),
+                icon = if (PlatformInfo.isMacOs) {
+                    // Keep macOS dock icon on the native app-bundle path.
+                    null
+                } else {
+                    painterResource(Res.drawable.ic_service_active)
+                },
             ) {
                 AppTheme {
                     MainScreen(moveToBackground = {})
@@ -185,6 +193,30 @@ fun main(args: Array<String>) {
             }
         }
     }
+}
+
+private fun configureMacOSDockIcon() {
+    if (!PlatformInfo.isMacOs || !Taskbar.isTaskbarSupported()) return
+    val dockIconPath = resolveMacOSDockIconPath() ?: return
+    runCatching {
+        val taskbar = Taskbar.getTaskbar()
+        if (!taskbar.isSupported(Taskbar.Feature.ICON_IMAGE)) return
+        ImageIO.read(dockIconPath)?.let(taskbar::setIconImage)
+    }.onFailure {
+        Logs.w("configure macOS dock icon", it)
+    }
+}
+
+private fun resolveMacOSDockIconPath(): File? {
+    val jarPath = runCatching {
+        DesktopRepository::class.java.protectionDomain.codeSource.location.toURI()
+    }.getOrNull() ?: return null
+    val jarFile = File(jarPath)
+    val appDir = jarFile.parentFile ?: return null
+    val contentsDir = appDir.parentFile ?: return null
+    val resourcesDir = File(contentsDir, "Resources")
+    val dockIcon = File(resourcesDir, "${jarFile.nameWithoutExtension}.png")
+    return dockIcon.takeIf(File::isFile)
 }
 
 private fun registerMacOSOpenUriHandler() {
