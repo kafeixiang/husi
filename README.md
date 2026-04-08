@@ -386,17 +386,20 @@ Requirement: >= Java Runtime **21**
 
 _No bundled JRE for end users_
 
-#### Options
+```shell
+$ fr.husi --help
+Usage: fr.husi [<options>] [<deep-link>]...
 
-`--dir`, `-d`: Data directory
+Options:
+  -d, --dir=<path>       Data directory
+  -l, --log-level=<int>  Log level override (0-6)
+  -m, --many             Ignore exist instance
+  -b, --background       Start without opening the main window
+  -h, --help             Show this message and exit
 
-`--log-level`, `-l`: Log level override (0-6)
-
-`--many`, `-m`: Ignore exist instance 
-
-`--help`, `-h`: Usage info 
-
-`--background`, `-b`: Only start with tray, not open window.
+Arguments:
+  <deep-link>  Deep links
+```
 
 #### Arguments
 

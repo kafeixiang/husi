@@ -1,13 +1,13 @@
 [versions]
 ksp = "2.3.6"
 kotlinComposePlugin = "2.3.20"
+clikt = "5.1.0"
 composeMultiplatform = "1.10.3"
 composeMaterial3 = "1.11.0-alpha05"
 koin = "4.2.0"
 kotlinCoroutines = "1.10.2"
 kotlinxSerialization = "1.10.0"
 kotlinxDatetime = "0.7.1"
-kotlinxCli = "0.3.6"
 kotlinxImmutable = "0.4.0"
 androidxCoreKtx = "1.18.0"
 androidxAppcompat = "1.7.1"
@@ -43,7 +43,7 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxImmutable" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
-kotlinx-cli = { module = "org.jetbrains.kotlinx:kotlinx-cli", version.ref = "kotlinxCli" }
+clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "androidxCoreKtx" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "androidxAppcompat" }
 androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "androidxActivity" }

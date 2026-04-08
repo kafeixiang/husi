@@ -357,8 +357,8 @@ kotlin {
                 } else {
                     implementation("${desktopTarget.composeDependencyNotation}:$composeDesktopVersion")
                 }
+                implementation(libs.clikt)
                 implementation(libs.kotlinx.coroutines.swing)
-                implementation(libs.kotlinx.cli)
                 implementation(libcoreDesktopJar)
             }
         }
