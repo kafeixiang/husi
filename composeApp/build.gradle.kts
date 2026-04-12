@@ -176,10 +176,12 @@ val desktopJarFile = layout.projectDirectory.file("libs/$desktopJarName").asFile
 val libcoreDesktopJarOptional = desktopJarFile.takeIf { it.isFile }?.let { files(it) }
 val libcoreDesktopJarRequired =
     files({
-        require(desktopJarFile.isFile) {
-            "Missing desktop libcore jar '${desktopJarFile.path}'. Build it first, e.g. make libcore_desktop DESKTOP_TARGETS=$desktopTarget."
+        if (desktopJarFile.isFile) {
+            desktopJarFile
+        } else {
+            // Placeholder to avoid sync error when only building Android
+            emptyList<Any>()
         }
-        desktopJarFile
     })
 val desktopPackageName = metadata.getProperty("PACKAGE_NAME").trim()
 val desktopVersion = metadata.getProperty("VERSION_NAME").trim()
