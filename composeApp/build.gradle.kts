@@ -151,19 +151,6 @@ fun resolveHostDesktopTarget(): DesktopTarget =
         archRawValue = System.getProperty("os.arch"),
     )
 
-fun normalizeMacPackageVersion(versionName: String): String {
-    val numbers =
-        Regex("""\d+""")
-            .findAll(versionName)
-            .map { it.value }
-            .take(3)
-            .toList()
-    val major = numbers.getOrElse(0) { "1" }
-    val minor = numbers.getOrElse(1) { "0" }
-    val patch = numbers.getOrElse(2) { "0" }
-    return "$major.$minor.$patch"
-}
-
 val requestedDesktopTargetRaw = project.findProperty("desktopTarget")?.toString()?.trim().orEmpty()
 val requestedDesktopTarget =
     if (requestedDesktopTargetRaw.isNotEmpty()) {
@@ -172,7 +159,6 @@ val requestedDesktopTarget =
         null
     }
 val desktopTarget = requestedDesktopTarget ?: resolveHostDesktopTarget()
-val hostDesktopTarget = resolveHostDesktopTarget()
 val composeDesktopVersion = libs.versions.composeMultiplatform.get()
 
 val desktopJarName = desktopTarget.libcoreDesktopJarName
@@ -186,13 +172,7 @@ val libcoreDesktopJar =
     })
 val desktopPackageName = metadata.getProperty("PACKAGE_NAME").trim()
 val desktopVersion = metadata.getProperty("VERSION_NAME").trim()
-val macPackageVersion = normalizeMacPackageVersion(desktopVersion)
-val desktopTargetFormats =
-    when (hostDesktopTarget.platform) {
-        DesktopPlatform.Linux -> emptySet()
-        DesktopPlatform.Darwin -> setOf(TargetFormat.Dmg)
-        DesktopPlatform.Windows -> linkedSetOf(TargetFormat.Exe)
-    }
+val desktopTargetFormats = emptySet<TargetFormat>()
 
 val generateBuildConfig by tasks.registering {
     val outputDir = layout.buildDirectory.dir("generated/buildConfig/kotlin")
@@ -373,17 +353,11 @@ compose.desktop {
                 targetFormats(*desktopTargetFormats.toTypedArray())
             }
             packageName = desktopPackageName
-            packageVersion = macPackageVersion
+            packageVersion = desktopVersion
             description = "Husi desktop proxy integration tool"
             vendor = "Husi contributors"
             copyright = "GPL-3.0-or-later"
             licenseFile.set(rootProject.layout.projectDirectory.file("LICENSE"))
-            macOS {
-                dmgPackageVersion = macPackageVersion
-            }
-            windows {
-                exePackageVersion = macPackageVersion
-            }
         }
     }
 }
@@ -437,30 +411,6 @@ tasks.matching { it.name == "packageUberJarForCurrentOS" }.configureEach {
         }
 
         includeEmptyDirs = false
-    }
-
-    doLast {
-        if (requestedDesktopTarget == null) {
-            return@doLast
-        }
-
-        val jarOutputDir = layout.buildDirectory.dir("compose/jars").get().asFile
-        val sourceJarName =
-            "$desktopPackageName-${hostDesktopTarget.platform.id}-${hostDesktopTarget.arch.packageJarArchToken}-$desktopVersion.jar"
-        val targetJarName =
-            "$desktopPackageName-${desktopTarget.platform.id}-${desktopTarget.arch.packageJarArchToken}-$desktopVersion.jar"
-        val sourceJar = jarOutputDir.resolve(sourceJarName)
-        val targetJar = jarOutputDir.resolve(targetJarName)
-
-        require(sourceJar.isFile) {
-            "Expected source uberjar '${sourceJar.path}' was not generated."
-        }
-
-        if (sourceJar.path == targetJar.path) {
-            return@doLast
-        }
-
-        sourceJar.copyTo(targetJar, overwrite = true)
     }
 }
 
