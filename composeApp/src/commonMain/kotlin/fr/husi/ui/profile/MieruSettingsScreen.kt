@@ -16,6 +16,10 @@ import fr.husi.resources.Res
 import fr.husi.resources.compare_arrows
 import fr.husi.resources.directions_boat
 import fr.husi.resources.emoji_symbols
+import fr.husi.resources.handshake_mode
+import fr.husi.resources.handshake_mode_default
+import fr.husi.resources.handshake_mode_no_wait
+import fr.husi.resources.handshake_mode_standard
 import fr.husi.resources.high
 import fr.husi.resources.low
 import fr.husi.resources.middle
@@ -34,10 +38,13 @@ import fr.husi.resources.router
 import fr.husi.resources.server_address
 import fr.husi.resources.server_port
 import fr.husi.resources.traffic_pattern
+import fr.husi.resources.user_hint
+import fr.husi.resources.user_hint_sum
 import fr.husi.resources.username
 import fr.husi.ui.NavRoutes
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
+import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.TextFieldPreference
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -105,13 +112,10 @@ private fun LazyListScope.mieruSettings(
             value = uiState.port,
             onValueChange = { viewModel.setPort(it) },
             title = { Text(stringResource(Res.string.server_port)) },
-            textToValue = { it.toIntOrNull() ?: 443 },
+            textToValue = { it },
             icon = { Icon(vectorResource(Res.drawable.directions_boat), null) },
             summary = { Text(contentOrUnset(uiState.port)) },
-            valueToText = { it.toString() },
-            textField = { value, onValueChange, onOk ->
-                UIntegerTextField(value, onValueChange, onOk)
-            },
+            valueToText = { it },
         )
     }
     item("protocol") {
@@ -143,7 +147,7 @@ private fun LazyListScope.mieruSettings(
             onValueChange = { viewModel.setPassword(it) },
         )
     }
-    if (uiState.protocol == "udp") {
+    if (uiState.protocol.uppercase() == "UDP") {
         item("mtu") {
             TextFieldPreference(
                 value = uiState.mtu,
@@ -161,15 +165,16 @@ private fun LazyListScope.mieruSettings(
     }
     item("mux_number") {
         fun muxSummary(mux: Int): StringResource = when (mux) {
-            0 -> Res.string.off
-            1 -> Res.string.low
-            2 -> Res.string.middle
-            3 -> Res.string.high
+            0 -> Res.string.not_set
+            1 -> Res.string.off
+            2 -> Res.string.low
+            3 -> Res.string.middle
+            4 -> Res.string.high
             else -> Res.string.not_set
         }
         ListPreference(
             value = uiState.muxNumber,
-            values = intListN(4),
+            values = intListN(5),
             onValueChange = { viewModel.setMuxNumber(it) },
             title = { Text(stringResource(Res.string.mux_preference)) },
             icon = { Icon(vectorResource(Res.drawable.compare_arrows), null) },
@@ -179,21 +184,21 @@ private fun LazyListScope.mieruSettings(
         )
     }
     item("handshake_mode") {
-        fun handshakeSummary(mode: Int): String = when (mode) {
-            0 -> "DEFAULT"
-            1 -> "STANDARD (1-RTT)"
-            2 -> "NO_WAIT (0-RTT)"
-            else -> "UNKNOWN"
+        fun handshakeSummary(mode: Int): StringResource = when (mode) {
+            0 -> Res.string.handshake_mode_default
+            1 -> Res.string.handshake_mode_standard
+            2 -> Res.string.handshake_mode_no_wait
+            else -> Res.string.not_set
         }
         ListPreference(
             value = uiState.handshakeMode,
             values = intListN(3),
             onValueChange = { viewModel.setHandshakeMode(it) },
-            title = { Text("Handshake Mode") },
+            title = { Text(stringResource(Res.string.handshake_mode)) },
             icon = { Icon(vectorResource(Res.drawable.compare_arrows), null) },
-            summary = { Text(handshakeSummary(uiState.handshakeMode)) },
+            summary = { Text(stringResource(handshakeSummary(uiState.handshakeMode))) },
             type = ListPreferenceType.DROPDOWN_MENU,
-            valueToText = { AnnotatedString(handshakeSummary(it)) },
+            valueToText = { AnnotatedString(stringResource(handshakeSummary(it))) },
         )
     }
     item("traffic_pattern") {
@@ -208,6 +213,15 @@ private fun LazyListScope.mieruSettings(
             textField = { value, onValueChange, onOk ->
                 MultilineTextField(value, onValueChange, onOk)
             },
+        )
+    }
+    item("user_hint") {
+        SwitchPreference(
+            value = uiState.userHint,
+            onValueChange = { viewModel.setUserHint(it) },
+            title = { Text(stringResource(Res.string.user_hint)) },
+            icon = { Icon(vectorResource(Res.drawable.compare_arrows), null) },
+            summary = { Text(stringResource(Res.string.user_hint_sum)) },
         )
     }
 }

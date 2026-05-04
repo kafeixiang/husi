@@ -14,7 +14,7 @@ internal data class MieruUiState(
     override val customOutbound: String = "",
     val name: String = "",
     val address: String = "127.0.0.1",
-    val port: Int = 443,
+    val port: String = "443",
     val protocol: String = "TCP",
     val username: String = "",
     val password: String = "",
@@ -22,6 +22,7 @@ internal data class MieruUiState(
     val muxNumber: Int = 0,
     val trafficPattern: String = "",
     val handshakeMode: Int = 0,
+    val userHint: Boolean = false,
 ) : ProfileEditorUiState
 
 @Stable
@@ -38,7 +39,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
                 customOutbound = customOutboundJson,
                 name = name,
                 address = serverAddress,
-                port = serverPort,
+                port = serverPorts.takeIf { it.isNotBlank() } ?: serverPort.toString(),
                 protocol = protocol,
                 username = username,
                 password = password,
@@ -46,6 +47,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
                 muxNumber = serverMuxNumber,
                 trafficPattern = trafficPattern,
                 handshakeMode = handshakeMode,
+                userHint = userHint,
             )
         }
     }
@@ -56,7 +58,13 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
         customOutboundJson = state.customOutbound
         name = state.name
         serverAddress = state.address
-        serverPort = state.port
+        if (state.port.contains("-") || state.port.contains(",")) {
+            serverPorts = state.port
+            serverPort = state.port.split(",", "-").firstOrNull()?.toIntOrNull() ?: defaultPort
+        } else {
+            serverPorts = ""
+            serverPort = state.port.toIntOrNull() ?: defaultPort
+        }
         protocol = state.protocol
         username = state.username
         password = state.password
@@ -64,6 +72,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
         serverMuxNumber = state.muxNumber
         trafficPattern = state.trafficPattern
         handshakeMode = state.handshakeMode
+        userHint = state.userHint
     }
 
     override fun setCustomConfig(config: String) {
@@ -86,7 +95,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
         _uiState.update { it.copy(address = address) }
     }
 
-    fun setPort(port: Int) {
+    fun setPort(port: String) {
         _uiState.update { it.copy(port = port) }
     }
 
@@ -116,6 +125,10 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
 
     fun setHandshakeMode(mode: Int) {
         _uiState.update { it.copy(handshakeMode = mode) }
+    }
+
+    fun setUserHint(userHint: Boolean) {
+        _uiState.update { it.copy(userHint = userHint) }
     }
 
 }

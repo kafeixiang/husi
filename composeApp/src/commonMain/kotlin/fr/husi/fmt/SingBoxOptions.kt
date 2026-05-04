@@ -929,6 +929,8 @@ object SingBoxOptions {
         @JvmField var multiplexing: String? = null
         @JvmField var traffic_pattern: String? = null
         @JvmField var handshake_mode: String? = null
+        @JvmField var user_hint: Boolean? = null
+        @JvmField var mtu: Int? = null
         @JvmField var detour: String? = null
     }
     @KxsSerializable

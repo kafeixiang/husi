@@ -784,6 +784,12 @@
     <string name="tun_auto_redirect">Tun auto redirect</string>
     <string name="no_plugin_found">No plugin found!</string>
     <string name="traffic_pattern">Traffic Pattern</string>
+    <string name="handshake_mode">Handshake Mode</string>
+    <string name="handshake_mode_default">Default</string>
+    <string name="handshake_mode_standard">Standard (1-RTT)</string>
+    <string name="handshake_mode_no_wait">No wait (0-RTT)</string>
+    <string name="user_hint">User Hint</string>
+    <string name="user_hint_sum">Decryption Acceleration</string>
     <string name="route_invert">Invert Match</string>
     <string name="latency">Latency</string>
     <string name="select_file">Select File</string>

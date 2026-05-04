@@ -31,16 +31,18 @@ class MieruBean : AbstractBean() {
     var mtu: Int = 1400
     var trafficPattern: String = ""
     var handshakeMode: Int = 2 // 0: DEFAULT, 1: STANDARD, 2: NO_WAIT
+    var userHint: Boolean = false
+    var serverPorts: String = ""
 
     override fun initializeDefaultValues() {
         super.initializeDefaultValues()
         if (protocol.isEmpty()) protocol = PROTOCOL_TCP
-        // Mieru multiplexing level is 0-3
-        if (serverMuxNumber !in 0..3) serverMuxNumber = 0
+        // Mieru multiplexing level is 0-4
+        if (serverMuxNumber !in 0..4) serverMuxNumber = 0
     }
 
     override fun serialize(output: ByteBufferOutput) {
-        output.writeInt(3) // Version 3: Added handshakeMode
+        output.writeInt(5) // Version 5: Added serverPorts
         super.serialize(output)
         output.writeString(protocol)
         output.writeString(username)
@@ -50,6 +52,8 @@ class MieruBean : AbstractBean() {
         }
         output.writeString(trafficPattern)
         output.writeInt(handshakeMode)
+        output.writeBoolean(userHint)
+        output.writeString(serverPorts)
     }
 
     override fun deserialize(input: ByteBufferInput) {
@@ -71,6 +75,12 @@ class MieruBean : AbstractBean() {
         if (version >= 3) {
             handshakeMode = input.readInt()
         }
+        if (version >= 4) {
+            userHint = input.readBoolean()
+        }
+        if (version >= 5) {
+            serverPorts = input.readString()
+        }
     }
 
     override fun applyFeatureSettings(other: AbstractBean) {
@@ -81,6 +91,8 @@ class MieruBean : AbstractBean() {
         mtu = other.mtu
         trafficPattern = other.trafficPattern
         handshakeMode = other.handshakeMode
+        userHint = other.userHint
+        serverPorts = other.serverPorts
     }
 
     override val canTCPing get() = protocol == PROTOCOL_TCP

@@ -28,6 +28,13 @@ class MieruFmtTest {
     }
 
     @Test
+    fun `parseMieru should parse url with user_hint`() {
+        val bean = parseMieru("mierus://user:pass@example.com?user_hint=true")
+
+        assertEquals(true, bean.userHint)
+    }
+
+    @Test
     fun `parseMieru should use defaults for missing or unknown optional fields`() {
         val bean = parseMieru("mierus://user:pass@example.com?multiplexing=UNKNOWN")
 
@@ -64,6 +71,20 @@ class MieruFmtTest {
         assertEquals(source.name, parsed.name)
         assertEquals(source.mtu, parsed.mtu)
         assertEquals(source.serverMuxNumber, parsed.serverMuxNumber)
+    }
+
+    @Test
+    fun `toUri should preserve userHint through parseMieru`() {
+        val source = MieruBean().apply {
+            serverAddress = "example.com"
+            username = "user"
+            password = "pass"
+            userHint = true
+        }
+
+        val parsed = parseMieru(source.toUri())
+
+        assertEquals(source.userHint, parsed.userHint)
     }
 
     @Test
@@ -128,6 +149,23 @@ class MieruFmtTest {
 
         val multiplexing = profile["multiplexing"].asJsonMap()
         assertEquals("MULTIPLEXING_HIGH", multiplexing["level"])
+        assertEquals(false, profile["userHint"])
+    }
+
+    @Test
+    fun `buildMieruConfig should include userHint`() {
+        val bean = MieruBean().apply {
+            username = "user"
+            password = "pass"
+            userHint = true
+        }
+        bean.initializeDefaultValues()
+
+        val config = bean.buildMieruConfig(port = 2080, logLevel = 0).toJsonMapKxs()
+        val profiles = config["profiles"].asJsonList()
+        val profile = profiles.first().asJsonMap()
+
+        assertEquals(true, profile["userHint"])
     }
 
     @Test
@@ -247,5 +285,71 @@ class MieruFmtTest {
 
         assertEquals(42, assertIs<Number>(trafficPattern["seed"]).toInt())
         assertEquals(true, trafficPattern["unlockAll"])
+    }
+
+    @Test
+    fun `parseMieru should parse url with multiple ports`() {
+        val bean = parseMieru("mierus://user:pass@example.com?port=80&port=443&port=8080-8090&protocol=TCP")
+
+        assertEquals("80,443,8080-8090", bean.serverPorts)
+        assertEquals(80, bean.serverPort)
+        assertEquals("TCP", bean.protocol)
+    }
+
+    @Test
+    fun `toUri should export multiple ports`() {
+        val source = MieruBean().apply {
+            serverAddress = "example.com"
+            serverPorts = "80,443,8080-8090"
+            username = "user"
+            password = "pass"
+        }
+
+        val uri = source.toUri()
+        val parsed = parseMieru(uri)
+
+        assertEquals("80,443,8080-8090", parsed.serverPorts)
+        assertEquals(80, parsed.serverPort)
+    }
+
+    @Test
+    fun `buildMieruConfig should map multiple ports to portBindings`() {
+        val bean = MieruBean().apply {
+            serverAddress = "example.com"
+            serverPorts = "80, 8080-8090"
+            username = "user"
+            password = "secret"
+            protocol = MieruBean.PROTOCOL_TCP
+        }
+        bean.initializeDefaultValues()
+
+        val config = bean.buildMieruConfig(port = 2080, logLevel = 0).toJsonMapKxs()
+        val profiles = config["profiles"].asJsonList()
+        val profile = profiles.first().asJsonMap()
+        val servers = profile["servers"].asJsonList()
+        val firstServer = servers.first().asJsonMap()
+
+        val bindings = firstServer["portBindings"].asJsonList()
+        assertEquals(2, bindings.size)
+
+        val firstBinding = bindings[0].asJsonMap()
+        assertEquals(80, assertIs<Number>(firstBinding["port"]).toInt())
+
+        val secondBinding = bindings[1].asJsonMap()
+        assertEquals("8080-8090", secondBinding["portRange"])
+    }
+
+    @Test
+    fun `parseMieruOutbound should include user_hint`() {
+        val json = mutableMapOf<String, Any?>(
+            "type" to "mieru",
+            "username" to "user",
+            "password" to "pass",
+            "user_hint" to true,
+        )
+
+        val bean = parseMieruOutbound(json)
+
+        assertEquals(true, bean.userHint)
     }
 }

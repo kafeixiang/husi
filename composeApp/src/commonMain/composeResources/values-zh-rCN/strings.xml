@@ -720,6 +720,12 @@
     <string name="tun_auto_redirect">Tun 自动重定向</string>
     <string name="no_plugin_found">没有找到任何插件！</string>
     <string name="traffic_pattern">流量模式</string>
+    <string name="handshake_mode">握手模式</string>
+    <string name="handshake_mode_default">默认</string>
+    <string name="handshake_mode_standard">标准 (1-RTT)</string>
+    <string name="handshake_mode_no_wait">无等待 (0-RTT)</string>
+    <string name="user_hint">用户提示 (User Hint)</string>
+    <string name="user_hint_sum">解密加速 (Decryption Acceleration)</string>
     <string name="route_invert">反转匹配</string>
     <string name="latency">延迟</string>
     <string name="select_file">选择文件</string>

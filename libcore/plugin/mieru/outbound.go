@@ -2,9 +2,13 @@ package mieru
 
 import (
 	"context"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/sagernet/sing-box/adapter"
@@ -18,11 +22,16 @@ import (
 
 	"libcore/plugin/pluginoption"
 
+	"github.com/enfein/mieru/v3/apis/constant"
 	mieruclient "github.com/enfein/mieru/v3/apis/client"
 	mierucommon "github.com/enfein/mieru/v3/apis/common"
 	mierumodel "github.com/enfein/mieru/v3/apis/model"
 	mierutp "github.com/enfein/mieru/v3/apis/trafficpattern"
+	"github.com/enfein/mieru/v3/pkg/appctl/appctlcommon"
 	mierupb "github.com/enfein/mieru/v3/pkg/appctl/appctlpb"
+	"github.com/enfein/mieru/v3/pkg/cipher"
+	"github.com/enfein/mieru/v3/pkg/protocol"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -34,9 +43,10 @@ var _ adapter.Outbound = (*Outbound)(nil)
 
 type Outbound struct {
 	outbound.Adapter
-	dialer N.Dialer
-	logger log.ContextLogger
-	client mieruclient.Client
+	dialer  N.Dialer
+	logger  log.ContextLogger
+	mux     *protocol.Mux
+	profile *mierupb.ClientProfile
 }
 
 func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options pluginoption.MieruOutboundOptions) (adapter.Outbound, error) {
@@ -49,24 +59,38 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 		return nil, err
 	}
 
-	config, err := buildMieruClientConfig(options, mieruDialer{dialer: outboundDialer})
+	config, err := buildMieruClientConfig(tag, options, mieruDialer{dialer: outboundDialer})
 	if err != nil {
 		return nil, fmt.Errorf("failed to build mieru client config: %w", err)
 	}
-	c := mieruclient.NewClient()
-	if err := c.Store(config); err != nil {
-		return nil, fmt.Errorf("failed to store mieru client config: %w", err)
+
+	mux, err := appctlcommon.NewClientMuxFromProfile(config.Profile, config.Dialer, config.PacketDialer, config.Resolver, config.DNSConfig)
+	if err != nil {
+		return nil, err
 	}
-	if err := c.Start(); err != nil {
-		return nil, fmt.Errorf("failed to start mieru client: %w", err)
+
+	if !options.UserHint {
+		user := config.Profile.GetUser()
+		var hashedPassword []byte
+		if user.GetHashedPassword() != "" {
+			hashedPassword, err = hex.DecodeString(user.GetHashedPassword())
+			if err != nil {
+				return nil, fmt.Errorf("failed to decode hashed password: %w", err)
+			}
+		} else {
+			hashedPassword = cipher.HashPassword([]byte(user.GetPassword()), []byte(user.GetName()))
+		}
+		mux.SetClientUserNamePassword("", hashedPassword)
 	}
+
 	logger.InfoContext(ctx, "mieru client is started")
 
 	return &Outbound{
 		Adapter: outbound.NewAdapterWithDialerOptions(pluginoption.TypeMieru, tag, []string{N.NetworkTCP, N.NetworkUDP}, options.DialerOptions),
 		dialer:  outboundDialer,
 		logger:  logger,
-		client:  c,
+		mux:     mux,
+		profile: config.Profile,
 	}, nil
 }
 
@@ -74,6 +98,8 @@ func (o *Outbound) DialContext(ctx context.Context, network string, destination 
 	ctx, metadata := adapter.ExtendContext(ctx)
 	metadata.Outbound = o.Tag()
 	metadata.Destination = destination
+
+	var netAddrSpec mierumodel.NetAddrSpec
 	switch N.NetworkName(network) {
 	case N.NetworkTCP:
 		o.logger.InfoContext(ctx, "outbound connection to ", destination)
@@ -81,44 +107,63 @@ func (o *Outbound) DialContext(ctx context.Context, network string, destination 
 		if err != nil {
 			return nil, E.Cause(err, "failed to convert destination address")
 		}
-		return o.client.DialContext(ctx, d)
+		netAddrSpec = d
 	case N.NetworkUDP:
 		o.logger.InfoContext(ctx, "outbound UoT packet connection to ", destination)
 		d, err := socksAddrToNetAddrSpec(destination, "udp")
 		if err != nil {
 			return nil, E.Cause(err, "failed to convert destination address")
 		}
-		streamConn, err := o.client.DialContext(ctx, d)
-		if err != nil {
-			return nil, err
-		}
-		return &streamer{
-			PacketConn: mierucommon.NewUDPAssociateWrapper(mierucommon.NewPacketOverStreamTunnel(streamConn)),
-			Remote:     destination,
-		}, nil
+		netAddrSpec = d
 	default:
 		return nil, os.ErrInvalid
 	}
-}
 
-func (o *Outbound) ListenPacket(ctx context.Context, destination M.Socksaddr) (net.PacketConn, error) {
-	ctx, metadata := adapter.ExtendContext(ctx)
-	metadata.Outbound = o.Tag()
-	metadata.Destination = destination
-	o.logger.InfoContext(ctx, "outbound UoT packet connection to ", destination)
-	d, err := socksAddrToNetAddrSpec(destination, "udp")
-	if err != nil {
-		return nil, E.Cause(err, "failed to convert destination address")
-	}
-	streamConn, err := o.client.DialContext(ctx, d)
+	conn, err := o.mux.DialContext(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return mierucommon.NewUDPAssociateWrapper(mierucommon.NewPacketOverStreamTunnel(streamConn)), nil
+
+	var dialConn net.Conn
+	if o.profile.GetHandshakeMode() == mierupb.HandshakeMode_HANDSHAKE_NO_WAIT {
+		req := &mierumodel.Request{}
+		if N.NetworkName(network) == N.NetworkTCP {
+			req.Command = constant.Socks5ConnectCmd
+		} else {
+			req.Command = constant.Socks5UDPAssociateCmd
+		}
+		req.DstAddr = netAddrSpec.AddrSpec
+		earlyConn := NewEarlyConn(conn)
+		earlyConn.SetRequest(req)
+		dialConn = earlyConn
+	} else {
+		_, err = PostDialHandshake(conn, netAddrSpec)
+		if err != nil {
+			conn.Close()
+			return nil, err
+		}
+		dialConn = conn
+	}
+
+	if N.NetworkName(network) == N.NetworkUDP {
+		return &streamer{
+			PacketConn: mierucommon.NewUDPAssociateWrapper(mierucommon.NewPacketOverStreamTunnel(dialConn)),
+			Remote:     destination,
+		}, nil
+	}
+	return dialConn, nil
+}
+
+func (o *Outbound) ListenPacket(ctx context.Context, destination M.Socksaddr) (net.PacketConn, error) {
+	conn, err := o.DialContext(ctx, "udp", destination)
+	if err != nil {
+		return nil, err
+	}
+	return conn.(*streamer).PacketConn, nil
 }
 
 func (o *Outbound) Close() error {
-	return common.Close(o.client)
+	return common.Close(o.mux)
 }
 
 // mieruDialer is an adapter to mieru dialer interface.
@@ -188,7 +233,7 @@ func socksAddrToNetAddrSpec(sa M.Socksaddr, network string) (mierumodel.NetAddrS
 	return nas, nil
 }
 
-func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mieruDialer) (*mieruclient.ClientConfig, error) {
+func buildMieruClientConfig(tag string, options pluginoption.MieruOutboundOptions, dialer mieruDialer) (*mieruclient.ClientConfig, error) {
 	if err := validateMieruOptions(options); err != nil {
 		return nil, fmt.Errorf("failed to validate mieru options: %w", err)
 	}
@@ -208,10 +253,20 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 		})
 	}
 	for _, pr := range options.ServerPortRanges {
-		server.PortBindings = append(server.PortBindings, &mierupb.PortBinding{
-			PortRange: proto.String(pr),
-			Protocol:  transportProtocol,
-		})
+		if strings.Contains(pr, "-") {
+			server.PortBindings = append(server.PortBindings, &mierupb.PortBinding{
+				PortRange: proto.String(pr),
+				Protocol:  transportProtocol,
+			})
+		} else {
+			port, err := strconv.Atoi(pr)
+			if err == nil {
+				server.PortBindings = append(server.PortBindings, &mierupb.PortBinding{
+					Port:     proto.Int32(int32(port)),
+					Protocol: transportProtocol,
+				})
+			}
+		}
 	}
 	if M.IsDomainName(options.Server) {
 		server.DomainName = proto.String(options.Server)
@@ -220,7 +275,7 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 	}
 	config := &mieruclient.ClientConfig{
 		Profile: &mierupb.ClientProfile{
-			ProfileName: proto.String("sing-box"),
+			ProfileName: proto.String(tag),
 			User: &mierupb.User{
 				Name:     proto.String(options.UserName),
 				Password: proto.String(options.Password),
@@ -241,11 +296,41 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 	if handshakeMode, ok := mierupb.HandshakeMode_value[options.HandshakeMode]; ok {
 		config.Profile.HandshakeMode = mierupb.HandshakeMode(handshakeMode).Enum()
 	}
+	config.Profile.UserHint = proto.Bool(options.UserHint)
+	if options.MTU > 0 {
+		config.Profile.Mtu = proto.Int32(int32(options.MTU))
+	}
 	if options.TrafficPattern != "" {
-		trafficPattern, _ := mierutp.Decode(options.TrafficPattern)
-		config.Profile.TrafficPattern = trafficPattern
+		trafficPattern, err := mierutp.Decode(options.TrafficPattern)
+		if err != nil {
+			// Try decode as JSON
+			trafficPattern, err = decodeTrafficPatternJSON(options.TrafficPattern)
+		}
+		if err == nil {
+			config.Profile.TrafficPattern = trafficPattern
+		}
 	}
 	return config, nil
+}
+
+func decodeTrafficPatternJSON(jsonText string) (*mierupb.TrafficPattern, error) {
+	var root map[string]json.RawMessage
+	err := json.Unmarshal([]byte(jsonText), &root)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := []byte(jsonText)
+	if nested, loaded := root["trafficPattern"]; loaded {
+		payload = nested
+	}
+
+	pattern := &mierupb.TrafficPattern{}
+	err = protojson.Unmarshal(payload, pattern)
+	if err != nil {
+		return nil, err
+	}
+	return pattern, nil
 }
 
 func validateMieruOptions(options pluginoption.MieruOutboundOptions) error {

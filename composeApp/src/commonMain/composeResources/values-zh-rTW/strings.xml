@@ -652,6 +652,13 @@
     <string name="full">完整</string>
     <string name="more">更多</string>
     <string name="internal_link">內部連結</string>
+    <string name="traffic_pattern">流量模式</string>
+    <string name="handshake_mode">握手模式</string>
+    <string name="handshake_mode_default">預設</string>
+    <string name="handshake_mode_standard">標準 (1-RTT)</string>
+    <string name="handshake_mode_no_wait">無等待 (0-RTT)</string>
+    <string name="user_hint">使用者提示 (User Hint)</string>
+    <string name="user_hint_sum">解密加速 (Decryption Acceleration)</string>
     <string name="back">返回</string>
     <string name="quic">QUIC</string>
 </resources>
