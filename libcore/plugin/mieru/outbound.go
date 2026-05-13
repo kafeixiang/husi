@@ -296,7 +296,6 @@ func buildMieruClientConfig(tag string, options pluginoption.MieruOutboundOption
 	if handshakeMode, ok := mierupb.HandshakeMode_value[options.HandshakeMode]; ok {
 		config.Profile.HandshakeMode = mierupb.HandshakeMode(handshakeMode).Enum()
 	}
-	config.Profile.UserHint = proto.Bool(options.UserHint)
 	if options.MTU > 0 {
 		config.Profile.Mtu = proto.Int32(int32(options.MTU))
 	}
