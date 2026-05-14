@@ -28,6 +28,8 @@ class SSRBean : AbstractBean() {
     var protocolParam: String = ""
     var obfs: String = "plain"
     var obfsParam: String = ""
+    var group: String = ""
+    var udpOverTcp: Boolean = false
 
     override fun initializeDefaultValues() {
         super.initializeDefaultValues()
@@ -37,7 +39,7 @@ class SSRBean : AbstractBean() {
     }
 
     override fun serialize(output: ByteBufferOutput) {
-        output.writeInt(1)
+        output.writeInt(2)
         super.serialize(output)
         output.writeString(method)
         output.writeString(password)
@@ -45,6 +47,8 @@ class SSRBean : AbstractBean() {
         output.writeString(protocolParam)
         output.writeString(obfs)
         output.writeString(obfsParam)
+        output.writeString(group)
+        output.writeBoolean(udpOverTcp)
     }
 
     override fun deserialize(input: ByteBufferInput) {
@@ -56,6 +60,10 @@ class SSRBean : AbstractBean() {
         protocolParam = input.readString()
         obfs = input.readString()
         obfsParam = input.readString()
+        if (version >= 2) {
+            group = input.readString()
+            udpOverTcp = input.readBoolean()
+        }
     }
 
     override fun applyFeatureSettings(other: AbstractBean) {

@@ -14,4 +14,5 @@ type SSROutboundOptions struct {
 	Obfs          string   `json:"obfs,omitempty"`
 	ObfsParam     string   `json:"obfs_param,omitempty"`
 	Network       []string `json:"network,omitempty"`
+	UDPOverTCP    bool     `json:"udp_over_tcp,omitempty"`
 }

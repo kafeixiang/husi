@@ -35,12 +35,13 @@ fun parseSSR(rawUrl: String): SSRBean {
     if (parts.size < 6) throw IllegalArgumentException("Invalid SSR link: missing parts")
     
     return SSRBean().apply {
-        serverAddress = parts[0]
-        serverPort = parts[1].toIntOrNull() ?: 8388
-        protocol = parts[2]
-        method = parts[3]
-        obfs = parts[4]
-        password = parts[5].ssrB64Decode()
+        // Robust parsing for IPv6: the last 5 fields are port, protocol, method, obfs, password
+        serverPort = parts[parts.size - 5].toIntOrNull() ?: 8388
+        protocol = parts[parts.size - 4]
+        method = parts[parts.size - 3]
+        obfs = parts[parts.size - 2]
+        password = parts[parts.size - 1].ssrB64Decode()
+        serverAddress = parts.subList(0, parts.size - 5).joinToString(":")
         
         if (queryPart.isNotBlank()) {
             val params = queryPart.split("&")
@@ -51,6 +52,8 @@ fun parseSSR(rawUrl: String): SSRBean {
                     "obfsparam" -> obfsParam = value
                     "protoparam" -> protocolParam = value
                     "remarks" -> name = value
+                    "group" -> group = value
+                    "uot" -> udpOverTcp = value == "1"
                 }
             }
         }
@@ -65,6 +68,8 @@ fun SSRBean.toUri(): String {
     if (obfsParam.isNotBlank()) queryParams.add("obfsparam=${obfsParam.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')}")
     if (protocolParam.isNotBlank()) queryParams.add("protoparam=${protocolParam.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')}")
     if (name.isNotBlank()) queryParams.add("remarks=${name.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')}")
+    if (group.isNotBlank()) queryParams.add("group=${group.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')}")
+    if (udpOverTcp) queryParams.add("uot=1")
     
     val url = if (queryParams.isEmpty()) mainPart else "$mainPart/?${queryParams.joinToString("&")}"
     return "ssr://${url.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')}"
@@ -81,6 +86,8 @@ fun JSONMap.parseSSR(): SSRBean {
         obfs = getStr("obfs").orEmpty()
         obfsParam = getStr("obfs_param").orEmpty()
         name = getStr("tag").orEmpty()
+        group = getStr("group").orEmpty()
+        udpOverTcp = this@parseSSR["udp_over_tcp"] == true
     }
 }
 
@@ -96,6 +103,7 @@ fun buildSingBoxOutboundSSRBean(bean: SSRBean): SingBoxOptions.Outbound_Shadowso
         obfs = bean.obfs
         obfs_param = bean.obfsParam
         network = bean.network().split(",").toMutableList()
+        udp_over_tcp = bean.udpOverTcp
     }
 }
 
@@ -108,6 +116,7 @@ fun parseSSROutbound(json: JSONMap): SSRBean = SSRBean().apply {
             "protocol_param" -> protocolParam = value.toString()
             "obfs" -> obfs = value.toString()
             "obfs_param" -> obfsParam = value.toString()
+            "udp_over_tcp" -> udpOverTcp = value as? Boolean ?: false
         }
     }
 }

@@ -21,6 +21,8 @@ internal data class SSRUiState(
     val protocolParam: String = "",
     val obfs: String = "plain",
     val obfsParam: String = "",
+    val group: String = "",
+    val udpOverTcp: Boolean = false,
 ) : ProfileEditorUiState
 
 @Stable
@@ -44,6 +46,8 @@ internal class SSRSettingsViewModel : ProfileEditorViewModel<SSRBean>() {
                 protocolParam = protocolParam,
                 obfs = obfs,
                 obfsParam = obfsParam,
+                group = group,
+                udpOverTcp = udpOverTcp,
             )
         }
     }
@@ -61,6 +65,8 @@ internal class SSRSettingsViewModel : ProfileEditorViewModel<SSRBean>() {
         protocolParam = state.protocolParam
         obfs = state.obfs
         obfsParam = state.obfsParam
+        group = state.group
+        udpOverTcp = state.udpOverTcp
     }
 
     override fun setCustomConfig(config: String) {
@@ -105,5 +111,13 @@ internal class SSRSettingsViewModel : ProfileEditorViewModel<SSRBean>() {
 
     fun setObfsParam(param: String) {
         _uiState.update { it.copy(obfsParam = param) }
+    }
+
+    fun setGroup(group: String) {
+        _uiState.update { it.copy(group = group) }
+    }
+
+    fun setUdpOverTcp(enabled: Boolean) {
+        _uiState.update { it.copy(udpOverTcp = enabled) }
     }
 }

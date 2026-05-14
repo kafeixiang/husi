@@ -2779,6 +2779,7 @@ object SingBoxOptions {
         @JvmField var obfs: String? = null
         @JvmField var obfs_param: String? = null
         @JvmField var network: MutableList<String>? = null
+        @JvmField var udp_over_tcp: Boolean? = null
 
         @JvmField var detour: String? = null
         @JvmField var bind_interface: String? = null

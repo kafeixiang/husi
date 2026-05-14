@@ -14,10 +14,12 @@ import fr.husi.compose.UIntegerTextField
 import fr.husi.fmt.ssr.SSRBean
 import fr.husi.ktx.contentOrUnset
 import fr.husi.resources.Res
+import fr.husi.resources.category
 import fr.husi.resources.directions_boat
 import fr.husi.resources.emoji_symbols
 import fr.husi.resources.enc_method
 import fr.husi.resources.enhanced_encryption
+import fr.husi.resources.menu_group
 import fr.husi.resources.obfs
 import fr.husi.resources.obfs_param
 import fr.husi.resources.profile_config
@@ -30,9 +32,11 @@ import fr.husi.resources.server_address
 import fr.husi.resources.server_port
 import fr.husi.resources.settings
 import fr.husi.resources.type_specimen
+import fr.husi.resources.udp_over_tcp
 import fr.husi.ui.NavRoutes
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
+import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.TextFieldPreference
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
@@ -132,6 +136,17 @@ private fun LazyListScope.ssrSettings(
             valueToText = { it },
         )
     }
+    item("group") {
+        TextFieldPreference(
+            value = uiState.group,
+            onValueChange = { viewModel.setGroup(it) },
+            title = { Text(stringResource(Res.string.menu_group)) },
+            textToValue = { it },
+            icon = { Icon(vectorResource(Res.drawable.category), null) },
+            summary = { Text(contentOrUnset(uiState.group)) },
+            valueToText = { it },
+        )
+    }
 
     item("category_proxy") {
         PreferenceCategory(text = { Text(stringResource(Res.string.proxy_cat)) })
@@ -224,6 +239,14 @@ private fun LazyListScope.ssrSettings(
             icon = { Icon(vectorResource(Res.drawable.settings), null) },
             summary = { Text(contentOrUnset(uiState.obfsParam)) },
             valueToText = { it },
+        )
+    }
+    item("udp_over_tcp") {
+        SwitchPreference(
+            value = uiState.udpOverTcp,
+            onValueChange = { viewModel.setUdpOverTcp(it) },
+            title = { Text(stringResource(Res.string.udp_over_tcp)) },
+            icon = { Icon(vectorResource(Res.drawable.settings), null) },
         )
     }
 }
