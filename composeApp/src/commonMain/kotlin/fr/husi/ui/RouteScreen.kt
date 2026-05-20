@@ -7,11 +7,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
@@ -38,8 +36,9 @@ import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import fr.husi.compose.material3.Switch
 import fr.husi.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import fr.husi.compose.CapsuleActionButton
+import fr.husi.compose.CapsuleTopBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -74,8 +73,7 @@ import fr.husi.compose.SimpleIconButton
 import fr.husi.compose.StatsBar
 import fr.husi.compose.TextButton
 import fr.husi.compose.fadingEdge
-import fr.husi.compose.navigationBarsAlwaysInsets
-import fr.husi.compose.paddingExceptBottom
+import fr.husi.compose.withNavigation
 import fr.husi.compose.rememberScrollHideState
 import fr.husi.database.DataStore
 import fr.husi.database.ProfileManager
@@ -190,53 +188,57 @@ fun RouteScreen(
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            TopAppBar(
+            CapsuleTopBar(
                 title = { Text(stringResource(Res.string.menu_route)) },
-                navigationIcon = {
-                    PlatformMenuIcon(
-                        imageVector = vectorResource(Res.drawable.menu),
-                        contentDescription = stringResource(Res.string.menu),
-                        onClick = onDrawerClick,
-                    )
-                },
+                navigationIcon = PlatformMenuIcon(
+                    imageVector = vectorResource(Res.drawable.menu),
+                    contentDescription = stringResource(Res.string.menu),
+                    onClick = onDrawerClick,
+                ),
                 actions = {
-                    SimpleIconButton(
-                        imageVector = vectorResource(Res.drawable.add_road),
-                        contentDescription = stringResource(Res.string.route_add),
-                        onClick = {
-                            openRouteSettings(-1L)
-                        },
-                    )
-                    SimpleIconButton(
-                        imageVector = vectorResource(Res.drawable.replay),
-                        contentDescription = stringResource(Res.string.route_reset),
-                        onClick = { showResetAlert = true },
-                    )
-                    Box {
+                    CapsuleActionButton {
                         SimpleIconButton(
-                            imageVector = vectorResource(Res.drawable.more_vert),
-                            contentDescription = stringResource(Res.string.more),
-                            onClick = { showMoreAction = true },
+                            imageVector = vectorResource(Res.drawable.add_road),
+                            contentDescription = stringResource(Res.string.route_add),
+                            onClick = {
+                                openRouteSettings(-1L)
+                            },
                         )
-                        DropdownMenu(
-                            expanded = showMoreAction,
-                            onDismissRequest = { showMoreAction = false },
-                            shape = MenuDefaults.standaloneGroupShape,
-                            containerColor = MenuDefaults.groupStandardContainerColor,
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(Res.string.route_manage_assets)) },
-                                onClick = {
-                                    showMoreAction = false
-                                    openAssets()
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        imageVector = vectorResource(Res.drawable.layers),
-                                        contentDescription = null,
-                                    )
-                                },
+                    }
+                    CapsuleActionButton {
+                        SimpleIconButton(
+                            imageVector = vectorResource(Res.drawable.replay),
+                            contentDescription = stringResource(Res.string.route_reset),
+                            onClick = { showResetAlert = true },
+                        )
+                    }
+                    CapsuleActionButton {
+                        Box {
+                            SimpleIconButton(
+                                imageVector = vectorResource(Res.drawable.more_vert),
+                                contentDescription = stringResource(Res.string.more),
+                                onClick = { showMoreAction = true },
                             )
+                            DropdownMenu(
+                                expanded = showMoreAction,
+                                onDismissRequest = { showMoreAction = false },
+                                shape = MenuDefaults.standaloneGroupShape,
+                                containerColor = MenuDefaults.groupStandardContainerColor,
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(Res.string.route_manage_assets)) },
+                                    onClick = {
+                                        showMoreAction = false
+                                        openAssets()
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = vectorResource(Res.drawable.layers),
+                                            contentDescription = null,
+                                        )
+                                    },
+                                )
+                            }
                         }
                     }
                 },
@@ -276,12 +278,12 @@ fun RouteScreen(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight()
-                    .paddingExceptBottom(innerPadding),
+                    .fillMaxHeight(),
             ) {
                 OutlinedCard(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(innerPadding)
                         .padding(4.dp),
                     elevation = CardDefaults.elevatedCardElevation(),
                 ) {
@@ -314,11 +316,7 @@ fun RouteScreen(
                     items = uiState.rules.toImmutableList(),
                     key = { it.id },
                     contentType = { 0 },
-                    contentPadding = PaddingValues(
-                        bottom = navigationBarsAlwaysInsets()
-                            .asPaddingValues()
-                            .calculateBottomPadding(),
-                    ),
+                    contentPadding = innerPadding.withNavigation(),
                     userScrollEnabled = true,
                     onIndicesChangedViaDragAndDrop = {
                         viewModel.submitReorder(it)
