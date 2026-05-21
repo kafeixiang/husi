@@ -1,6 +1,7 @@
 # Husi Project skills
 
-Link / copy this directory to `.claude/skills` and/or `.agents/skills`
+This directory is on `./.skills`.
+You should link / copy this directory to `.claude/skills` and/or `.agents/skills`
 
 Run on project root:
 
