@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -35,6 +34,8 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.TopAppBarDefaults
+import fr.husi.compose.CapsuleActionButton
+import fr.husi.compose.CapsuleTopBar
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -280,12 +281,12 @@ fun RouteScreen(
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxHeight()
-                    .paddingExceptBottom(innerPadding),
+                    .fillMaxHeight(),
             ) {
                 OutlinedCard(
                     modifier = Modifier
                         .fillMaxWidth()
+                        .padding(innerPadding)
                         .padding(4.dp),
                     elevation = CardDefaults.elevatedCardElevation(),
                 ) {
