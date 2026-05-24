@@ -1,27 +1,40 @@
 package fr.husi.ui.profile
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import fr.husi.compose.material3.Icon
-import fr.husi.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import fr.husi.compose.MultilineTextField
 import fr.husi.compose.PasswordPreference
 import fr.husi.compose.PreferenceCategory
+import fr.husi.compose.TextButton
 import fr.husi.compose.UIntegerTextField
+import fr.husi.compose.material3.Icon
+import fr.husi.compose.material3.IconButton
+import fr.husi.compose.material3.Text
 import fr.husi.ktx.contentOrUnset
 import fr.husi.ktx.intListN
 import fr.husi.resources.Res
 import fr.husi.resources.bolt
 import fr.husi.resources.border_inner
 import fr.husi.resources.build
+import fr.husi.resources.cancel
 import fr.husi.resources.directions_boat
+import fr.husi.resources.edit
 import fr.husi.resources.emoji_symbols
 import fr.husi.resources.enable_brutal
 import fr.husi.resources.enable_mux
@@ -36,6 +49,7 @@ import fr.husi.resources.mux_strategy
 import fr.husi.resources.mux_sum
 import fr.husi.resources.mux_type
 import fr.husi.resources.numbers
+import fr.husi.resources.ok
 import fr.husi.resources.padding
 import fr.husi.resources.plugin
 import fr.husi.resources.plugin_configure
@@ -46,16 +60,20 @@ import fr.husi.resources.router
 import fr.husi.resources.server_address
 import fr.husi.resources.server_port
 import fr.husi.resources.settings
+import fr.husi.resources.sip003_editor
 import fr.husi.resources.type_specimen
 import fr.husi.resources.udp_over_tcp
 import fr.husi.resources.view_in_ar
+import fr.husi.results.ResultEffect
 import fr.husi.ui.NavRoutes
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
+import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.TextFieldPreference
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.resources.vectorResource
+import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +82,7 @@ fun ShadowsocksSettingsScreen(
     isSubscription: Boolean,
     onResult: (updated: Boolean) -> Unit,
     onOpenConfigEditor: (NavRoutes.ConfigEditor) -> Unit,
+    onOpenSIP003Editor: (NavRoutes.SIP003Editor) -> Unit,
 ) {
     val viewModel: ShadowsocksSettingsViewModel = profileEditorViewModel(
         profileId = profileId,
@@ -72,13 +91,28 @@ fun ShadowsocksSettingsScreen(
         ShadowsocksSettingsViewModel()
     }
 
+    val sip003ResultKey = rememberSaveable {
+        val number = viewModel.editingId.takeIf { it >= 0 } ?: Random.nextLong()
+        "sip003-editor-$number"
+    }
+    ResultEffect<String?>(resultKey = sip003ResultKey) { result ->
+        if (result == null) return@ResultEffect
+        viewModel.setPluginConfig(result)
+    }
+
     ProfileSettingsScreenScaffold(
         title = Res.string.profile_config,
         viewModel = viewModel,
         onResult = onResult,
         onOpenConfigEditor = onOpenConfigEditor,
     ) { uiState, scrollTo ->
-        shadowsocksSettings(uiState as ShadowsocksUiState, viewModel, scrollTo)
+        shadowsocksSettings(
+            uiState as ShadowsocksUiState,
+            viewModel,
+            scrollTo,
+            sip003ResultKey,
+            onOpenSIP003Editor,
+        )
     }
 }
 
@@ -86,6 +120,8 @@ private fun LazyListScope.shadowsocksSettings(
     uiState: ShadowsocksUiState,
     viewModel: ShadowsocksSettingsViewModel,
     scrollTo: (key: String) -> Unit,
+    sip003ResultKey: String,
+    onOpenSIP003Editor: (NavRoutes.SIP003Editor) -> Unit,
 ) {
     val encryptionMethods = listOf(
         "2022-blake3-aes-128-gcm",
@@ -255,19 +291,65 @@ private fun LazyListScope.shadowsocksSettings(
         )
     }
     item("plugin_config") {
-        TextFieldPreference(
-            value = uiState.pluginConfig,
-            onValueChange = { viewModel.setPluginConfig(it) },
+        var showDialog by remember { mutableStateOf(false) }
+        var draft by remember { mutableStateOf(TextFieldValue(uiState.pluginConfig)) }
+
+        Preference(
             title = { Text(stringResource(Res.string.plugin_configure)) },
-            textToValue = { it },
-            enabled = uiState.pluginName.isNotBlank(),
             icon = { Icon(vectorResource(Res.drawable.settings), null) },
             summary = { Text(contentOrUnset(uiState.pluginConfig)) },
-            valueToText = { it },
-            textField = { value, onValueChange, onOk ->
-                MultilineTextField(value, onValueChange, onOk)
+            enabled = uiState.pluginName.isNotBlank(),
+            onClick = {
+                draft = TextFieldValue(uiState.pluginConfig)
+                showDialog = true
             },
         )
+
+        if (showDialog) {
+            AlertDialog(
+                onDismissRequest = { showDialog = false },
+                title = { Text(stringResource(Res.string.plugin_configure)) },
+                text = {
+                    Box {
+                        MultilineTextField(
+                            value = draft,
+                            onValueChange = { draft = it },
+                            onOk = {},
+                        )
+                        IconButton(
+                            onClick = {
+                                viewModel.setPluginConfig(draft.text)
+                                showDialog = false
+                                onOpenSIP003Editor(
+                                    NavRoutes.SIP003Editor(
+                                        pluginName = uiState.pluginName,
+                                        initialOpts = draft.text,
+                                        resultKey = sip003ResultKey,
+                                    ),
+                                )
+                            },
+                            modifier = Modifier.align(Alignment.TopEnd),
+                        ) {
+                            Icon(
+                                imageVector = vectorResource(Res.drawable.edit),
+                                contentDescription = stringResource(Res.string.sip003_editor),
+                            )
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(stringResource(Res.string.ok)) {
+                        viewModel.setPluginConfig(draft.text)
+                        showDialog = false
+                    }
+                },
+                dismissButton = {
+                    TextButton(stringResource(Res.string.cancel)) {
+                        showDialog = false
+                    }
+                },
+            )
+        }
     }
 
     item("category_experimental") {
