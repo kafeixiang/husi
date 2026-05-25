@@ -53,7 +53,7 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	outboundDialer, err := dialer.NewWithOptions(dialer.Options{
 		Context:        ctx,
 		Options:        options.DialerOptions,
-		RemoteIsDomain: options.ServerIsDomain(),
+		RemoteIsDomain: M.IsDomainName(options.Server),
 	})
 	if err != nil {
 		return nil, err
@@ -69,19 +69,21 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 		return nil, err
 	}
 
-	if !options.UserHint {
-		user := config.Profile.GetUser()
-		var hashedPassword []byte
-		if user.GetHashedPassword() != "" {
-			hashedPassword, err = hex.DecodeString(user.GetHashedPassword())
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode hashed password: %w", err)
-			}
-		} else {
-			hashedPassword = cipher.HashPassword([]byte(user.GetPassword()), []byte(user.GetName()))
+	user := config.Profile.GetUser()
+	var hashedPassword []byte
+	if user.GetHashedPassword() != "" {
+		hashedPassword, err = hex.DecodeString(user.GetHashedPassword())
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode hashed password: %w", err)
 		}
-		mux.SetClientUserNamePassword("", hashedPassword)
+	} else {
+		hashedPassword = cipher.HashPassword([]byte(user.GetPassword()), []byte(user.GetName()))
 	}
+	username := ""
+	if options.UserHint {
+		username = user.GetName()
+	}
+	mux.SetClientUserNamePassword(username, hashedPassword)
 
 	logger.InfoContext(ctx, "mieru client is started")
 
@@ -225,11 +227,17 @@ func (s *streamer) SetWriteDeadline(t time.Time) error {
 
 // socksAddrToNetAddrSpec converts a Socksaddr object to NetAddrSpec, and overrides the network.
 func socksAddrToNetAddrSpec(sa M.Socksaddr, network string) (mierumodel.NetAddrSpec, error) {
-	var nas mierumodel.NetAddrSpec
-	if err := nas.From(sa); err != nil {
-		return nas, err
+	nas := mierumodel.NetAddrSpec{
+		Net: network,
+		AddrSpec: mierumodel.AddrSpec{
+			Port: int(sa.Port),
+		},
 	}
-	nas.Net = network
+	if sa.IsFqdn() {
+		nas.AddrSpec.FQDN = sa.Fqdn
+	} else if sa.Addr.IsValid() {
+		nas.AddrSpec.IP = sa.Addr.AsSlice()
+	}
 	return nas, nil
 }
 
@@ -288,7 +296,7 @@ func buildMieruClientConfig(tag string, options pluginoption.MieruOutboundOption
 			BypassDialerDNS: true,
 		},
 	}
-	if multiplexing, ok := mierupb.MultiplexingLevel_value[options.Multiplexing]; ok {
+	if multiplexing, ok := mieruMuxValue(options.Multiplexing); ok {
 		config.Profile.Multiplexing = &mierupb.MultiplexingConfig{
 			Level: mierupb.MultiplexingLevel(multiplexing).Enum(),
 		}
@@ -340,9 +348,19 @@ func validateMieruOptions(options pluginoption.MieruOutboundOptions) error {
 		return fmt.Errorf("either server_port or server_ports must be set")
 	}
 	for _, pr := range options.ServerPortRanges {
-		begin, end, err := beginAndEndPortFromPortRange(pr)
-		if err != nil {
-			return fmt.Errorf("invalid server_ports format")
+		var begin, end int
+		if strings.Contains(pr, "-") {
+			var err error
+			begin, end, err = beginAndEndPortFromPortRange(pr)
+			if err != nil {
+				return fmt.Errorf("invalid server_ports format")
+			}
+		} else {
+			port, err := strconv.Atoi(pr)
+			if err != nil {
+				return fmt.Errorf("invalid server_ports format")
+			}
+			begin, end = port, port
 		}
 		if begin < 1 || begin > 65535 {
 			return fmt.Errorf("begin port must be between 1 and 65535")
