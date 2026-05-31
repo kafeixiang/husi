@@ -6,6 +6,7 @@ import (
 	"libcore/plugin/mieru"
 	"libcore/plugin/plugindns"
 	"libcore/plugin/ssr"
+	"libcore/plugin/snell"
 	"libcore/plugin/trusttunnel"
 	"libcore/plugin/vless"
 
@@ -20,6 +21,7 @@ func registerPluginsOutbound(registry *outbound.Registry) {
 	vless.RegisterOutbound(registry)
 	trusttunnel.RegisterOutbound(registry)
 	ssr.RegisterOutbound(registry)
+	snell.RegisterOutbound(registry)
 }
 
 func registerPluginsDNSTransport(registry *dns.TransportRegistry) {

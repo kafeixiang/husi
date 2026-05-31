@@ -6,11 +6,11 @@ require (
 	filippo.io/age v1.3.1
 	github.com/enfein/mieru/v3 v3.33.0
 	github.com/exclavenetwork/sing-juicity v0.2.0-beta.2
-    github.com/enfein/mieru/v3 v3.28.0
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/klauspost/compress v1.18.6
-	github.com/metacubex/mihomo v1.19.20
+	github.com/metacubex/mihomo v1.19.26
 	github.com/miekg/dns v1.1.72
+	github.com/reF1nd/sing-snell v0.0.6-0.20260531152532-49f2fb05925b
 	github.com/sagernet/gvisor v0.0.0-20250909151924-850a370d8506
 	github.com/sagernet/sing v0.8.11-0.20260514110501-905ad103a4df
 	github.com/sagernet/sing-box v1.14.0-alpha.29

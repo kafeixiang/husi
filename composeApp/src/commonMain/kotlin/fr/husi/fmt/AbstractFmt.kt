@@ -25,7 +25,9 @@ import fr.husi.fmt.SingBoxOptions.TYPE_TUIC
 import fr.husi.fmt.SingBoxOptions.TYPE_VLESS
 import fr.husi.fmt.SingBoxOptions.TYPE_VMESS
 import fr.husi.fmt.SingBoxOptions.TYPE_WIREGUARD
+import fr.husi.fmt.SingBoxOptions.TYPE_SNELL
 import fr.husi.fmt.anytls.AnyTLSBean
+import fr.husi.fmt.snell.parseSnellOutbound
 import fr.husi.fmt.anytls.buildSingBoxOutboundAnyTLSBean
 import fr.husi.fmt.anytls.parseAnyTLSOutbound
 import fr.husi.fmt.config.ConfigBean
@@ -47,6 +49,8 @@ import fr.husi.fmt.naive.NaiveBean
 import fr.husi.fmt.naive.buildSingBoxOutboundNaiveBean
 import fr.husi.fmt.naive.parseNaiveOutbound
 import fr.husi.fmt.shadowquic.ShadowQUICBean
+import fr.husi.fmt.snell.SnellBean
+import fr.husi.fmt.snell.buildSingBoxOutboundSnellBean
 import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.shadowsocks.buildSingBoxOutboundShadowsocksBean
 import fr.husi.fmt.shadowsocks.parseShadowsocksOutbound
@@ -132,6 +136,8 @@ fun buildSingBoxOutbound(bean: AbstractBean): String = when (bean) {
         buildSingBoxOutboundMieruBean(bean).apply { tag = bean.name }.toJsonStringKxs()
     is TrustTunnelBean ->
         kxs.encodeToString(buildSingBoxOutboundTrustTunnelBean(bean).apply { tag = bean.name })
+    is SnellBean ->
+        kxs.encodeToString<SingBoxOptions.Outbound_SnellOptions>(buildSingBoxOutboundSnellBean(bean).apply { tag = bean.name })
     else -> error("invalid bean: ${bean.javaClass.simpleName}")
 }
 
@@ -201,6 +207,8 @@ fun parseOutbound(json: JSONMap): AbstractBean? = when (json["type"].toString())
     TYPE_NAIVE -> parseNaiveOutbound(json)
 
     TYPE_MIERU -> parseMieruOutbound(json)
+
+    TYPE_SNELL -> parseSnellOutbound(json)
 
     else -> null
 }

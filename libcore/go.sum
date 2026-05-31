@@ -34,8 +34,6 @@ github.com/enfein/mieru/v3 v3.33.0 h1:hv2jK8nqYHwpSG86U2rpZR2I8Aff1/J3ifRmd9NBbF
 github.com/enfein/mieru/v3 v3.33.0/go.mod h1:zJBUCsi5rxyvHM8fjFf+GLaEl4OEjjBXr1s5F6Qd3hM=
 github.com/exclavenetwork/sing-juicity v0.2.0-beta.2 h1:tNtn59YPtDySJI0dM+bmiBHfIzJglqeZgZ3iv/VfwMI=
 github.com/exclavenetwork/sing-juicity v0.2.0-beta.2/go.mod h1:YgpvD65+gP8UQogBMJ5Ej2NHYcRBojJBH8VmyAxS+CM=
-github.com/enfein/mieru/v3 v3.28.0 h1:4OsFPUIjKfQ6ymfyX1Laqz7h+zB8TxuK1m0isnYJ8ww=
-github.com/enfein/mieru/v3 v3.28.0/go.mod h1:zJBUCsi5rxyvHM8fjFf+GLaEl4OEjjBXr1s5F6Qd3hM=
 github.com/florianl/go-nfqueue/v2 v2.0.2 h1:FL5lQTeetgpCvac1TRwSfgaXUn0YSO7WzGvWNIp3JPE=
 github.com/florianl/go-nfqueue/v2 v2.0.2/go.mod h1:VA09+iPOT43OMoCKNfXHyzujQUty2xmzyCRkBOlmabc=
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
@@ -98,8 +96,8 @@ github.com/mdlayher/socket v0.5.1 h1:VZaqt6RkGkt2OE9l3GcC6nZkqD3xKeQLyfleW/uBcos
 github.com/mdlayher/socket v0.5.1/go.mod h1:TjPLHI1UgwEv5J1B5q0zTZq12A/6H7nKmtTanQE37IQ=
 github.com/metacubex/chacha v0.1.5 h1:fKWMb/5c7ZrY8Uoqi79PPFxl+qwR7X/q0OrsAubyX2M=
 github.com/metacubex/chacha v0.1.5/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
-github.com/metacubex/mihomo v1.19.20 h1:S2sPZILo5VjsUVka/KJR0F9lyxGkeHKSkLYLcjx5PbE=
-github.com/metacubex/mihomo v1.19.20/go.mod h1:XC0nYFIkDkEFzggZLXLbcnGmjlMm2zivIDZrlmD/zd0=
+github.com/metacubex/mihomo v1.19.26 h1:zTOrwEzgji2N6jFZwe6411hCbKmV1VGxVYZFKriX6uw=
+github.com/metacubex/mihomo v1.19.26/go.mod h1:+L7tiesjMrF9I8lzTRsAFmHM9yh9RYdMEQP2tYnJqa8=
 github.com/metacubex/randv2 v0.2.0 h1:uP38uBvV2SxYfLj53kuvAjbND4RUDfFJjwr4UigMiLs=
 github.com/metacubex/randv2 v0.2.0/go.mod h1:kFi2SzrQ5WuneuoLLCMkABtiBu6VRrMrWFqSPyj2cxY=
 github.com/metacubex/sing v0.5.7 h1:8OC+fhKFSv/l9ehEhJRaZZAOuthfZo68SteBVLe8QqM=
@@ -120,6 +118,8 @@ github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRI
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/quic-go/qpack v0.6.0 h1:g7W+BMYynC1LbYLSqRt8PBg5Tgwxn214ZZR34VIOjz8=
 github.com/quic-go/qpack v0.6.0/go.mod h1:lUpLKChi8njB4ty2bFLX2x4gzDqXwUpaO1DP9qMDZII=
+github.com/reF1nd/sing-snell v0.0.6-0.20260531152532-49f2fb05925b h1:kLh6ll4+29N6EdJg/8l1UlB1920SDGXoRXv2rZ2IswA=
+github.com/reF1nd/sing-snell v0.0.6-0.20260531152532-49f2fb05925b/go.mod h1:9GeHBibP7RGZFoj4lgen8Tp5MbfOezw8nYeL6GHS/XA=
 github.com/sagernet/bbolt v0.0.0-20231014093535-ea5cb2fe9f0a h1:+NkI2670SQpQWvkkD2QgdTuzQG263YZ+2emfpeyGqW0=
 github.com/sagernet/bbolt v0.0.0-20231014093535-ea5cb2fe9f0a/go.mod h1:63s7jpZqcDAIpj8oI/1v4Izok+npJOHACFCU6+huCkM=
 github.com/sagernet/cronet-go v0.0.0-20260516035203-b3eec8134aec h1:2fsBcAbLWfjtCV4y7830DoPgE72GzvbtErlxy2px/iI=

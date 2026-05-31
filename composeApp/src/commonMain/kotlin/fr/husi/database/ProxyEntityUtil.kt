@@ -12,6 +12,7 @@ import fr.husi.database.ProxyEntity.Companion.TYPE_NAIVE
 import fr.husi.database.ProxyEntity.Companion.TYPE_PROXY_SET
 import fr.husi.database.ProxyEntity.Companion.TYPE_SHADOWQUIC
 import fr.husi.database.ProxyEntity.Companion.TYPE_SHADOWTLS
+import fr.husi.database.ProxyEntity.Companion.TYPE_SNELL
 import fr.husi.database.ProxyEntity.Companion.TYPE_SOCKS
 import fr.husi.database.ProxyEntity.Companion.TYPE_SS
 import fr.husi.database.ProxyEntity.Companion.TYPE_SSR
@@ -47,6 +48,7 @@ fun ProxyEntity.displayType(): String = when (type) {
     TYPE_SHADOWQUIC -> shadowQUICBean!!.displayType()
     TYPE_PROXY_SET -> proxySetBean!!.displayType()
     TYPE_TRUST_TUNNEL -> "Trust Tunnel"
+    TYPE_SNELL -> "Snell"
     TYPE_CHAIN -> runBlocking {
         resolveRepository().getString(Res.string.proxy_chain)
     }

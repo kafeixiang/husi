@@ -237,6 +237,13 @@ fun ProfileEditorScreen(
             onOpenConfigEditor = onOpenConfigEditor,
         )
 
+        ProxyEntity.TYPE_SNELL -> SnellSettingsScreen(
+            profileId = profileId,
+            isSubscription = isSubscription,
+            onResult = onResult,
+            onOpenConfigEditor = onOpenConfigEditor,
+        )
+
         ProxyEntity.TYPE_VMESS -> VMessSettingsScreen(
             profileId = profileId,
             isSubscription = isSubscription,

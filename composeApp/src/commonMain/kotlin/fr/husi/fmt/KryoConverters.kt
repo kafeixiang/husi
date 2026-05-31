@@ -14,6 +14,7 @@ import fr.husi.fmt.juicity.JuicityBean
 import fr.husi.fmt.mieru.MieruBean
 import fr.husi.fmt.naive.NaiveBean
 import fr.husi.fmt.shadowquic.ShadowQUICBean
+import fr.husi.fmt.snell.SnellBean
 import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.ssr.SSRBean
 import fr.husi.fmt.shadowtls.ShadowTLSBean
@@ -209,6 +210,13 @@ class KryoConverters {
         fun trustTunnelDeserialize(bytes: ByteArray?): TrustTunnelBean? {
             if (bytes?.isNotEmpty() != true) return null
             return deserialize(TrustTunnelBean(), bytes)
+        }
+
+        @TypeConverter
+        @JvmStatic
+        fun snellDeserialize(bytes: ByteArray?): SnellBean? {
+            if (bytes?.isNotEmpty() != true) return null
+            return deserialize(SnellBean(), bytes)
         }
 
         @TypeConverter

@@ -66,6 +66,9 @@
     <string name="profile_name">配置名称</string>
     <string name="server_address">服务器</string>
     <string name="server_port">服务器端口</string>
+    <string name="snell_psk">预共享密钥 (PSK)</string>
+    <string name="tcp_reuse">TCP 连接复用</string>
+    <string name="action_snell">Snell</string>
     <string name="username_opt">用户名 (可选)</string>
     <string name="password_opt">密码 (可选)</string>
     <string name="password">密码</string>
@@ -725,4 +728,5 @@
     <string name="route_invert">反转匹配</string>
     <string name="latency">延迟</string>
     <string name="select_file">选择文件</string>
+    <string name="udp" translatable="false">UDP</string>
 </resources>

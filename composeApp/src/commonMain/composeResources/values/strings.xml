@@ -124,6 +124,9 @@
     <string name="profile_name">Profile Name</string>
     <string name="server_address">Server</string>
     <string name="server_port">Remote Port</string>
+    <string name="snell_psk">Pre-Shared Key</string>
+    <string name="tcp_reuse">TCP Connection Reuse</string>
+    <string name="action_snell">Add Snell Profile</string>
     <string name="username">Username</string>
     <string name="username_opt">Username (Optional)</string>
     <string name="password_opt">Password (Optional)</string>
@@ -761,6 +764,7 @@
     <string name="cert_chrome" translatable="false">Chrome</string>
     <string name="force_resolve_error">Force resolve error: %1$s</string>
     <string name="quic">QUIC</string>
+    <string name="udp" translatable="false">UDP</string>
     <string name="health_check">Health Check</string>
     <string name="gso" translatable="false">GSO</string>
     <string name="mtu_discovery">Path Maxium MTU Discovery</string>

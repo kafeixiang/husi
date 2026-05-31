@@ -44,6 +44,7 @@ object SingBoxOptions {
     const val TYPE_ANYTLS = "anytls"
     const val TYPE_NAIVE = "naive"
     const val TYPE_TRUST_TUNNEL = "trusttunnel"
+    const val TYPE_SNELL = "snell"
 
     const val TRANSPORT_WS = "ws"
     const val TRANSPORT_HTTPUPGRADE = "httpupgrade"
@@ -345,6 +346,8 @@ object SingBoxOptions {
         // Generate note: option type:  public SelectorOutboundOptions SelectorOptions;
 
         // Generate note: option type:  public URLTestOutboundOptions URLTestOptions;
+
+        // Generate note: option type:  public SnellOutboundOptions SnellOptions;
 
     }
 
@@ -4492,9 +4495,45 @@ object SingBoxOptions {
         var quic_congestion_control: String? = null
 
         // Generate note: nested type OutboundTLSOptionsContainer
+        // Generate note: nested type OutboundTLSOptionsContainer
         @JvmField
         var tls: OutboundTLSOptions? = null
 
+    }
+
+    @KxsSerializable
+    open class Outbound_SnellOptions : Outbound() {
+        @JvmField var server: String? = null
+        @JvmField var server_port: Int? = null
+        @JvmField var psk: String? = null
+        @JvmField var version: Int? = null
+        @JvmField var udp: Boolean? = null
+        @JvmField var obfs: SnellObfsOptions? = null
+        @JvmField var tls: OutboundTLSOptions? = null
+        @JvmField var reuse: Boolean? = null
+        @JvmField var network: MutableList<String>? = null
+        @JvmField var obfs_mode: String? = null
+        @JvmField var obfs_host: String? = null
+        @JvmField var udp_over_tcp: UDPOverTCPOptions? = null
+        @JvmField var multiplex: OutboundMultiplexOptions? = null
+
+        @JvmField var detour: String? = null
+        @JvmField var bind_interface: String? = null
+        @JvmField var inet4_bind_address: String? = null
+        @JvmField var inet6_bind_address: String? = null
+        @JvmField var routing_mark: Int? = null
+        @JvmField var reuse_addr: Boolean? = null
+        @JvmField var connect_timeout: String? = null
+        @JvmField var tcp_fast_open: Boolean? = null
+        @JvmField var network_strategy: String? = null
+        @JvmField var network_type: MutableList<String>? = null
+        @JvmField var fallback_network_type: MutableList<String>? = null
+    }
+
+    @KxsSerializable
+    open class SnellObfsOptions : SingBoxOption() {
+        @JvmField var type: String? = null
+        @JvmField var host: String? = null
     }
 
     @KxsSerializable

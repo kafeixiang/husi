@@ -41,6 +41,9 @@ import fr.husi.fmt.naive.toUri
 import fr.husi.fmt.shadowquic.ShadowQUICBean
 import fr.husi.fmt.shadowquic.buildShadowQUICConfig
 import fr.husi.fmt.shadowquic.toUri
+import fr.husi.fmt.snell.SnellBean
+import fr.husi.fmt.snell.buildSingBoxOutboundSnellBean
+import fr.husi.fmt.snell.toUri
 import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.shadowsocks.toUri
 import fr.husi.fmt.ssr.SSRBean
@@ -95,6 +98,7 @@ data class ProxyEntity(
     var anyTLSBean: AnyTLSBean? = null,
     var shadowQUICBean: ShadowQUICBean? = null,
     var trustTunnelBean: TrustTunnelBean? = null,
+    var snellBean: SnellBean? = null,
     var proxySetBean: ProxySetBean? = null,
     var chainBean: ChainBean? = null,
     var configBean: ConfigBean? = null,
@@ -123,6 +127,7 @@ data class ProxyEntity(
         const val TYPE_SHADOWQUIC = 25
         const val TYPE_PROXY_SET = 26
         const val TYPE_TRUST_TUNNEL = 27
+        const val TYPE_SNELL = 28
         const val TYPE_CONFIG = 998
         const val TYPE_NEKO = 999 // Deleted
 
@@ -221,6 +226,7 @@ data class ProxyEntity(
             TYPE_SHADOWQUIC -> shadowQUICBean = KryoConverters.shadowQUICDeserialize(byteArray)
             TYPE_PROXY_SET -> proxySetBean = KryoConverters.proxySetDeserialize(byteArray)
             TYPE_TRUST_TUNNEL -> trustTunnelBean = KryoConverters.trustTunnelDeserialize(byteArray)
+            TYPE_SNELL -> snellBean = KryoConverters.snellDeserialize(byteArray)
             TYPE_CHAIN -> chainBean = KryoConverters.chainDeserialize(byteArray)
             TYPE_CONFIG -> configBean = KryoConverters.configDeserialize(byteArray)
         }
@@ -260,6 +266,7 @@ data class ProxyEntity(
             TYPE_SHADOWTLS -> shadowTLSBean
             TYPE_PROXY_SET -> proxySetBean
             TYPE_TRUST_TUNNEL -> trustTunnelBean
+            TYPE_SNELL -> snellBean
             TYPE_CHAIN -> chainBean
             TYPE_CONFIG -> configBean
             else -> error("Undefined type $type")
@@ -309,6 +316,7 @@ data class ProxyEntity(
                 toUniversalLink()
             }
 
+            is SnellBean -> toUri()
             else -> toUniversalLink()
         }
     }
@@ -317,6 +325,7 @@ data class ProxyEntity(
         TYPE_MIERU -> DataStore.providerMieru == ProtocolProvider.PLUGIN
         TYPE_JUICITY -> DataStore.providerJuicity == ProtocolProvider.PLUGIN
         TYPE_SSR -> DataStore.providerSSR == ProtocolProvider.PLUGIN
+        TYPE_SNELL -> DataStore.providerSnell == ProtocolProvider.PLUGIN
         TYPE_SHADOWQUIC -> true
         else -> false
     }
@@ -420,6 +429,7 @@ data class ProxyEntity(
         anyTLSBean = null
         shadowQUICBean = null
         trustTunnelBean = null
+        snellBean = null
         proxySetBean = null
         chainBean = null
         configBean = null
@@ -518,6 +528,11 @@ data class ProxyEntity(
             is TrustTunnelBean -> {
                 type = TYPE_TRUST_TUNNEL
                 trustTunnelBean = bean
+            }
+
+            is SnellBean -> {
+                type = TYPE_SNELL
+                snellBean = bean
             }
 
             is ProxySetBean -> {
