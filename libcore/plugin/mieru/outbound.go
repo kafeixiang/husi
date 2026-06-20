@@ -233,6 +233,9 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 			BypassDialerDNS: true,
 		},
 	}
+	if options.MTU > 0 {
+		config.Profile.Mtu = proto.Int32(int32(options.MTU))
+	}
 	if multiplexing, ok := mierupb.MultiplexingLevel_value[options.Multiplexing]; ok {
 		config.Profile.Multiplexing = &mierupb.MultiplexingConfig{
 			Level: mierupb.MultiplexingLevel(multiplexing).Enum(),

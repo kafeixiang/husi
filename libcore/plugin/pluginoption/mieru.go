@@ -12,9 +12,13 @@ type MieruOutboundOptions struct {
 	Transport        string                     `json:"transport,omitempty"`
 	UserName         string                     `json:"username,omitempty"`
 	Password         string                     `json:"password,omitempty"`
-	Multiplexing     string                     `json:"multiplexing,omitempty"`
-	TrafficPattern   string                     `json:"traffic_pattern,omitempty"`
-	HandshakeMode    string                     `json:"handshake_mode,omitempty"`
+	Multiplexing      string                     `json:"multiplexing,omitempty"`
+	TrafficPattern    string                     `json:"traffic_pattern,omitempty"`
+	HandshakeMode     string                     `json:"handshake_mode,omitempty"`
+	HeartbeatInterval string                     `json:"heartbeat_interval,omitempty"`
+	HeartbeatJitter   float64                    `json:"heartbeat_jitter,omitempty"`
+	UserHint          string                     `json:"user_hint,omitempty"`
+	MTU               int                        `json:"mtu,omitempty"`
 }
 
 type MieruInboundOptions struct {

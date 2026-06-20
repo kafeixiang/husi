@@ -1014,9 +1014,7 @@ object SingBoxOptions {
         @JvmField var multiplexing: String? = null
         @JvmField var traffic_pattern: String? = null
         @JvmField var handshake_mode: String? = null
-        @JvmField var heartbeat_interval: String? = null
-        @JvmField var heartbeat_jitter: Double? = null
-        @JvmField var user_hint: String? = null
+        @JvmField var mtu: Int? = null
         @JvmField var detour: String? = null
     }
     @KxsSerializable
