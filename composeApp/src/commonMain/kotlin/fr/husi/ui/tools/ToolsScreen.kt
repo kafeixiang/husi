@@ -84,15 +84,7 @@ fun ToolsScreen(
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val topAppBarColors = TopAppBarDefaults.topAppBarColors()
-    val appBarContainerColor by animateColorAsState(
-        targetValue = lerp(
-            topAppBarColors.containerColor,
-            topAppBarColors.scrolledContainerColor,
-            scrollBehavior.state.overlappedFraction.fastCoerceIn(0f, 1f),
-        ),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "appBarContainerColor",
-    )
+    val appBarContainerColor = fr.husi.compose.husiTopBarColor(scrollBehavior)
     val windowInsets = WindowInsets.safeDrawing
 
     val serviceStatus by BackendState.status.collectAsStateWithLifecycle()

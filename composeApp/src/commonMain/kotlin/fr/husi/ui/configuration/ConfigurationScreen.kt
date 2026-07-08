@@ -315,15 +315,7 @@ fun ConfigurationScreen(
     val serviceStatus by BackendState.status.collectAsStateWithLifecycle()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val topAppBarColors = TopAppBarDefaults.topAppBarColors()
-    val appBarContainerColor by animateColorAsState(
-        targetValue = lerp(
-            topAppBarColors.containerColor,
-            topAppBarColors.scrolledContainerColor,
-            scrollBehavior.state.overlappedFraction.fastCoerceIn(0f, 1f),
-        ),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "appBarContainerColor",
-    )
+    val appBarContainerColor = fr.husi.compose.husiTopBarColor(scrollBehavior)
 
     LaunchedEffect(Unit) {
         vm.scrollToProxy(DataStore.selectedProxy)

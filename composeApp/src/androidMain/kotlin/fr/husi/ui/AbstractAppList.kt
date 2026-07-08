@@ -382,15 +382,7 @@ internal fun AppListScaffold(
     val listScrollState = rememberLazyListState()
     val windowInsets = WindowInsets.safeDrawing
     val topAppBarColors = TopAppBarDefaults.topAppBarColors()
-    val appBarContainerColor by animateColorAsState(
-        targetValue = lerp(
-            topAppBarColors.containerColor,
-            topAppBarColors.scrolledContainerColor,
-            scrollBehavior.state.overlappedFraction.fastCoerceIn(0f, 1f),
-        ),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "appBarContainerColor",
-    )
+    val appBarContainerColor = fr.husi.compose.husiTopBarColor(scrollBehavior)
 
     Scaffold(
         modifier = modifier

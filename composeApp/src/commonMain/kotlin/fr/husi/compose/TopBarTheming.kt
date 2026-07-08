@@ -32,26 +32,21 @@ import fr.husi.database.DataStore
 val LocalHusiTopBarColor = staticCompositionLocalOf<Color?> { null }
 
 /**
+ * 获取当前的 TopBar 容器颜色。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun husiTopBarColor(scrollBehavior: TopAppBarScrollBehavior?): Color {
+    return LocalHusiTopBarColor.current ?: husiComputeTopBarColor(scrollBehavior)
+}
+
+/**
  * 集中处理 Husi 的顶部栏背景注入逻辑。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 fun Modifier.husiTopBarBackground(scrollBehavior: TopAppBarScrollBehavior?): Modifier = composed {
-    val isEnabled by DataStore.configurationStore
-        .booleanFlow(Key.THEMED_TOP_BAR, false)
-        .collectAsStateWithLifecycle(DataStore.themedTopBar)
-    val appTheme by DataStore.configurationStore
-        .intFlow(Key.APP_THEME, DEFAULT)
-        .collectAsStateWithLifecycle(DataStore.appTheme)
-
     val color = husiComputeTopBarColor(scrollBehavior)
-
-    // 如果开启了浮光跃彩，内部 CapsuleTopBar 保持透明（因为外层 Surface 已经同步了颜色）。
-    // 在 Pattern A 页面中，这里依然负责背景绘制。
-    if (isEnabled && appTheme != DYNAMIC) {
-        return@composed Modifier
-    }
-
-    background(color)
+    background(if (scrollBehavior != null) color else Color.Transparent)
 }
 
 /**

@@ -67,10 +67,11 @@ fun CapsuleTopBar(
     capsuleSpacing: Dp = 8.dp,
 ) {
     SetHeightOffsetLimit(scrollBehavior)
+    val outerColor = LocalHusiTopBarColor.current
     HusiTopBarColorProvider(scrollBehavior) {
         Box(
             modifier = modifier
-                .husiTopBarBackground(scrollBehavior)
+                .husiTopBarBackground(if (outerColor == null) scrollBehavior else null)
                 .fillMaxWidth()
                 .windowInsetsPadding(windowInsets)
                 .then(
@@ -209,10 +210,11 @@ fun CapsuleSearchTopBar(
     capsuleSpacing: Dp = 8.dp,
 ) {
     SetHeightOffsetLimit(scrollBehavior)
+    val outerColor = LocalHusiTopBarColor.current
     HusiTopBarColorProvider(scrollBehavior) {
         Box(
             modifier = modifier
-                .husiTopBarBackground(scrollBehavior)
+                .husiTopBarBackground(if (outerColor == null) scrollBehavior else null)
                 .fillMaxWidth()
                 .windowInsetsPadding(windowInsets),
         ) {
