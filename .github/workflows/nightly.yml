@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Golang Status
@@ -29,7 +29,7 @@ jobs:
         run: git ls-files libcore | xargs cat | sha1sum > libcore_status
       - name: LibCore Cache
         id: cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             composeApp/libs
@@ -87,7 +87,7 @@ jobs:
           echo "version=$(tr -d '[:space:]' < .github/CRONET_GO_VERSION)" >> "$GITHUB_OUTPUT"
       - name: Checkout cronet-go
         if: steps.verify_libcore.outputs.ready != 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: sagernet/cronet-go
           ref: ${{ steps.cronet-go-version.outputs.version }}
@@ -96,7 +96,7 @@ jobs:
           fetch-depth: 1
       - name: Cache Chromium toolchain
         if: steps.verify_libcore.outputs.ready != 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             cronet-go/naiveproxy/src/third_party/llvm-build/
@@ -130,6 +130,7 @@ jobs:
             composeApp/libs/libcore-desktop-linux-arm64.jar
           if-no-files-found: error
           name: "libcore"
+
   build:
     name: Build FOSS APK
     runs-on: ubuntu-latest
@@ -137,7 +138,7 @@ jobs:
       - libcore
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: LibCore Artifact
@@ -200,13 +201,13 @@ jobs:
           - name: linux-arm64
             target: linux/arm64
             runs_on: ubuntu-24.04-arm
-#          - darwin/amd64
-#          - darwin/arm64
-#          - windows/amd64
-#          - windows/arm64
+    #          - darwin/amd64
+    #          - darwin/arm64
+    #          - windows/amd64
+    #          - windows/arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: LibCore Artifact
@@ -258,16 +259,17 @@ jobs:
           name: "desktop-jar-${{ steps.artifact_target.outputs.safe }}"
           if-no-files-found: error
           path: composeApp/build/compose/jars/*.jar
+
   release:
     name: Publish Release
     if: github.event.inputs.release != 'y'
     runs-on: ubuntu-latest
-    needs: 
+    needs:
       - build
       - desktop
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Download APK Artifacts
@@ -326,7 +328,17 @@ jobs:
             done
           fi
 
+          # 创建 GitHub Release
           gh release create "${{ env.RELEASE_TAG }}" --title "${{ env.RELEASE_TAG }}" --prerelease \
             --notes $'# :memo: Debug Build Notes\n\n* Fixes and improvements.' 2>/dev/null || true
           
-          gh release upload "${{ env.RELEASE_TAG }}" ./release-assets/* --clobber
+          # 核心修改：利用通配符，让 gh release 仅上传 apk 文件
+          gh release upload "${{ env.RELEASE_TAG }}" ./release-assets/*.apk --clobber
+
+      # 将同样在上面重命名好的桌面端 jar 文件，单独过滤出来上传到 Actions Artifacts
+      - name: Upload Packed Desktop Jars to Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: "desktop-jars-with-suffix"
+          if-no-files-found: error
+          path: release-assets/*.jar
