@@ -112,7 +112,7 @@ object DataStore {
     val debugListen = configurationStore.string(Key.DEBUG_LISTEN)
     val networkStrategy = configurationStore.string(Key.NETWORK_STRATEGY)
     val anchorSSID = configurationStore.string(Key.ANCHOR_SSID)
-
+    var themedTopBar by configurationStore.boolean(Key.THEMED_TOP_BAR) { false }
     val networkInterfaceType = configurationStore.int(Key.NETWORK_INTERFACE_STRATEGY) {
         NetworkInterfaceStrategy.DEFAULT
     }
