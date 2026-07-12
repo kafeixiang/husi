@@ -53,6 +53,7 @@ object Key {
     const val ADVANCED_TAILSCALE_SSH_SERVER = "tailscaleSSHServer"
 
     const val APP_THEME = "appTheme"
+    const val THEMED_TOP_BAR = "themedTopBar"
     const val NIGHT_THEME = "nightTheme"
     const val APP_LANGUAGE = "appLanguage"
     const val SERVICE_MODE = "serviceMode"

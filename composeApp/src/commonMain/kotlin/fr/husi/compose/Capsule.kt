@@ -88,7 +88,7 @@ object CapsuleDefaults {
     }
 }
 
-private val CapsuleBarHeight get() = CapsuleDefaults.Size + CapsuleDefaults.VerticalPadding * 2
+private val CapsuleBarHeight get() = CapsuleDefaults.Size + (CapsuleDefaults.VerticalPadding * 2)
 
 class CapsuleActionsScope internal constructor(
     rowScope: RowScope,
@@ -209,6 +209,7 @@ private fun CapsuleBarLayout(
     SetHeightOffsetLimit(scrollBehavior)
     Box(
         modifier = modifier
+            .husiTopBarBackground(scrollBehavior)
             .fillMaxWidth()
             .windowInsetsPadding(windowInsets),
     ) {
@@ -304,25 +305,24 @@ fun CapsuleHeader(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val topAppBarColors = TopAppBarDefaults.topAppBarColors()
-    val appBarContainerColor by animateColorAsState(
-        targetValue = lerp(
-            topAppBarColors.containerColor,
-            topAppBarColors.scrolledContainerColor,
-            scrollBehavior.state.overlappedFraction.fastCoerceIn(0f, 1f),
-        ),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "appBarContainerColor",
-    )
+    val appBarContainerColor = husiAppBarContainerColor(scrollBehavior)
+    val themedTopBarColor = husiThemedTopBarColor(scrollBehavior)
     Column(
         modifier = modifier
             .fillMaxWidth()
             .hazeBlur(
                 input = HazeInput.Backdrop(hazeState),
                 style = CapsuleDefaults.blurStyle(tintColor = appBarContainerColor),
-            ),
-        content = content,
-    )
+            )
+            .husiTopBarBackground(scrollBehavior),
+    ) {
+        CompositionLocalProvider(
+            LocalInThemedHeader provides true,
+            LocalHusiTopBarColor provides themedTopBarColor,
+        ) {
+            content()
+        }
+    }
 }
 
 @Composable
@@ -335,7 +335,7 @@ fun CapsuleSearchInputField(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
 ) {
-    val showCenteredPlaceholder = searchBarState.currentValue == SearchBarValue.Collapsed &&
+    val showCenteredPlaceholder = (searchBarState.currentValue == SearchBarValue.Collapsed) &&
             textFieldState.text.isEmpty()
     Box(
         modifier = modifier
@@ -407,7 +407,7 @@ private fun CapsuleSearchPill(
         hazeState = hazeState,
     ) {
         content()
-        if (onClick != null || onLongClick != null) {
+        if ((onClick != null) || (onLongClick != null)) {
             Box(
                 modifier = Modifier
                     .matchParentSize()
