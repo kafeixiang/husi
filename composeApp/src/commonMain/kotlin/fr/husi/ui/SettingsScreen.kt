@@ -639,6 +639,23 @@ private fun GeneralSettingsGroup(
     )
     PreferenceDivider()
 
+    val themedTopBarValue by DataStore.configurationStore
+        .booleanFlow(Key.THEMED_TOP_BAR, false)
+        .collectAsStateWithLifecycle(false)
+    SwitchPreference(
+        value = themedTopBarValue,
+        onValueChange = { DataStore.themedTopBar = it },
+        title = { Text("浮光跃彩") },
+        icon = {
+            MaskedIcon(
+                Res.drawable.color_lens,
+                color = IconMaskColors.IconLightOrange,
+            )
+        },
+        summary = { Text("让顶部工具栏随主题灵动起舞") },
+    )
+    PreferenceDivider()
+
     fun nightString(index: Int): StringResource = when (index) {
         0 -> Res.string.follow_system
         1 -> Res.string.enable
