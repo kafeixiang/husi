@@ -69,7 +69,7 @@ object CapsuleDefaults {
         @Composable get() = MaterialTheme.colorScheme.surfaceContainer.copy(alpha = 0.75f)
 }
 
-private val CapsuleBarHeight get() = CapsuleDefaults.Size + CapsuleDefaults.VerticalPadding * 2
+private val CapsuleBarHeight get() = CapsuleDefaults.Size + (CapsuleDefaults.VerticalPadding * 2)
 
 @Composable
 fun CapsuleSurface(
@@ -121,6 +121,7 @@ fun CapsuleTopBar(
     SetHeightOffsetLimit(scrollBehavior)
     Box(
         modifier = modifier
+            .husiTopBarBackground(scrollBehavior)
             .fillMaxWidth()
             .windowInsetsPadding(windowInsets)
             .then(
@@ -209,6 +210,7 @@ fun CapsuleSearchTopBar(
     SetHeightOffsetLimit(scrollBehavior)
     Box(
         modifier = modifier
+            .husiTopBarBackground(scrollBehavior)
             .fillMaxWidth()
             .windowInsetsPadding(windowInsets),
     ) {
@@ -256,7 +258,7 @@ fun CapsuleSearchInputField(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
 ) {
-    val showCenteredPlaceholder = searchBarState.currentValue == SearchBarValue.Collapsed &&
+    val showCenteredPlaceholder = (searchBarState.currentValue == SearchBarValue.Collapsed) &&
             textFieldState.text.isEmpty()
     Box(
         modifier = modifier

@@ -94,6 +94,8 @@ import fr.husi.resources.shutter_speed
 import fr.husi.resources.speed
 import fr.husi.resources.speed_interval
 import fr.husi.resources.theme
+import fr.husi.resources.themed_top_bar
+import fr.husi.resources.themed_top_bar_summary
 import fr.husi.resources.traffic
 import fr.husi.resources.transgender
 import fr.husi.resources.translate
@@ -244,6 +246,20 @@ internal fun GeneralSettingsGroup(
     ColorPickerPreference(
         proxy = DataStore.appTheme,
         title = { Text(stringResource(Res.string.theme)) },
+    )
+
+    val themedTopBarValue by DataStore.themedTopBar.collectAsStateWithLifecycle()
+    SwitchPreference(
+        value = themedTopBarValue,
+        onValueChange = { DataStore.themedTopBar.setBlocking(it) },
+        title = { Text(stringResource(Res.string.themed_top_bar)) },
+        icon = {
+            MaskedIcon(
+                Res.drawable.color_lens,
+                color = IconMaskColors.IconLightOrange,
+            )
+        },
+        summary = { Text(stringResource(Res.string.themed_top_bar_summary)) },
     )
 
     fun nightString(index: Int): StringResource = when (index) {

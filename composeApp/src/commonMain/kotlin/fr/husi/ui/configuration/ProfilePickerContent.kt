@@ -4,6 +4,7 @@ package fr.husi.ui.configuration
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.husi.compose.CapsuleSearchInputField
 import fr.husi.compose.CapsuleSearchTopBar
+import fr.husi.compose.husiAppBarContainerColor
 import fr.husi.compose.SimpleIconButton
 import fr.husi.compose.SwipeableSnackbarHost
 import fr.husi.compose.material3.Icon
@@ -158,6 +160,7 @@ fun ProfilePickerContent(
     val snackbarHostState = remember { SnackbarHostState() }
     SnackbarEmitterEffect(snackbarEmitter, snackbarHostState)
     val windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
+    val appBarContainerColor = husiAppBarContainerColor(null)
     val searchInputField: @Composable () -> Unit = {
         CapsuleSearchInputField(
             textFieldState = state.searchTextFieldState,
@@ -187,7 +190,7 @@ fun ProfilePickerContent(
     CompositionLocalProvider(LocalSnackbarEmitter provides snackbarEmitter) {
         Box(modifier = modifier) {
             Column(modifier = Modifier.fillMaxSize()) {
-                Column {
+                Column(Modifier.background(appBarContainerColor)) {
                     CapsuleSearchTopBar(
                         inputField = searchInputField,
                         navigationIcon = {
@@ -207,6 +210,7 @@ fun ProfilePickerContent(
                                 state.uiState.groups.size - 1,
                             ),
                             edgePadding = 0.dp,
+                            containerColor = appBarContainerColor,
                         ) {
                             state.uiState.groups.forEachIndexed { index, group ->
                                 Tab(
