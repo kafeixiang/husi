@@ -62,6 +62,7 @@ import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import fr.husi.compose.CapsuleHeader
 import fr.husi.compose.CapsuleTopBar
+import fr.husi.compose.husiAppBarContainerColor
 import fr.husi.compose.SimpleIconButton
 import fr.husi.compose.material3.Card
 import fr.husi.compose.material3.Icon
