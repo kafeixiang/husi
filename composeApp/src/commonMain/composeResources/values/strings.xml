@@ -14,6 +14,8 @@
     <string name="menu_about">About</string>
     <!-- themes -->
     <string name="theme">Theme</string>
+    <string name="themed_top_bar">Themed Top Bar</string>
+    <string name="themed_top_bar_summary">Let the top bar dance with the theme</string>
     <string name="themes_amber">Pine Tears</string>
     <string name="themes_black">Traces in Snow</string>
     <string name="themes_blue">Misty Rain</string>

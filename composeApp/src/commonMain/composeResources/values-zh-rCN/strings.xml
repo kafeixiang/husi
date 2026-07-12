@@ -225,6 +225,8 @@
     <string name="need_reload">重载代理服务以应用修改</string>
     <!-- themes -->
     <string name="theme">主题颜色</string>
+    <string name="themed_top_bar">浮光跃彩</string>
+    <string name="themed_top_bar_summary">让顶部工具栏随主题灵动起舞</string>
     <string name="themes_amber">寒松凝液</string>
     <string name="themes_black">飞鸿踏雪</string>
     <string name="themes_blue">雨浥轻尘</string>
