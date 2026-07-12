@@ -99,6 +99,7 @@ object DataStore {
 
     var isExpert by configurationStore.boolean(Key.APP_EXPERT)
     var appTheme by configurationStore.int(Key.APP_THEME) { DEFAULT }
+    var themedTopBar by configurationStore.boolean(Key.THEMED_TOP_BAR) { false }
     var nightTheme by configurationStore.int(Key.NIGHT_THEME)
     var appLanguage by configurationStore.string(Key.APP_LANGUAGE)
     var serviceMode by configurationStore.string(Key.SERVICE_MODE) { Key.MODE_VPN }
