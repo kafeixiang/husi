@@ -44,6 +44,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import fr.husi.compose.LocalHusiTopBarColor
+import kotlinx.collections.immutable.ImmutableList
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.koinInject
 import org.koin.mp.KoinPlatformTools
 
@@ -1174,10 +1180,11 @@ fun PrimaryTabRow(
     containerColor: Color = MaterialTabRowDefaults.primaryContainerColor,
     content: @Composable () -> Unit,
 ) {
+    val husiColor = LocalHusiTopBarColor.current
     currentPlatformMaterialApi().PrimaryTabRow(
         selectedTabIndex = selectedTabIndex,
         modifier = modifier,
-        containerColor = containerColor,
+        containerColor = husiColor ?: containerColor,
         content = content,
     )
 }
@@ -1190,10 +1197,11 @@ fun PrimaryScrollableTabRow(
     edgePadding: Dp = MaterialTabRowDefaults.ScrollableTabRowEdgeStartPadding,
     content: @Composable () -> Unit,
 ) {
+    val husiColor = LocalHusiTopBarColor.current
     currentPlatformMaterialApi().PrimaryScrollableTabRow(
         selectedTabIndex = selectedTabIndex,
         modifier = modifier,
-        containerColor = containerColor,
+        containerColor = husiColor ?: containerColor,
         edgePadding = edgePadding,
         content = content,
     )

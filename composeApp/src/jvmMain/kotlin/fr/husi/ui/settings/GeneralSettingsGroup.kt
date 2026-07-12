@@ -49,6 +49,11 @@ import fr.husi.resources.service_mode_vpn
 import fr.husi.resources.show_direct_speed
 import fr.husi.resources.show_direct_speed_sum
 import fr.husi.resources.speed
+import fr.husi.resources.speed_interval
+import fr.husi.resources.terminal
+import fr.husi.resources.theme
+import fr.husi.resources.themed_top_bar
+import fr.husi.resources.themed_top_bar_summary
 import fr.husi.resources.traffic
 import fr.husi.resources.transform
 import fr.husi.resources.transgender
@@ -86,6 +91,26 @@ internal fun GeneralSettingsGroup(
         extraColors = rememberThemeExtraColors(),
         nightTheme = nightTheme,
         onNightThemeChange = {
+            DataStore.nightTheme.setBlocking(it)
+            applyNightMode(it)
+        },
+        appLanguage = appLanguage,
+        onAppLanguageChange = { languageController.value = it },
+    )
+
+    val themedTopBarValue by DataStore.themedTopBar.collectAsStateWithLifecycle()
+    SwitchPreference(
+        value = themedTopBarValue,
+        onValueChange = { DataStore.themedTopBar.setBlocking(it) },
+        title = { Text(stringResource(Res.string.themed_top_bar)) },
+        icon = {
+            MaskedIcon(
+                Res.drawable.color_lens,
+                color = IconMaskColors.IconLightOrange,
+            )
+        },
+        summary = { Text(stringResource(Res.string.themed_top_bar_summary)) },
+    )
             DataStore.nightTheme.setBlocking(it)
             applyNightMode(it)
         },
