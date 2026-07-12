@@ -232,15 +232,7 @@ fun CapsuleSearchTopBar(
                 }
 
                 CapsuleSearchPill(
-                    modifier = Modifier
-                        .weight(1f)
-                        .then(
-                            if (onSearchPillLongPress != null) {
-                                Modifier.consumeOnlyLongPress(onSearchPillLongPress)
-                            } else {
-                                Modifier
-                            },
-                        ),
+                    modifier = Modifier.weight(1f),
                     onClick = onSearchPillClick,
                     onLongClick = onSearchPillLongPress,
                 ) {
