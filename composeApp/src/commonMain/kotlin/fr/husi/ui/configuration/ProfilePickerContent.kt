@@ -36,8 +36,10 @@ import androidx.compose.ui.util.fastCoerceAtLeast
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.material3.Surface
 import fr.husi.compose.CapsuleSearchInputField
 import fr.husi.compose.CapsuleSearchTopBar
+import fr.husi.compose.husiAppBarContainerColor
 import fr.husi.compose.SimpleIconButton
 import fr.husi.compose.material3.Icon
 import fr.husi.compose.material3.PrimaryScrollableTabRow
@@ -146,6 +148,7 @@ fun ProfilePickerContent(
     modifier: Modifier = Modifier,
     bottomPadding: Dp,
 ) {
+    val appBarContainerColor = husiAppBarContainerColor(null)
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
     val searchBarState = rememberSearchBarState()
@@ -177,35 +180,38 @@ fun ProfilePickerContent(
     }
 
     Column(modifier = modifier) {
-        Column {
-            CapsuleSearchTopBar(
-                inputField = searchInputField,
-                navigationIcon = {
-                    SimpleIconButton(
-                        imageVector = vectorResource(Res.drawable.close),
-                        contentDescription = stringResource(Res.string.close),
-                        onClick = onDismiss,
-                    )
-                },
-                windowInsets = windowInsets,
-            )
-
-            if (state.hasGroups && state.uiState.groups.size > 1) {
-                PrimaryScrollableTabRow(
-                    selectedTabIndex = state.pagerState.currentPage.fastCoerceIn(
-                        0,
-                        state.uiState.groups.size - 1,
-                    ),
-                    edgePadding = 0.dp,
-                ) {
-                    state.uiState.groups.forEachIndexed { index, group ->
-                        Tab(
-                            text = { Text(group.displayName()) },
-                            selected = state.pagerState.currentPage == index,
-                            onClick = {
-                                state.selectGroup(group.id)
-                            },
+        Surface(color = appBarContainerColor) {
+            Column {
+                CapsuleSearchTopBar(
+                    inputField = searchInputField,
+                    navigationIcon = {
+                        SimpleIconButton(
+                            imageVector = vectorResource(Res.drawable.close),
+                            contentDescription = stringResource(Res.string.close),
+                            onClick = onDismiss,
                         )
+                    },
+                    windowInsets = windowInsets,
+                )
+
+                if (state.hasGroups && state.uiState.groups.size > 1) {
+                    PrimaryScrollableTabRow(
+                        selectedTabIndex = state.pagerState.currentPage.fastCoerceIn(
+                            0,
+                            state.uiState.groups.size - 1,
+                        ),
+                        edgePadding = 0.dp,
+                        containerColor = appBarContainerColor,
+                    ) {
+                        state.uiState.groups.forEachIndexed { index, group ->
+                            Tab(
+                                text = { Text(group.displayName()) },
+                                selected = state.pagerState.currentPage == index,
+                                onClick = {
+                                    state.selectGroup(group.id)
+                                },
+                            )
+                        }
                     }
                 }
             }
