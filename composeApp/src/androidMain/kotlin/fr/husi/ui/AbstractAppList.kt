@@ -68,6 +68,7 @@ import androidx.lifecycle.viewModelScope
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import fr.husi.compose.CapsuleActionButton
 import fr.husi.compose.CapsuleTopBar
+import fr.husi.compose.husiAppBarContainerColor
 import fr.husi.compose.SimpleIconButton
 import fr.husi.compose.material3.Card
 import fr.husi.compose.material3.Icon
@@ -398,16 +399,7 @@ internal fun AppListScaffold(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val listScrollState = rememberLazyListState()
     val windowInsets = WindowInsets.safeDrawing
-    val topAppBarColors = TopAppBarDefaults.topAppBarColors()
-    val appBarContainerColor by animateColorAsState(
-        targetValue = lerp(
-            topAppBarColors.containerColor,
-            topAppBarColors.scrolledContainerColor,
-            scrollBehavior.state.overlappedFraction.fastCoerceIn(0f, 1f),
-        ),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "appBarContainerColor",
-    )
+    val appBarContainerColor = husiAppBarContainerColor(scrollBehavior)
 
     Scaffold(
         modifier = modifier
