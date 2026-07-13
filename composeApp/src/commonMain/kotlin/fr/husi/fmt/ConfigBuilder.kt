@@ -48,6 +48,7 @@ import fr.husi.fmt.internal.buildSingBoxOutboundProxySetBean
 import fr.husi.fmt.juicity.JuicityBean
 import fr.husi.fmt.juicity.buildSingBoxOutboundJuicityBean
 import fr.husi.fmt.mieru.MieruBean
+import fr.husi.fmt.mieru.buildSingBoxOutboundMieruBean
 import fr.husi.fmt.naive.NaiveBean
 import fr.husi.fmt.naive.buildSingBoxOutboundNaiveBean
 import fr.husi.fmt.openconnect.OpenConnectBean
@@ -586,6 +587,8 @@ fun buildConfig(
                         is AnyTLSBean -> buildSingBoxOutboundAnyTLSBean(bean).asKxsMap()
 
                         is JuicityBean -> buildSingBoxOutboundJuicityBean(bean).asKxsMap()
+
+                        is MieruBean -> buildSingBoxOutboundMieruBean(bean).asKxsMap()
 
                         is NaiveBean -> buildSingBoxOutboundNaiveBean(bean).asKxsMap()
 

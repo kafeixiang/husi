@@ -5,6 +5,7 @@ go 1.26
 require (
 	filippo.io/age v1.3.1
 	github.com/anytls/sing-anytls v0.0.11
+	github.com/enfein/mieru/v3 v3.34.1
 	github.com/exclavenetwork/sing-juicity v0.2.0-beta.3
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/klauspost/compress v1.19.0
