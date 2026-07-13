@@ -85,14 +85,14 @@ import fr.husi.ktx.toJsonStringKxs
 const val ECH_CONFIGS_PEM_HEADER = "-----BEGIN ECH CONFIGS-----"
 const val ECH_CONFIGS_PEM_FOOTER = "-----END ECH CONFIGS-----"
 
-fun String.toBase64ECHConfig(): String {
+fun String.toECHOneLine(): String {
     val base64 = lineSequence()
         .filterNot { it == ECH_CONFIGS_PEM_HEADER || it == ECH_CONFIGS_PEM_FOOTER }
         .joinToString(separator = "")
     return base64.b64Decode().b64EncodeOneLine()
 }
 
-fun String.toPEMECHConfig(): String {
+fun String.toECHPem(): String {
     return buildString {
         appendLine(ECH_CONFIGS_PEM_HEADER)
         appendLine(b64Decode().b64EncodeOneLine())

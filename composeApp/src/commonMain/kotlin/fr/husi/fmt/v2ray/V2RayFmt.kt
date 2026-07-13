@@ -30,8 +30,8 @@ import fr.husi.fmt.listable
 import fr.husi.fmt.parseBoxOutbound
 import fr.husi.fmt.parseBoxTLS
 import fr.husi.fmt.parseHeader
-import fr.husi.fmt.toBase64ECHConfig
-import fr.husi.fmt.toPEMECHConfig
+import fr.husi.fmt.toECHOneLine
+import fr.husi.fmt.toECHPem
 import fr.husi.fmt.trojan.TrojanBean
 import fr.husi.ktx.JSONMap
 import fr.husi.ktx.Logs
@@ -118,7 +118,7 @@ private fun StandardV2RayBean.parseDuckSoftTlsQueries(url: URL) {
             echQueryServerName = it.substringBefore("://", "").substringBefore("+", "")
         } else runCatching {
             if (it.b64Decode().isNotEmpty()) {
-                echConfig = it.toPEMECHConfig()
+                echConfig = it.toECHPem()
             }
         }
     }
@@ -392,7 +392,7 @@ fun StandardV2RayBean.toUriVMessVLESSTrojan(): String {
                 // Xray requires a DNS server in ECH field, which is coupling.
                 // We don't set a hard-coded DNS server here. 😅
                 if (ech) echConfig.blankAsNull()?.let {
-                    builder.setQueryParameter("ech", it.toBase64ECHConfig())
+                    builder.setQueryParameter("ech", it.toECHOneLine())
                 }
             }
         }
