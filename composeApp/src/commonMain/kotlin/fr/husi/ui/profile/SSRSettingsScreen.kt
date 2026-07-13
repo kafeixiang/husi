@@ -2,15 +2,17 @@ package fr.husi.ui.profile
 
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
-import androidx.lifecycle.viewmodel.compose.viewModel
+import fr.husi.compose.IconMaskColors
+import fr.husi.compose.MaskedIcon
 import fr.husi.compose.PasswordPreference
 import fr.husi.compose.PreferenceCategory
+import fr.husi.compose.PreferenceDivider
 import fr.husi.compose.UIntegerTextField
+import fr.husi.compose.material3.Text
+import fr.husi.compose.preferenceGroup
 import fr.husi.fmt.ssr.SSRBean
 import fr.husi.ktx.contentOrUnset
 import fr.husi.resources.Res
@@ -45,9 +47,11 @@ fun SSRSettingsScreen(
     onOpenConfigEditor: (NavRoutes.ConfigEditor) -> Unit,
     onResult: (updated: Boolean) -> Unit,
 ) {
-    val viewModel: SSRSettingsViewModel = viewModel { SSRSettingsViewModel() }
-    LaunchedEffect(profileId, isSubscription) {
-        viewModel.initialize(profileId, isSubscription)
+    val viewModel: SSRSettingsViewModel = profileEditorViewModel(
+        profileId = profileId,
+        isSubscription = isSubscription,
+    ) {
+        SSRSettingsViewModel()
     }
 
     ProfileSettingsScreenScaffold<SSRBean>(
@@ -55,15 +59,14 @@ fun SSRSettingsScreen(
         viewModel = viewModel,
         onResult = onResult,
         onOpenConfigEditor = onOpenConfigEditor,
-    ) { uiState, scrollTo ->
-        ssrSettings(uiState as SSRUiState, viewModel, scrollTo)
+    ) { uiState, _ ->
+        ssrSettings(uiState as SSRUiState, viewModel)
     }
 }
 
 private fun LazyListScope.ssrSettings(
     uiState: SSRUiState,
     viewModel: SSRSettingsViewModel,
-    scrollTo: (key: String) -> Unit,
 ) {
     val encryptionMethods = listOf(
         "none",
@@ -121,13 +124,18 @@ private fun LazyListScope.ssrSettings(
         "random_head",
     )
 
-    item("name") {
+    preferenceGroup(key = "name") {
         TextFieldPreference(
             value = uiState.name,
             onValueChange = { viewModel.setName(it) },
             title = { Text(stringResource(Res.string.profile_name)) },
             textToValue = { it },
-            icon = { Icon(vectorResource(Res.drawable.emoji_symbols), null) },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.emoji_symbols,
+                    color = IconMaskColors.IconCyan,
+                )
+            },
             summary = { Text(contentOrUnset(uiState.name)) },
             valueToText = { it },
         )
@@ -136,92 +144,121 @@ private fun LazyListScope.ssrSettings(
     item("category_proxy") {
         PreferenceCategory(text = { Text(stringResource(Res.string.proxy_cat)) })
     }
-    item("address") {
+    preferenceGroup(key = "address") {
         TextFieldPreference(
             value = uiState.address,
             onValueChange = { viewModel.setAddress(it) },
             title = { Text(stringResource(Res.string.server_address)) },
             textToValue = { it },
-            icon = { Icon(vectorResource(Res.drawable.router), null) },
+            icon = {
+                MaskedIcon(Res.drawable.router, color = IconMaskColors.IconCyan)
+            },
             summary = { Text(contentOrUnset(uiState.address)) },
             valueToText = { it },
         )
-    }
-    item("port") {
+        PreferenceDivider()
         TextFieldPreference(
             value = uiState.port,
             onValueChange = { viewModel.setPort(it) },
             title = { Text(stringResource(Res.string.server_port)) },
             textToValue = { it.toIntOrNull() ?: 8388 },
-            icon = { Icon(vectorResource(Res.drawable.directions_boat), null) },
-            summary = { Text(contentOrUnset(uiState.port)) },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.directions_boat,
+                    color = IconMaskColors.IconCyan,
+                )
+            },
+            summary = { Text(uiState.port.toString()) },
             valueToText = { it.toString() },
             textField = { value, onValueChange, onOk ->
                 UIntegerTextField(value, onValueChange, onOk)
             },
         )
-    }
-    item("method") {
+        PreferenceDivider()
         ListPreference(
             value = uiState.method,
             values = encryptionMethods,
             onValueChange = { viewModel.setMethod(it) },
             title = { Text(stringResource(Res.string.enc_method)) },
-            icon = { Icon(vectorResource(Res.drawable.enhanced_encryption), null) },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.enhanced_encryption,
+                    color = IconMaskColors.IconLightBlue,
+                )
+            },
             summary = { Text(contentOrUnset(uiState.method)) },
             type = ListPreferenceType.DROPDOWN_MENU,
             valueToText = { AnnotatedString(it) },
         )
-    }
-    item("password") {
+        PreferenceDivider()
         PasswordPreference(
             value = uiState.password,
             onValueChange = { viewModel.setPassword(it) },
         )
     }
 
-    item("protocol") {
+    item("category_ssr") {
+        PreferenceCategory(text = { Text("SSR") })
+    }
+    preferenceGroup(key = "ssr") {
         ListPreference(
             value = uiState.protocol,
             values = protocols,
             onValueChange = { viewModel.setProtocol(it) },
             title = { Text(stringResource(Res.string.protocol)) },
-            icon = { Icon(vectorResource(Res.drawable.type_specimen), null) },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.type_specimen,
+                    color = IconMaskColors.IconLightGreen,
+                )
+            },
             summary = { Text(contentOrUnset(uiState.protocol)) },
             type = ListPreferenceType.DROPDOWN_MENU,
             valueToText = { AnnotatedString(it) },
         )
-    }
-    item("protocol_param") {
+        PreferenceDivider()
         TextFieldPreference(
             value = uiState.protocolParam,
             onValueChange = { viewModel.setProtocolParam(it) },
             title = { Text(stringResource(Res.string.protocol_param)) },
             textToValue = { it },
-            icon = { Icon(vectorResource(Res.drawable.settings), null) },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.settings,
+                    color = IconMaskColors.IconWarmGray,
+                )
+            },
             summary = { Text(contentOrUnset(uiState.protocolParam)) },
             valueToText = { it },
         )
-    }
-    item("obfs") {
+        PreferenceDivider()
         ListPreference(
             value = uiState.obfs,
             values = obfses,
             onValueChange = { viewModel.setObfs(it) },
             title = { Text(stringResource(Res.string.obfs)) },
-            icon = { Icon(vectorResource(Res.drawable.type_specimen), null) },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.type_specimen,
+                    color = IconMaskColors.IconLavender,
+                )
+            },
             summary = { Text(contentOrUnset(uiState.obfs)) },
             type = ListPreferenceType.DROPDOWN_MENU,
             valueToText = { AnnotatedString(it) },
         )
-    }
-    item("obfs_param") {
+        PreferenceDivider()
         TextFieldPreference(
             value = uiState.obfsParam,
             onValueChange = { viewModel.setObfsParam(it) },
             title = { Text(stringResource(Res.string.obfs_param)) },
             textToValue = { it },
-            icon = { Icon(vectorResource(Res.drawable.settings), null) },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.settings,
+                    color = IconMaskColors.IconWarmGray,
+                )
+            },
             summary = { Text(contentOrUnset(uiState.obfsParam)) },
             valueToText = { it },
         )
