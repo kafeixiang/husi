@@ -75,6 +75,7 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.viewmodel.compose.viewModel
 import fr.husi.compose.CapsuleActionButton
 import fr.husi.compose.ClipboardContent
+import fr.husi.compose.husiAppBarContainerColor
 import fr.husi.compose.CapsuleSearchInputField
 import fr.husi.compose.CapsuleSearchTopBar
 import fr.husi.compose.ExpandableDropdownMenuItem
@@ -296,16 +297,7 @@ fun ConfigurationScreen(
     val windowInsets = WindowInsets.safeDrawing
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val topAppBarColors = TopAppBarDefaults.topAppBarColors()
-    val appBarContainerColor by animateColorAsState(
-        targetValue = lerp(
-            topAppBarColors.containerColor,
-            topAppBarColors.scrolledContainerColor,
-            scrollBehavior.state.overlappedFraction.fastCoerceIn(0f, 1f),
-        ),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "appBarContainerColor",
-    )
+    val appBarContainerColor = husiAppBarContainerColor(scrollBehavior)
 
     LaunchedEffect(Unit) {
         vm.scrollToProxy(DataStore.selectedProxy.get())

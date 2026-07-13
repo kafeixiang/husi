@@ -64,6 +64,7 @@ import fr.husi.compose.CapsuleSearchInputField
 import fr.husi.compose.CapsuleSearchTopBar
 import fr.husi.compose.SagerFabClearance
 import fr.husi.compose.SheetActionRow
+import fr.husi.compose.husiAppBarContainerColor
 import fr.husi.compose.SimpleIconButton
 import fr.husi.compose.ansiEscape
 import fr.husi.compose.fadingEdge
@@ -168,6 +169,7 @@ fun LogcatScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val appBarContainerColor = husiAppBarContainerColor(scrollBehavior)
     val windowInsets = WindowInsets.safeDrawing
     val searchBarState = rememberSearchBarState()
     val searchTextFieldState = viewModel.searchTextFieldState
