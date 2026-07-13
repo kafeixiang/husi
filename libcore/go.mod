@@ -5,6 +5,7 @@ go 1.26
 require (
 	filippo.io/age v1.3.1
 	github.com/exclavenetwork/sing-juicity v0.2.0
+    github.com/enfein/mieru/v3 v3.34.1
 	github.com/gofrs/uuid/v5 v5.5.0
 	github.com/klauspost/compress v1.19.1
     github.com/metacubex/mihomo v1.19.29

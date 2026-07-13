@@ -34,6 +34,7 @@ object SingBoxOptions {
     const val TYPE_SHADOWSOCKS = "shadowsocks"
     const val TYPE_SNELL = "snell"
     const val TYPE_SSR = "ssr"
+    const val TYPE_MIERU = "mieru"
     const val TYPE_SOCKS = "socks"
     const val TYPE_SSH = "ssh"
     const val TYPE_TROJAN = "trojan"
@@ -1016,6 +1017,21 @@ object SingBoxOptions {
         @JvmField
         var rules: MutableList<HeadlessRule>? = null
 
+    }
+
+    @KxsSerializable
+    open class Outbound_MieruOptions : Outbound() {
+        @JvmField var server: String? = null
+        @JvmField var server_port: Int? = null
+        @JvmField var server_ports: MutableList<String>? = null
+        @JvmField var transport: String? = null
+        @JvmField var username: String? = null
+        @JvmField var password: String? = null
+        @JvmField var multiplexing: String? = null
+        @JvmField var traffic_pattern: String? = null
+        @JvmField var handshake_mode: String? = null
+        @JvmField var mtu: Int? = null
+        @JvmField var detour: String? = null
     }
 
     @KxsSerializable

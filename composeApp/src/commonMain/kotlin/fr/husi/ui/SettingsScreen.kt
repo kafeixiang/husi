@@ -177,6 +177,7 @@ import fr.husi.resources.long_click_to_see_name
 import fr.husi.resources.max_log_line
 import fr.husi.resources.mdns_network_interfaces
 import fr.husi.resources.menu
+import fr.husi.resources.mieru_provider
 import fr.husi.resources.mozilla
 import fr.husi.resources.mtu
 import fr.husi.resources.nat
@@ -1284,6 +1285,29 @@ private fun ProtocolSettingsGroup(
             )
         },
         summary = { Text(stringOrRes(pluginProviderText(juicityProviderValue))) },
+        type = ListPreferenceType.DROPDOWN_MENU,
+        valueToText = { AnnotatedString(stringOrRes(pluginProviderText(it))) },
+    )
+    PreferenceDivider()
+
+    val mieruProviderValue by DataStore.configurationStore
+        .intFlow(Key.PROVIDER_MIERU, ProtocolProvider.PLUGIN)
+        .collectAsStateWithLifecycle(ProtocolProvider.PLUGIN)
+    ListPreference(
+        value = mieruProviderValue,
+        onValueChange = {
+            DataStore.providerMieru = it
+            needReload()
+        },
+        values = listOf(ProtocolProvider.CORE, ProtocolProvider.PLUGIN),
+        title = { Text(stringResource(Res.string.mieru_provider)) },
+        icon = {
+            MaskedIcon(
+                Res.drawable.flight_takeoff,
+                color = IconMaskColors.IconLightYellow,
+            )
+        },
+        summary = { Text(stringOrRes(pluginProviderText(mieruProviderValue))) },
         type = ListPreferenceType.DROPDOWN_MENU,
         valueToText = { AnnotatedString(stringOrRes(pluginProviderText(it))) },
     )
