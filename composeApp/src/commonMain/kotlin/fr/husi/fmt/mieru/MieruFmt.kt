@@ -1,48 +1,53 @@
-/******************************************************************************
- * Copyright (C) 2022 by nekohasekai <contact-git@sekai.icu>                  *
- *                                                                            *
- * This program is free software: you can redistribute it and/or modify       *
- * it under the terms of the GNU General Public License as published by       *
- * the Free Software Foundation, either version 3 of the License, or          *
- *  (at your option) any later version.                                       *
- *                                                                            *
- * This program is distributed in the hope that it will be useful,            *
- * but WITHOUT ANY WARRANTY; without even the implied warranty of             *
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the              *
- * GNU General Public License for more details.                               *
- *                                                                            *
- * You should have received a copy of the GNU General Public License          *
- * along with this program. If not, see <http://www.gnu.org/licenses/>.       *
- *                                                                            *
- ******************************************************************************/
-
 package fr.husi.fmt.mieru
 
+import fr.husi.fmt.SingBoxOptions
+import fr.husi.fmt.parseBoxOutbound
+import fr.husi.ktx.JSONMap
 import fr.husi.ktx.blankAsNull
 import fr.husi.ktx.isIpAddress
 import fr.husi.ktx.queryParameterNotBlank
-import fr.husi.ktx.toJsonMapKxs
 import fr.husi.ktx.toJsonStringKxs
 import fr.husi.libcore.Libcore
-import fr.husi.logLevelString
 
 fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
-    val profile = mutableMapOf(
-        "profileName" to "default",
+    val profile = mutableMapOf<String, Any>(
+        "name" to "sing-box",
         "user" to mapOf(
             "name" to username,
-            "password" to password.also {
-                if (it.isEmpty()) error("mieru password is empty")
+            "password" to password,
+        ),
+        "portBindings" to listOf(
+            mapOf(
+                "port" to port,
+                "protocol" to protocol.uppercase(),
+            ),
+        ),
+    )
+    val config = mapOf(
+        "profiles" to listOf(profile),
+        "logging" to mapOf(
+            "level" to when (logLevel) {
+                0, 1 -> "PANIC"
+                2 -> "ERROR"
+                3 -> "WARN"
+                4 -> "INFO"
+                5 -> "DEBUG"
+                6 -> "TRACE"
+                else -> "INFO"
             },
         ),
         "servers" to listOf(
-            mutableMapOf<String, Any>(
+            mutableMapOf<String, Any?>(
                 "portBindings" to listOf(
                     mapOf(
                         "port" to finalPort,
                         "protocol" to protocol.uppercase(),
                     ),
                 ),
+                "mtu" to mtu,
+                "multiplexing" to mieruMuxToString(serverMuxNumber)?.let { mapOf("level" to it) },
+                "handshakeMode" to mieruHandshakeToString(handshakeMode),
+                "trafficPattern" to trafficPattern.takeIf { it.isNotBlank() && it != "1" },
             ).also {
                 // mieru refuses to parse a domain name in the ipAddress field.
                 if (finalAddress.isIpAddress()) {
@@ -54,85 +59,123 @@ fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
         ),
         "mtu" to mtu,
         "multiplexing" to mieruMuxToString(serverMuxNumber)?.let { mapOf("level" to it) },
-        // "handshakeMode" to "HANDSHAKE_NO_WAIT",
-        // https://github.com/enfein/mieru/issues/254
-        // Mieru TCP mux long-time mutex holding + no wait = bug.
-        "handshakeMode" to "HANDSHAKE_STANDARD",
+        "handshakeMode" to mieruHandshakeToString(handshakeMode),
     )
-    trafficPattern.blankAsNull()?.let { trafficPattern ->
-        profile["trafficPattern"] = runCatching {
-            trafficPattern.toJsonMapKxs().let {
-                it["trafficPattern"] ?: it
-            }
-        }.getOrElse { _ ->
-            Libcore.decodeMieruTrafficPattern(trafficPattern).toJsonMapKxs().let {
-                it["trafficPattern"] ?: it
-            }
-        }
+    trafficPattern.blankAsNull()?.let { pattern ->
+        profile["trafficPattern"] = runCatching<String> {
+            Libcore.encodeMieruTrafficPattern(pattern)
+        }.getOrNull() ?: pattern
     }
-    val basic = mutableMapOf(
-        "activeProfile" to "default",
-        "socks5Port" to port,
-        "loggingLevel" to logLevel.takeIf { it > 0 }?.let { logLevelString(it).uppercase() },
-        "advancedSettings" to mapOf("noCheckUpdate" to true),
-        "profiles" to listOf(profile),
-    )
-    return basic.toJsonStringKxs()
+    return config.toJsonStringKxs()
 }
 
-// https://github.com/enfein/mieru/blob/b1cd50fabb2f893c7878388767d97370dbb7a660/pkg/appctl/url.go#L51
 fun parseMieru(link: String): MieruBean = MieruBean().apply {
-    val url = Libcore.parseURL(link)
-    username = url.username
-    password = url.password
-    serverAddress = url.host
-    serverPort = url.ports.toIntOrNull() ?: defaultPort
-
-    name = url.queryParameter("profile")
-    mtu = url.queryParameterNotBlank("mtu")?.toIntOrNull() ?: 0
-    serverMuxNumber = url.queryParameter("multiplexing")?.let {
-        parseMieruMux(it)
-    } ?: 0
-    trafficPattern = url.queryParameter("traffic-pattern")
+    val uri = Libcore.parseURL(link)
+    serverAddress = uri.host
+    serverPort = uri.ports.toIntOrNull() ?: 0
+    username = uri.username
+    password = uri.password
+    protocol = uri.queryParameterNotBlank("transport")?.uppercase() ?: MieruBean.PROTOCOL_TCP
+    serverMuxNumber = uri.queryParameterNotBlank("multiplexing")?.let { parseMieruMux(it) } ?: 0
+    handshakeMode = uri.queryParameterNotBlank("handshake_mode")?.let { parseMieruHandshake(it) } ?: 2
+    heartbeatInterval = uri.queryParameterNotBlank("heartbeat_interval")?.toIntOrNull() ?: 0
+    heartbeatJitter = uri.queryParameterNotBlank("heartbeat_jitter")?.toDoubleOrNull() ?: 0.0
+    userHint = uri.queryParameterNotBlank("user_hint") ?: ""
+    trafficPattern = uri.queryParameterNotBlank("traffic_pattern")?.let { pattern ->
+        runCatching<String> {
+            Libcore.decodeMieruTrafficPattern(pattern)
+        }.getOrNull() ?: pattern
+    } ?: ""
+    name = uri.fragment
 }
 
-fun MieruBean.toUri(): String = Libcore.newURL("mierus").apply {
-    username = this@toUri.username
-    password = this@toUri.password
-    host = serverAddress
-    ports = serverPort.toString()
-
-    name.takeIf { it.isNotBlank() }?.let {
-        addQueryParameter("profile", it)
+fun MieruBean.toUri(): String {
+    val url = Libcore.newURL("mierus")
+    url.host = serverAddress
+    url.ports = serverPort.toString()
+    url.username = username
+    url.password = password
+    if (name.isNotBlank()) url.fragment = name
+    url.addQueryParameter("transport", protocol.lowercase())
+    if (serverMuxNumber > 0) {
+        url.addQueryParameter("multiplexing", mieruMuxToString(serverMuxNumber))
     }
-    mtu.takeIf { it > 0 }?.let {
-        addQueryParameter("mtu", it.toString())
+    if (handshakeMode != 0) {
+        url.addQueryParameter("handshake_mode", mieruHandshakeToString(handshakeMode))
     }
-    serverMuxNumber.takeIf { it > 0 }?.let {
-        addQueryParameter("multiplexing", mieruMuxToString(it))
+    if (heartbeatInterval > 0) {
+        url.addQueryParameter("heartbeat_interval", heartbeatInterval.toString())
     }
-    trafficPattern.blankAsNull()?.let { trafficPattern ->
-        val base64TrafficPattern = runCatching {
-            Libcore.encodeMieruTrafficPattern(trafficPattern)
-        }.getOrElse {
-            trafficPattern
-        }
-        addQueryParameter("traffic-pattern", base64TrafficPattern)
+    if (heartbeatJitter > 0.0) {
+        url.addQueryParameter("heartbeat_jitter", heartbeatJitter.toString())
     }
-}.string
-
-private fun parseMieruMux(link: String): Int? = when (link) {
-    "MULTIPLEXING_OFF" -> 0
-    "MULTIPLEXING_LOW" -> 1
-    "MULTIPLEXING_MEDIUM" -> 2
-    "MULTIPLEXING_HIGH" -> 3
-    else -> null
+    if (userHint.isNotBlank()) {
+        url.addQueryParameter("user_hint", userHint)
+    }
+    trafficPattern.blankAsNull()?.let { pattern ->
+        val base64TrafficPattern = runCatching<String> {
+            Libcore.encodeMieruTrafficPattern(pattern)
+        }.getOrNull() ?: pattern
+        url.addQueryParameter("traffic_pattern", base64TrafficPattern)
+    }
+    return url.string
 }
 
-private fun mieruMuxToString(level: Int): String? = when (level) {
-    // 0 -> "MULTIPLEXING_OFF"
+internal fun parseMieruMux(link: String): Int? = when (link.uppercase()) {
+    "MULTIPLEXING_OFF", "OFF" -> 0
+    "MULTIPLEXING_LOW", "LOW" -> 1
+    "MULTIPLEXING_MIDDLE", "MIDDLE", "MULTIPLEXING_MEDIUM", "MEDIUM" -> 2
+    "MULTIPLEXING_HIGH", "HIGH" -> 3
+    else -> link.toIntOrNull()
+}
+
+internal fun mieruMuxToString(level: Int): String? = when (level) {
+    0 -> "MULTIPLEXING_OFF"
     1 -> "MULTIPLEXING_LOW"
-    2 -> "MULTIPLEXING_MEDIUM"
+    2 -> "MULTIPLEXING_MIDDLE"
     3 -> "MULTIPLEXING_HIGH"
     else -> null
+}
+
+internal fun parseMieruHandshake(mode: String): Int? = when (mode.uppercase()) {
+    "HANDSHAKE_DEFAULT", "DEFAULT" -> 0
+    "HANDSHAKE_STANDARD", "STANDARD" -> 1
+    "HANDSHAKE_NO_WAIT", "0-RTT", "NO_WAIT" -> 2
+    else -> mode.toIntOrNull()
+}
+
+internal fun mieruHandshakeToString(mode: Int): String? = when (mode) {
+    0 -> "HANDSHAKE_DEFAULT"
+    1 -> "HANDSHAKE_STANDARD"
+    2 -> "HANDSHAKE_NO_WAIT"
+    else -> null
+}
+
+fun buildSingBoxOutboundMieruBean(bean: MieruBean): SingBoxOptions.Outbound_MieruOptions {
+    return SingBoxOptions.Outbound_MieruOptions().apply {
+        type = SingBoxOptions.TYPE_MIERU
+        server = bean.serverAddress
+        server_port = bean.serverPort
+        transport = bean.protocol.uppercase()
+        username = bean.username
+        password = bean.password
+        multiplexing = mieruMuxToString(bean.serverMuxNumber)
+        handshake_mode = mieruHandshakeToString(bean.handshakeMode)
+        traffic_pattern = bean.trafficPattern.takeIf { it.isNotBlank() && it != "1" }
+        mtu = bean.mtu.takeIf { it > 0 }
+    }
+}
+
+fun parseMieruOutbound(json: JSONMap): MieruBean = MieruBean().apply {
+    parseBoxOutbound(json) { key, value ->
+        when (key) {
+            "transport" -> protocol = value.toString().uppercase()
+            "username" -> username = value.toString()
+            "password" -> password = value.toString()
+            "multiplexing" -> serverMuxNumber = parseMieruMux(value.toString()) ?: 0
+            "handshake_mode" -> handshakeMode = parseMieruHandshake(value.toString()) ?: 0
+            "traffic_pattern" -> trafficPattern = value.toString()
+            "mtu" -> mtu = value.toString().toIntOrNull() ?: 0
+        }
+    }
 }

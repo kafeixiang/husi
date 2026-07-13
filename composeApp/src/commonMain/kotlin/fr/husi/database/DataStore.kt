@@ -212,6 +212,7 @@ object DataStore {
     val providerJuicity = configurationStore.int(Key.PROVIDER_JUICITY) { ProtocolProvider.PLUGIN }
     val providerNaive = configurationStore.int(Key.PROVIDER_NAIVE) { ProtocolProvider.CORE }
     var providerSSR = configurationStore.int(Key.PROVIDER_SSR) { ProtocolProvider.PLUGIN }
+    var providerMieru = configurationStore.int(Key.PROVIDER_MIERU) { ProtocolProvider.PLUGIN }
 
     val tunImplementation = configurationStore.int(Key.TUN_IMPLEMENTATION) { TunImplementation.MIXED }
     val profileTrafficStatistics = configurationStore.boolean(Key.PROFILE_TRAFFIC_STATISTICS) { true }

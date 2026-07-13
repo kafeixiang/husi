@@ -6,6 +6,7 @@ require (
 	filippo.io/age v1.3.2
 	github.com/coder/websocket v1.8.15
 	github.com/exclavenetwork/sing-juicity v0.3.0-beta.2
+	github.com/enfein/mieru/v3 v3.34.1
 	github.com/gofrs/uuid/v5 v5.5.1
 	github.com/klauspost/compress v1.19.2
 	github.com/metacubex/mihomo v1.19.30
