@@ -7,6 +7,7 @@ import fr.husi.ktx.blankAsNull
 import fr.husi.ktx.isIpAddress
 import fr.husi.ktx.queryParameterNotBlank
 import fr.husi.ktx.toJsonStringKxs
+import fr.husi.ktx.listByLineOrComma
 import fr.husi.libcore.Libcore
 
 fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
@@ -73,14 +74,12 @@ fun parseMieru(link: String): MieruBean = MieruBean().apply {
     val uri = Libcore.parseURL(link)
     serverAddress = uri.host
     serverPort = uri.ports.toIntOrNull() ?: 0
+    serverPorts = uri.queryParameterNotBlank("server_ports") ?: ""
     username = uri.username
     password = uri.password
     protocol = uri.queryParameterNotBlank("transport")?.uppercase() ?: MieruBean.PROTOCOL_TCP
     serverMuxNumber = uri.queryParameterNotBlank("multiplexing")?.let { parseMieruMux(it) } ?: 0
     handshakeMode = uri.queryParameterNotBlank("handshake_mode")?.let { parseMieruHandshake(it) } ?: 2
-    heartbeatInterval = uri.queryParameterNotBlank("heartbeat_interval")?.toIntOrNull() ?: 0
-    heartbeatJitter = uri.queryParameterNotBlank("heartbeat_jitter")?.toDoubleOrNull() ?: 0.0
-    userHint = uri.queryParameterNotBlank("user_hint") ?: ""
     trafficPattern = uri.queryParameterNotBlank("traffic_pattern")?.let { pattern ->
         runCatching<String> {
             Libcore.decodeMieruTrafficPattern(pattern)
@@ -96,21 +95,15 @@ fun MieruBean.toUri(): String {
     url.username = username
     url.password = password
     if (name.isNotBlank()) url.fragment = name
+    if (serverPorts.isNotBlank()) {
+        url.addQueryParameter("server_ports", serverPorts)
+    }
     url.addQueryParameter("transport", protocol.lowercase())
     if (serverMuxNumber > 0) {
         url.addQueryParameter("multiplexing", mieruMuxToString(serverMuxNumber))
     }
     if (handshakeMode != 0) {
         url.addQueryParameter("handshake_mode", mieruHandshakeToString(handshakeMode))
-    }
-    if (heartbeatInterval > 0) {
-        url.addQueryParameter("heartbeat_interval", heartbeatInterval.toString())
-    }
-    if (heartbeatJitter > 0.0) {
-        url.addQueryParameter("heartbeat_jitter", heartbeatJitter.toString())
-    }
-    if (userHint.isNotBlank()) {
-        url.addQueryParameter("user_hint", userHint)
     }
     trafficPattern.blankAsNull()?.let { pattern ->
         val base64TrafficPattern = runCatching<String> {
@@ -155,7 +148,11 @@ fun buildSingBoxOutboundMieruBean(bean: MieruBean): SingBoxOptions.Outbound_Mier
     return SingBoxOptions.Outbound_MieruOptions().apply {
         type = SingBoxOptions.TYPE_MIERU
         server = bean.serverAddress
-        server_port = bean.serverPort
+        if (bean.serverPorts.isNotBlank()) {
+            server_ports = bean.serverPorts.listByLineOrComma().toMutableList()
+        } else {
+            server_port = bean.serverPort
+        }
         transport = bean.protocol.uppercase()
         username = bean.username
         password = bean.password
@@ -169,6 +166,7 @@ fun buildSingBoxOutboundMieruBean(bean: MieruBean): SingBoxOptions.Outbound_Mier
 fun parseMieruOutbound(json: JSONMap): MieruBean = MieruBean().apply {
     parseBoxOutbound(json) { key, value ->
         when (key) {
+            "server_ports" -> serverPorts = (value as? List<*>)?.joinToString(",") ?: value.toString()
             "transport" -> protocol = value.toString().uppercase()
             "username" -> username = value.toString()
             "password" -> password = value.toString()

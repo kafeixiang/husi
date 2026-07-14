@@ -123,6 +123,7 @@ private fun LazyListScope.mieruSettings(
             onValueChange = { viewModel.setPort(it) },
             title = { Text(stringResource(Res.string.server_port)) },
             textToValue = { it.toIntOrNull() ?: 443 },
+            enabled = uiState.ports.isBlank(),
             icon = {
                 MaskedIcon(
                     Res.drawable.directions_boat,
