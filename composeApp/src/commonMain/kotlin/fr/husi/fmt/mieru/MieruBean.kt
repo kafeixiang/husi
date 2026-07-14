@@ -28,6 +28,7 @@ class MieruBean : AbstractBean() {
     var protocol: String = PROTOCOL_TCP
     var username: String = ""
     var password: String = ""
+    var serverPorts: String = ""
     var mtu: Int = 1400
     var trafficPattern: String = ""
     var handshakeMode: Int = 2 // 0: DEFAULT, 1: STANDARD, 2: NO_WAIT
@@ -43,7 +44,7 @@ class MieruBean : AbstractBean() {
     }
 
     override fun serialize(output: ByteBufferOutput) {
-        output.writeInt(4) // Version 4: Added heartbeat and userHint
+        output.writeInt(5) // Version 5: Added serverPorts
         super.serialize(output)
         output.writeString(protocol)
         output.writeString(username)
@@ -56,6 +57,7 @@ class MieruBean : AbstractBean() {
         output.writeInt(heartbeatInterval)
         output.writeDouble(heartbeatJitter)
         output.writeString(userHint)
+        output.writeString(serverPorts)
     }
 
     override fun deserialize(input: ByteBufferInput) {
@@ -82,6 +84,9 @@ class MieruBean : AbstractBean() {
             heartbeatJitter = input.readDouble()
             userHint = input.readString()
         }
+        if (version >= 5) {
+            serverPorts = input.readString() ?: ""
+        }
     }
 
     override fun applyFeatureSettings(other: AbstractBean) {
@@ -89,6 +94,7 @@ class MieruBean : AbstractBean() {
         protocol = other.protocol
         username = other.username
         password = other.password
+        serverPorts = other.serverPorts
         mtu = other.mtu
         trafficPattern = other.trafficPattern
         handshakeMode = other.handshakeMode

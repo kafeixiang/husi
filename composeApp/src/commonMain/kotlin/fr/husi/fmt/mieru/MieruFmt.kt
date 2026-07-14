@@ -7,6 +7,7 @@ import fr.husi.ktx.blankAsNull
 import fr.husi.ktx.isIpAddress
 import fr.husi.ktx.queryParameterNotBlank
 import fr.husi.ktx.toJsonStringKxs
+import fr.husi.ktx.listByLineOrComma
 import fr.husi.libcore.Libcore
 
 fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
@@ -73,6 +74,7 @@ fun parseMieru(link: String): MieruBean = MieruBean().apply {
     val uri = Libcore.parseURL(link)
     serverAddress = uri.host
     serverPort = uri.ports.toIntOrNull() ?: 0
+    serverPorts = uri.queryParameterNotBlank("server_ports") ?: ""
     username = uri.username
     password = uri.password
     protocol = uri.queryParameterNotBlank("transport")?.uppercase() ?: MieruBean.PROTOCOL_TCP
@@ -96,6 +98,9 @@ fun MieruBean.toUri(): String {
     url.username = username
     url.password = password
     if (name.isNotBlank()) url.fragment = name
+    if (serverPorts.isNotBlank()) {
+        url.addQueryParameter("server_ports", serverPorts)
+    }
     url.addQueryParameter("transport", protocol.lowercase())
     if (serverMuxNumber > 0) {
         url.addQueryParameter("multiplexing", mieruMuxToString(serverMuxNumber))
@@ -155,12 +160,19 @@ fun buildSingBoxOutboundMieruBean(bean: MieruBean): SingBoxOptions.Outbound_Mier
     return SingBoxOptions.Outbound_MieruOptions().apply {
         type = SingBoxOptions.TYPE_MIERU
         server = bean.serverAddress
-        server_port = bean.serverPort
+        if (bean.serverPorts.isNotBlank()) {
+            server_ports = bean.serverPorts.listByLineOrComma().toMutableList()
+        } else {
+            server_port = bean.serverPort
+        }
         transport = bean.protocol.uppercase()
         username = bean.username
         password = bean.password
         multiplexing = mieruMuxToString(bean.serverMuxNumber)
         handshake_mode = mieruHandshakeToString(bean.handshakeMode)
+        heartbeat_interval = bean.heartbeatInterval.takeIf { it > 0 }?.let { "${it}s" }
+        heartbeat_jitter = bean.heartbeatJitter.takeIf { it > 0.0 }
+        user_hint = bean.userHint.takeIf { it.isNotBlank() }
         traffic_pattern = bean.trafficPattern.takeIf { it.isNotBlank() && it != "1" }
         mtu = bean.mtu.takeIf { it > 0 }
     }
@@ -169,11 +181,15 @@ fun buildSingBoxOutboundMieruBean(bean: MieruBean): SingBoxOptions.Outbound_Mier
 fun parseMieruOutbound(json: JSONMap): MieruBean = MieruBean().apply {
     parseBoxOutbound(json) { key, value ->
         when (key) {
+            "server_ports" -> serverPorts = (value as? List<*>)?.joinToString(",") ?: value.toString()
             "transport" -> protocol = value.toString().uppercase()
             "username" -> username = value.toString()
             "password" -> password = value.toString()
             "multiplexing" -> serverMuxNumber = parseMieruMux(value.toString()) ?: 0
             "handshake_mode" -> handshakeMode = parseMieruHandshake(value.toString()) ?: 0
+            "heartbeat_interval" -> heartbeatInterval = value.toString().removeSuffix("s").toIntOrNull() ?: 0
+            "heartbeat_jitter" -> heartbeatJitter = value.toString().toDoubleOrNull() ?: 0.0
+            "user_hint" -> userHint = value.toString()
             "traffic_pattern" -> trafficPattern = value.toString()
             "mtu" -> mtu = value.toString().toIntOrNull() ?: 0
         }

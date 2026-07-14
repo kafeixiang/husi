@@ -244,6 +244,17 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 	if handshakeMode, ok := mierupb.HandshakeMode_value[options.HandshakeMode]; ok {
 		config.Profile.HandshakeMode = mierupb.HandshakeMode(handshakeMode).Enum()
 	}
+	if options.HeartbeatInterval != "" {
+		if interval, err := time.ParseDuration(options.HeartbeatInterval); err == nil {
+			config.Profile.HeartbeatInterval = proto.Int32(int32(interval.Seconds()))
+		}
+	}
+	if options.HeartbeatJitter > 0 {
+		config.Profile.HeartbeatJitter = proto.Float64(options.HeartbeatJitter)
+	}
+	if options.UserHint != "" {
+		config.Profile.UserHint = proto.String(options.UserHint)
+	}
 	if options.TrafficPattern != "" {
 		trafficPattern, _ := mierutp.Decode(options.TrafficPattern)
 		config.Profile.TrafficPattern = trafficPattern

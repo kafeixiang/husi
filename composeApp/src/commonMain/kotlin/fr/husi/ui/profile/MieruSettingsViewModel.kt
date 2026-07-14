@@ -13,6 +13,7 @@ internal data class MieruUiState(
     val name: String = "",
     val address: String = "127.0.0.1",
     val port: Int = 1080,
+    val ports: String = "",
     val protocol: String = MieruBean.PROTOCOL_TCP,
     val username: String = "",
     val password: String = "",
@@ -40,6 +41,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
                 name = name,
                 address = serverAddress,
                 port = serverPort,
+                ports = serverPorts,
                 protocol = protocol,
                 username = username,
                 password = password,
@@ -61,6 +63,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
         name = state.name
         serverAddress = state.address
         serverPort = state.port
+        serverPorts = state.ports
         protocol = state.protocol
         username = state.username
         password = state.password
@@ -91,6 +94,10 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
 
     fun setPort(port: Int) {
         _uiState.update { it.copy(port = port) }
+    }
+
+    fun setPorts(ports: String) {
+        _uiState.update { it.copy(ports = ports) }
     }
 
     fun setProtocol(protocol: String) {

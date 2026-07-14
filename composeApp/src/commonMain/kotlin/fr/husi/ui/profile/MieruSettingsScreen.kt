@@ -126,6 +126,7 @@ private fun LazyListScope.mieruSettings(
             onValueChange = { viewModel.setPort(it) },
             title = { Text(stringResource(Res.string.server_port)) },
             textToValue = { it.toIntOrNull() ?: 443 },
+            enabled = uiState.ports.isBlank(),
             icon = {
                 MaskedIcon(
                     Res.drawable.directions_boat,
@@ -137,6 +138,21 @@ private fun LazyListScope.mieruSettings(
             textField = { value, onValueChange, onOk ->
                 UIntegerTextField(value, onValueChange, onOk)
             },
+        )
+        PreferenceDivider()
+        TextFieldPreference(
+            value = uiState.ports,
+            onValueChange = { viewModel.setPorts(it) },
+            title = { Text("Server Ports (Ranges)") },
+            textToValue = { it },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.directions_boat,
+                    color = IconMaskColors.IconCyan,
+                )
+            },
+            summary = { Text(contentOrUnset(uiState.ports)) },
+            valueToText = { it },
         )
     }
 
