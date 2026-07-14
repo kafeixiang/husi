@@ -126,6 +126,7 @@ private fun LazyListScope.mieruSettings(
             onValueChange = { viewModel.setPort(it) },
             title = { Text(stringResource(Res.string.server_port)) },
             textToValue = { it.toIntOrNull() ?: 443 },
+            enabled = uiState.ports.isBlank(),
             icon = {
                 MaskedIcon(
                     Res.drawable.directions_boat,
@@ -137,6 +138,21 @@ private fun LazyListScope.mieruSettings(
             textField = { value, onValueChange, onOk ->
                 UIntegerTextField(value, onValueChange, onOk)
             },
+        )
+        PreferenceDivider()
+        TextFieldPreference(
+            value = uiState.ports,
+            onValueChange = { viewModel.setPorts(it) },
+            title = { Text("Server Ports (Ranges)") },
+            textToValue = { it },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.directions_boat,
+                    color = IconMaskColors.IconCyan,
+                )
+            },
+            summary = { Text(contentOrUnset(uiState.ports)) },
+            valueToText = { it },
         )
     }
 
@@ -228,54 +244,6 @@ private fun LazyListScope.mieruSettings(
             summary = { Text(handshakeSummary(uiState.handshakeMode)) },
             type = ListPreferenceType.DROPDOWN_MENU,
             valueToText = { AnnotatedString(handshakeSummary(it)) },
-        )
-        PreferenceDivider()
-        TextFieldPreference(
-            value = uiState.heartbeatInterval,
-            onValueChange = { viewModel.setHeartbeatInterval(it) },
-            title = { Text("Heartbeat Interval") },
-            textToValue = { it.toIntOrNull() ?: 0 },
-            icon = {
-                MaskedIcon(
-                    Res.drawable.compare_arrows,
-                    color = IconMaskColors.IconLightOrange,
-                )
-            },
-            summary = { Text(if (uiState.heartbeatInterval > 0) "${uiState.heartbeatInterval}s" else "DEFAULT") },
-            valueToText = { it.toString() },
-            textField = { value, onValueChange, onOk ->
-                UIntegerTextField(value, onValueChange, onOk)
-            },
-        )
-        PreferenceDivider()
-        TextFieldPreference(
-            value = uiState.heartbeatJitter,
-            onValueChange = { viewModel.setHeartbeatJitter(it) },
-            title = { Text("Heartbeat Jitter") },
-            textToValue = { it.toDoubleOrNull() ?: 0.0 },
-            icon = {
-                MaskedIcon(
-                    Res.drawable.compare_arrows,
-                    color = IconMaskColors.IconLightOrange,
-                )
-            },
-            summary = { Text(if (uiState.heartbeatJitter > 0.0) uiState.heartbeatJitter.toString() else "DEFAULT") },
-            valueToText = { it.toString() },
-        )
-        PreferenceDivider()
-        TextFieldPreference(
-            value = uiState.userHint,
-            onValueChange = { viewModel.setUserHint(it) },
-            title = { Text("User Hint") },
-            textToValue = { it },
-            icon = {
-                MaskedIcon(
-                    Res.drawable.person,
-                    color = IconMaskColors.IconWarmGray,
-                )
-            },
-            summary = { Text(contentOrUnset(uiState.userHint)) },
-            valueToText = { it },
         )
         PreferenceDivider()
         TextFieldPreference(
