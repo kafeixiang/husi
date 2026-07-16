@@ -9,6 +9,8 @@ import fr.husi.fmt.KryoConverters
 @KxsSerializable
 class MieruBean : AbstractBean() {
 
+    override val defaultPort get() = 443
+
     companion object {
         const val PROTOCOL_TCP = "TCP"
         const val PROTOCOL_UDP = "UDP"

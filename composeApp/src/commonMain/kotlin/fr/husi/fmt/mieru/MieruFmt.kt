@@ -48,6 +48,9 @@ fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
                 "mtu" to mtu,
                 "multiplexing" to mieruMuxToString(serverMuxNumber)?.let { mapOf("level" to it) },
                 "handshakeMode" to mieruHandshakeToString(handshakeMode),
+                "heartbeatInterval" to heartbeatInterval.takeIf { it > 0 },
+                "heartbeatJitter" to heartbeatJitter.takeIf { it > 0.0 },
+                "userHint" to userHint.takeIf { it.isNotBlank() },
                 "trafficPattern" to trafficPattern.takeIf { it.isNotBlank() && it != "1" },
             ).also {
                 // mieru refuses to parse a domain name in the ipAddress field.
@@ -61,6 +64,9 @@ fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
         "mtu" to mtu,
         "multiplexing" to mieruMuxToString(serverMuxNumber)?.let { mapOf("level" to it) },
         "handshakeMode" to mieruHandshakeToString(handshakeMode),
+        "heartbeatInterval" to heartbeatInterval.takeIf { it > 0 },
+        "heartbeatJitter" to heartbeatJitter.takeIf { it > 0.0 },
+        "userHint" to userHint.takeIf { it.isNotBlank() },
     )
     trafficPattern.blankAsNull()?.let { pattern ->
         profile["trafficPattern"] = runCatching<String> {

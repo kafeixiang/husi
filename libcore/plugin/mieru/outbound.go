@@ -236,9 +236,9 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 	if options.MTU > 0 {
 		config.Profile.Mtu = proto.Int32(int32(options.MTU))
 	}
-	if multiplexing, ok := mierupb.MultiplexingLevel_value[options.Multiplexing]; ok {
+	if multiplexing, ok := mieruMuxValue(options.Multiplexing); ok {
 		config.Profile.Multiplexing = &mierupb.MultiplexingConfig{
-			Level: mierupb.MultiplexingLevel(multiplexing).Enum(),
+			Level: multiplexing.Enum(),
 		}
 	}
 	if handshakeMode, ok := mierupb.HandshakeMode_value[options.HandshakeMode]; ok {
@@ -315,13 +315,19 @@ func validateMieruOptions(options pluginoption.MieruOutboundOptions) error {
 	return nil
 }
 
-func mieruMuxValue(s string) (int32, bool) {
+func mieruMuxValue(s string) (mierupb.MultiplexingLevel, bool) {
 	if v, ok := mierupb.MultiplexingLevel_value[s]; ok {
-		return v, true
+		return mierupb.MultiplexingLevel(v), true
 	}
 	switch s {
-	case "MEDIUM":
-		return mierupb.MultiplexingLevel_value["MULTIPLEXING_MIDDLE"], true
+	case "MIDDLE", "MEDIUM", "MULTIPLEXING_MEDIUM":
+		return mierupb.MultiplexingLevel_MULTIPLEXING_MIDDLE, true
+	case "LOW", "MULTIPLEXING_LOW":
+		return mierupb.MultiplexingLevel_MULTIPLEXING_LOW, true
+	case "HIGH", "MULTIPLEXING_HIGH":
+		return mierupb.MultiplexingLevel_MULTIPLEXING_HIGH, true
+	case "OFF", "MULTIPLEXING_OFF":
+		return mierupb.MultiplexingLevel_MULTIPLEXING_OFF, true
 	}
 	return 0, false
 }
