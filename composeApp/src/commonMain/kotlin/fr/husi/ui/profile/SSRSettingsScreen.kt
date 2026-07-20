@@ -16,6 +16,7 @@ import fr.husi.compose.preferenceGroup
 import fr.husi.fmt.ssr.SSRBean
 import fr.husi.ktx.contentOrUnset
 import fr.husi.resources.Res
+import fr.husi.resources.action_ssr
 import fr.husi.resources.directions_boat
 import fr.husi.resources.emoji_symbols
 import fr.husi.resources.enc_method
@@ -171,7 +172,7 @@ private fun LazyListScope.ssrSettings(
             summary = { Text(uiState.port.toString()) },
             valueToText = { it.toString() },
             textField = { value, onValueChange, onOk ->
-                UIntegerTextField(value, onValueChange, onOk)
+                UIntegerTextField(value, onValueChange, onOk, minValue = 1, maxValue = 65535)
             },
         )
         PreferenceDivider()
@@ -198,7 +199,7 @@ private fun LazyListScope.ssrSettings(
     }
 
     item("category_ssr") {
-        PreferenceCategory(text = { Text("SSR") })
+        PreferenceCategory(text = { Text(stringResource(Res.string.action_ssr)) })
     }
     preferenceGroup(key = "ssr") {
         ListPreference(

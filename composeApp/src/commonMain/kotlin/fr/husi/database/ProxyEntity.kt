@@ -332,7 +332,6 @@ data class ProxyEntity(
     fun mustUsePlugin(): Boolean = when (type) {
         TYPE_MIERU -> DataStore.providerMieru == ProtocolProvider.PLUGIN
         TYPE_JUICITY -> DataStore.providerJuicity == ProtocolProvider.PLUGIN
-        TYPE_SSR -> DataStore.providerSSR == ProtocolProvider.PLUGIN
         TYPE_SHADOWQUIC -> true
         else -> false
     }
