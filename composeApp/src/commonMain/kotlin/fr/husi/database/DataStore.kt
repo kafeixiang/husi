@@ -223,7 +223,7 @@ object DataStore {
     var providerJuicity by configurationStore.int(Key.PROVIDER_JUICITY) { ProtocolProvider.PLUGIN }
     var providerMieru by configurationStore.int(Key.PROVIDER_MIERU) { ProtocolProvider.PLUGIN }
     var providerNaive by configurationStore.int(Key.PROVIDER_NAIVE) { ProtocolProvider.CORE }
-    var providerSSR by configurationStore.int(Key.PROVIDER_SSR) { ProtocolProvider.PLUGIN }
+    var providerSSR by configurationStore.int(Key.PROVIDER_SSR) { ProtocolProvider.CORE }
 
     var tunImplementation by configurationStore.int(Key.TUN_IMPLEMENTATION) { TunImplementation.MIXED }
     var profileTrafficStatistics by configurationStore.boolean(Key.PROFILE_TRAFFIC_STATISTICS) { true }
