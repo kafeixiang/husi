@@ -244,15 +244,6 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 	if handshakeMode, ok := mierupb.HandshakeMode_value[options.HandshakeMode]; ok {
 		config.Profile.HandshakeMode = mierupb.HandshakeMode(handshakeMode).Enum()
 	}
-	if options.HeartbeatInterval != "" {
-		// Mieru v3 handles heartbeats internally.
-	}
-	if options.HeartbeatJitter > 0 {
-		// Mieru v3 handles jitter internally.
-	}
-	if options.UserHint != "" {
-		// Mieru v3 derives UserHint from username automatically.
-	}
 	if options.TrafficPattern != "" {
 		trafficPattern, _ := mierutp.Decode(options.TrafficPattern)
 		config.Profile.TrafficPattern = trafficPattern

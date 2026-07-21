@@ -48,9 +48,6 @@ fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
                 "mtu" to mtu,
                 "multiplexing" to mieruMuxToString(serverMuxNumber)?.let { mapOf("level" to it) },
                 "handshakeMode" to mieruHandshakeToString(handshakeMode),
-                "heartbeatInterval" to heartbeatInterval.takeIf { it > 0 },
-                "heartbeatJitter" to heartbeatJitter.takeIf { it > 0.0 },
-                "userHint" to userHint.takeIf { it.isNotBlank() },
                 "trafficPattern" to trafficPattern.takeIf { it.isNotBlank() && it != "1" },
             ).also {
                 // mieru refuses to parse a domain name in the ipAddress field.
@@ -64,9 +61,6 @@ fun MieruBean.buildMieruConfig(port: Int, logLevel: Int): String {
         "mtu" to mtu,
         "multiplexing" to mieruMuxToString(serverMuxNumber)?.let { mapOf("level" to it) },
         "handshakeMode" to mieruHandshakeToString(handshakeMode),
-        "heartbeatInterval" to heartbeatInterval.takeIf { it > 0 },
-        "heartbeatJitter" to heartbeatJitter.takeIf { it > 0.0 },
-        "userHint" to userHint.takeIf { it.isNotBlank() },
     )
     trafficPattern.blankAsNull()?.let { pattern ->
         profile["trafficPattern"] = runCatching<String> {
@@ -86,9 +80,6 @@ fun parseMieru(link: String): MieruBean = MieruBean().apply {
     protocol = uri.queryParameterNotBlank("transport")?.uppercase() ?: MieruBean.PROTOCOL_TCP
     serverMuxNumber = uri.queryParameterNotBlank("multiplexing")?.let { parseMieruMux(it) } ?: 0
     handshakeMode = uri.queryParameterNotBlank("handshake_mode")?.let { parseMieruHandshake(it) } ?: 2
-    heartbeatInterval = uri.queryParameterNotBlank("heartbeat_interval")?.toIntOrNull() ?: 0
-    heartbeatJitter = uri.queryParameterNotBlank("heartbeat_jitter")?.toDoubleOrNull() ?: 0.0
-    userHint = uri.queryParameterNotBlank("user_hint") ?: ""
     trafficPattern = uri.queryParameterNotBlank("traffic_pattern")?.let { pattern ->
         runCatching<String> {
             Libcore.decodeMieruTrafficPattern(pattern)
@@ -113,15 +104,6 @@ fun MieruBean.toUri(): String {
     }
     if (handshakeMode != 0) {
         url.addQueryParameter("handshake_mode", mieruHandshakeToString(handshakeMode))
-    }
-    if (heartbeatInterval > 0) {
-        url.addQueryParameter("heartbeat_interval", heartbeatInterval.toString())
-    }
-    if (heartbeatJitter > 0.0) {
-        url.addQueryParameter("heartbeat_jitter", heartbeatJitter.toString())
-    }
-    if (userHint.isNotBlank()) {
-        url.addQueryParameter("user_hint", userHint)
     }
     trafficPattern.blankAsNull()?.let { pattern ->
         val base64TrafficPattern = runCatching<String> {
@@ -176,9 +158,6 @@ fun buildSingBoxOutboundMieruBean(bean: MieruBean): SingBoxOptions.Outbound_Mier
         password = bean.password
         multiplexing = mieruMuxToString(bean.serverMuxNumber)
         handshake_mode = mieruHandshakeToString(bean.handshakeMode)
-        heartbeat_interval = bean.heartbeatInterval.takeIf { it > 0 }?.let { "${it}s" }
-        heartbeat_jitter = bean.heartbeatJitter.takeIf { it > 0.0 }
-        user_hint = bean.userHint.takeIf { it.isNotBlank() }
         traffic_pattern = bean.trafficPattern.takeIf { it.isNotBlank() && it != "1" }
         mtu = bean.mtu.takeIf { it > 0 }
     }
@@ -193,9 +172,6 @@ fun parseMieruOutbound(json: JSONMap): MieruBean = MieruBean().apply {
             "password" -> password = value.toString()
             "multiplexing" -> serverMuxNumber = parseMieruMux(value.toString()) ?: 0
             "handshake_mode" -> handshakeMode = parseMieruHandshake(value.toString()) ?: 0
-            "heartbeat_interval" -> heartbeatInterval = value.toString().removeSuffix("s").toIntOrNull() ?: 0
-            "heartbeat_jitter" -> heartbeatJitter = value.toString().toDoubleOrNull() ?: 0.0
-            "user_hint" -> userHint = value.toString()
             "traffic_pattern" -> trafficPattern = value.toString()
             "mtu" -> mtu = value.toString().toIntOrNull() ?: 0
         }

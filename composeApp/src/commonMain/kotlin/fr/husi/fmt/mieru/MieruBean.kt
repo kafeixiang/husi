@@ -34,9 +34,6 @@ class MieruBean : AbstractBean() {
     var mtu: Int = 1400
     var trafficPattern: String = ""
     var handshakeMode: Int = 2 // 0: DEFAULT, 1: STANDARD, 2: NO_WAIT
-    var heartbeatInterval: Int = 0
-    var heartbeatJitter: Double = 0.0
-    var userHint: String = ""
 
     override fun initializeDefaultValues() {
         super.initializeDefaultValues()
@@ -46,7 +43,7 @@ class MieruBean : AbstractBean() {
     }
 
     override fun serialize(output: ByteBufferOutput) {
-        output.writeInt(5) // Version 5: Added serverPorts
+        output.writeInt(6) // Version 6: Removed heartbeatInterval, heartbeatJitter, userHint
         super.serialize(output)
         output.writeString(protocol)
         output.writeString(username)
@@ -56,9 +53,6 @@ class MieruBean : AbstractBean() {
         }
         output.writeString(trafficPattern)
         output.writeInt(handshakeMode)
-        output.writeInt(heartbeatInterval)
-        output.writeDouble(heartbeatJitter)
-        output.writeString(userHint)
         output.writeString(serverPorts)
     }
 
@@ -81,10 +75,10 @@ class MieruBean : AbstractBean() {
         if (version >= 3) {
             handshakeMode = input.readInt()
         }
-        if (version >= 4) {
-            heartbeatInterval = input.readInt()
-            heartbeatJitter = input.readDouble()
-            userHint = input.readString()
+        if (version in 4..5) {
+            input.readInt() // heartbeatInterval
+            input.readDouble() // heartbeatJitter
+            input.readString() // userHint
         }
         if (version >= 5) {
             serverPorts = input.readString() ?: ""
@@ -100,9 +94,6 @@ class MieruBean : AbstractBean() {
         mtu = other.mtu
         trafficPattern = other.trafficPattern
         handshakeMode = other.handshakeMode
-        heartbeatInterval = other.heartbeatInterval
-        heartbeatJitter = other.heartbeatJitter
-        userHint = other.userHint
     }
 
     override val canTCPing get() = protocol == PROTOCOL_TCP
