@@ -245,15 +245,13 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 		config.Profile.HandshakeMode = mierupb.HandshakeMode(handshakeMode).Enum()
 	}
 	if options.HeartbeatInterval != "" {
-		if interval, err := time.ParseDuration(options.HeartbeatInterval); err == nil {
-			config.Profile.HeartbeatInterval = proto.Int32(int32(interval.Seconds()))
-		}
+		// Mieru v3 handles heartbeats internally.
 	}
 	if options.HeartbeatJitter > 0 {
-		config.Profile.HeartbeatJitter = proto.Float64(options.HeartbeatJitter)
+		// Mieru v3 handles jitter internally.
 	}
 	if options.UserHint != "" {
-		config.Profile.UserHint = proto.String(options.UserHint)
+		// Mieru v3 derives UserHint from username automatically.
 	}
 	if options.TrafficPattern != "" {
 		trafficPattern, _ := mierutp.Decode(options.TrafficPattern)
