@@ -21,16 +21,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: ./.github/actions/load-build-versions
       - name: Golang Status
         run: find buildScript libcore/*.sh | xargs cat | sha1sum > golang_status
       - name: Libcore Status
         run: git ls-files libcore | xargs cat | sha1sum > libcore_status
       - name: LibCore Cache
         id: cache
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             composeApp/libs
@@ -55,56 +56,44 @@ jobs:
             exit 0
           fi
           echo "ready=false" >> "$GITHUB_OUTPUT"
-      - name: Golang Version
-        if: steps.verify_libcore.outputs.ready != 'true'
-        id: version
-        run: |
-          source buildScript/init/version.sh
-          echo go_version=$GO_VERSION >> $GITHUB_OUTPUT
       - name: Install Golang
         if: steps.verify_libcore.outputs.ready != 'true'
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: ${{ steps.version.outputs.go_version }}
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: libcore/go.sum
       - uses: actions/setup-java@v5
         if: steps.verify_libcore.outputs.ready != 'true'
         with:
-          java-version: "21"
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
       - name: Setup Android NDK
         if: steps.verify_libcore.outputs.ready != 'true'
-        # Pin NDK version for `gomobile`.
         id: setup-ndk
         uses: nttld/setup-ndk@v1
         with:
           add-to-path: true
-          ndk-version: r29
+          ndk-version: ${{ env.ANDROID_NDK_VERSION }}
           local-cache: false
-      - name: Resolve cronet-go version
-        if: steps.verify_libcore.outputs.ready != 'true'
-        id: cronet-go-version
-        run: |
-          echo "version=$(tr -d '[:space:]' < .github/CRONET_GO_VERSION)" >> "$GITHUB_OUTPUT"
       - name: Checkout cronet-go
         if: steps.verify_libcore.outputs.ready != 'true'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: sagernet/cronet-go
-          ref: ${{ steps.cronet-go-version.outputs.version }}
+          ref: ${{ env.CRONET_GO_COMMIT }}
           path: cronet-go
           submodules: recursive
           fetch-depth: 1
       - name: Cache Chromium toolchain
         if: steps.verify_libcore.outputs.ready != 'true'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: |
             cronet-go/naiveproxy/src/third_party/llvm-build/
             cronet-go/naiveproxy/src/gn/out/
             cronet-go/naiveproxy/src/chrome/build/pgo_profiles/
             cronet-go/naiveproxy/src/out/sysroot-build/
-          key: cronet-toolchain-linux-amd64-arm64-${{ steps.cronet-go-version.outputs.version }}
+          key: cronet-toolchain-linux-amd64-arm64-${{ env.CRONET_GO_COMMIT }}
       - name: Download Chromium toolchain
         if: steps.verify_libcore.outputs.ready != 'true'
         run: |
@@ -138,9 +127,10 @@ jobs:
       - libcore
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: ./.github/actions/load-build-versions
       - name: LibCore Artifact
         uses: actions/download-artifact@v8
         with:
@@ -153,22 +143,23 @@ jobs:
           test -f composeApp/libs/libcore-desktop-linux-amd64.jar
       - uses: actions/setup-java@v5
         with:
-          java-version: "21"
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
       - uses: gradle/actions/setup-gradle@v5
-      - name: Golang Version
-        id: version
-        run: |
-          source buildScript/init/version.sh
-          echo go_version=$GO_VERSION >> $GITHUB_OUTPUT
       - name: Install Golang
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: ${{ steps.version.outputs.go_version }}
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: libcore/go.sum
-      - name: Build Assets
-        run: |
-          ./run init action gradle
+      - name: Cache route assets
+        id: cache-assets
+        uses: actions/cache@v6
+        with:
+          path: composeApp/src/commonMain/composeResources/files/sing-box
+          key: assets-${{ env.GEOIP_VERSION }}-${{ env.GEOSITE_VERSION }}
+      - name: Prepare assets
+        if: steps.cache-assets.outputs.cache-hit != 'true'
+        run: make assets
       - name: Gradle Build
         env:
           BUILD_PLUGIN: none
@@ -197,7 +188,7 @@ jobs:
         include:
           - name: linux-amd64
             target: linux/amd64
-            runs_on: ubuntu-24.04
+            runs_on: ubuntu-latest
           - name: linux-arm64
             target: linux/arm64
             runs_on: ubuntu-24.04-arm
@@ -207,9 +198,10 @@ jobs:
     #          - windows/arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: ./.github/actions/load-build-versions
       - name: LibCore Artifact
         uses: actions/download-artifact@v8
         with:
@@ -226,22 +218,23 @@ jobs:
           test -f "$required_jar"
       - uses: actions/setup-java@v5
         with:
-          java-version: "21"
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
       - uses: gradle/actions/setup-gradle@v5
-      - name: Golang Version
-        id: version
-        run: |
-          source buildScript/init/version.sh
-          echo go_version=$GO_VERSION >> $GITHUB_OUTPUT
       - name: Install Golang
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: ${{ steps.version.outputs.go_version }}
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: libcore/go.sum
-      - name: Build Assets
-        run: |
-          ./run init action gradle
+      - name: Cache route assets
+        id: cache-assets
+        uses: actions/cache@v6
+        with:
+          path: composeApp/src/commonMain/composeResources/files/sing-box
+          key: assets-${{ env.GEOIP_VERSION }}-${{ env.GEOSITE_VERSION }}
+      - name: Prepare assets
+        if: steps.cache-assets.outputs.cache-hit != 'true'
+        run: make assets
       - name: Desktop Package
         env:
           BUILD_PLUGIN: none
@@ -268,7 +261,7 @@ jobs:
       - desktop
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
       - name: Download APK Artifacts
