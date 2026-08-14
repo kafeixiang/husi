@@ -44,6 +44,10 @@ jobs:
             "composeApp/libs/libcore.aar"
             "composeApp/libs/libcore-desktop-linux-amd64.jar"
             "composeApp/libs/libcore-desktop-linux-arm64.jar"
+            "composeApp/libs/libcore-desktop-windows-amd64.jar"
+            "composeApp/libs/libcore-desktop-windows-arm64.jar"
+            "composeApp/libs/libcore-desktop-darwin-amd64.jar"
+            "composeApp/libs/libcore-desktop-darwin-arm64.jar"
           )
           for file in "${required_files[@]}"; do
             if [ ! -f "$file" ]; then
@@ -75,6 +79,27 @@ jobs:
           add-to-path: true
           ndk-version: ${{ env.ANDROID_NDK_VERSION }}
           local-cache: false
+      - uses: mlugg/setup-zig@v2
+        if: steps.verify_libcore.outputs.ready != 'true'
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          cache-key: launcher-desktop-all-targets
+      - name: Checkout JNI headers
+        if: steps.verify_libcore.outputs.ready != 'true'
+        uses: actions/checkout@v7
+        with:
+          repository: Casterlabs/jni-headers
+          ref: ${{ env.JNI_HEADERS_COMMIT }}
+          path: jni-headers
+          sparse-checkout: versions/${{ env.JNI_HEADERS_VERSION }}
+      - name: Checkout macOS SDK
+        if: steps.verify_libcore.outputs.ready != 'true'
+        uses: actions/checkout@v7
+        with:
+          repository: alexey-lysiuk/macos-sdk
+          ref: ${{ env.MACOS_SDK_COMMIT }}
+          path: macos-sdk
+          sparse-checkout: MacOSX${{ env.MACOS_SDK_VERSION }}.sdk
       - name: Checkout cronet-go
         if: steps.verify_libcore.outputs.ready != 'true'
         uses: actions/checkout@v7
@@ -109,15 +134,12 @@ jobs:
           ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
           export CRONET_GO_ROOT="$GITHUB_WORKSPACE/cronet-go"
-          # ./run lib core --android --desktop --desktoptargets linux/amd64,linux/arm64,darwin/amd64,darwin/arm64,windows/amd64,windows/arm64
-          ./run lib core --android --desktop --desktoptargets linux/amd64,linux/arm64
+          make libcore_android
+          make libcore_desktop DESKTOP_TARGETS=linux/amd64,linux/arm64,windows/amd64,windows/arm64,darwin/amd64,darwin/arm64 JNI_INCLUDE="$JNI_INCLUDE" DARWIN_SDK="$MACOS_SDK_PATH"
       - name: Upload libcore
         uses: actions/upload-artifact@v7
         with:
-          path: |
-            composeApp/libs/libcore.aar
-            composeApp/libs/libcore-desktop-linux-amd64.jar
-            composeApp/libs/libcore-desktop-linux-arm64.jar
+          path: composeApp/libs/
           if-no-files-found: error
           name: "libcore"
   build:
@@ -160,6 +182,8 @@ jobs:
       - name: Prepare assets
         if: steps.cache-assets.outputs.cache-hit != 'true'
         run: make assets
+      - name: Generate about libraries metadata
+        run: make aboutlibraries_go aboutlibraries_android
       - name: Gradle Build
         env:
           BUILD_PLUGIN: none
@@ -188,10 +212,28 @@ jobs:
         include:
           - name: linux-amd64
             target: linux/amd64
+            platform: linux
             runs_on: ubuntu-latest
           - name: linux-arm64
             target: linux/arm64
+            platform: linux
             runs_on: ubuntu-24.04-arm
+          - name: windows-amd64
+            target: windows/amd64
+            platform: windows
+            runs_on: ubuntu-latest
+          - name: windows-arm64
+            target: windows/arm64
+            platform: windows
+            runs_on: ubuntu-latest
+          - name: macos-amd64
+            target: darwin/amd64
+            platform: macos
+            runs_on: ubuntu-latest
+          - name: macos-arm64
+            target: darwin/arm64
+            platform: macos
+            runs_on: ubuntu-latest
     #          - darwin/amd64
     #          - darwin/arm64
     #          - windows/amd64
@@ -212,6 +254,7 @@ jobs:
           target="${{ matrix.target }}"
           platform="${target%%/*}"
           arch="${target##*/}"
+          # map darwin to macos if needed, but the jar filename uses platform from target
           required_jar="composeApp/libs/libcore-desktop-${platform}-${arch}.jar"
           ls -la composeApp/libs || true
           test -f composeApp/libs/libcore.aar
@@ -226,6 +269,24 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: libcore/go.sum
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          cache-key: launcher-desktop-${{ matrix.name }}
+      - name: Install system packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y nsis xorriso
+      - name: Cache nfpm
+        if: matrix.platform == 'linux'
+        id: cache-nfpm
+        uses: actions/cache@v6
+        with:
+          path: ~/go/bin/nfpm
+          key: nfpm-${{ runner.os }}-${{ runner.arch }}-${{ env.NFPM_VERSION }}
+      - name: Install nfpm
+        if: matrix.platform == 'linux' && steps.cache-nfpm.outputs.cache-hit != 'true'
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@v${NFPM_VERSION}
       - name: Cache route assets
         id: cache-assets
         uses: actions/cache@v6
@@ -235,23 +296,28 @@ jobs:
       - name: Prepare assets
         if: steps.cache-assets.outputs.cache-hit != 'true'
         run: make assets
+      - name: Generate about libraries metadata
+        run: make aboutlibraries_go aboutlibraries_desktop DESKTOP_TARGET=${{ matrix.target }}
       - name: Desktop Package
         env:
           BUILD_PLUGIN: none
         run: |
           ./gradlew :composeApp:exportLibraryDefinitions
-          ./gradlew -p composeApp packageUberJarForCurrentOS -PdesktopTarget=${{ matrix.target }}
+          # Ensure release tag exists locally for packaging scripts
+          VERSION_NAME=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
+          git tag -f "v${VERSION_NAME}"
+          make desktop_package_${{ matrix.platform }} DESKTOP_TARGET=${{ matrix.target }}
       - name: Normalize artifact target
         id: artifact_target
         run: |
           target="${{ matrix.target }}"
           echo "safe=${target//\//-}" >> "$GITHUB_OUTPUT"
-      - name: Upload Desktop Jar Artifact
+      - name: Upload Desktop Artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: "desktop-jar-${{ steps.artifact_target.outputs.safe }}"
+          name: "desktop-${{ steps.artifact_target.outputs.safe }}"
           if-no-files-found: error
-          path: composeApp/build/compose/jars/*.jar
+          path: composeApp/build/compose/packages
   release:
     name: Publish Release
     if: github.event.inputs.release != 'y'
@@ -269,11 +335,11 @@ jobs:
         with:
           name: APKs
           path: artifacts/
-      - name: Download Desktop Jar Artifacts
+      - name: Download Desktop Artifacts
         uses: actions/download-artifact@v8
         with:
-          pattern: desktop-jar-*
-          path: desktop-jars/
+          pattern: desktop-*
+          path: desktop-assets/
           merge-multiple: true
       - name: Set Release Tag and Suffix
         run: |
@@ -307,12 +373,14 @@ jobs:
             done
           fi
           
-          # Process Desktop Jars
-          if [ -d desktop-jars ]; then
-            find desktop-jars -name "*.jar" | while read -r file; do
+          # Process Desktop Assets
+          if [ -d desktop-assets ]; then
+            find desktop-assets -type f \( -name "*.jar" -o -name "*.deb" -o -name "*.rpm" -o -name "*.pacman" -o -name "*.dmg" -o -name "*.exe" -o -name "*.zip" \) | while read -r file; do
               filename=$(basename "$file")
               if [[ -n "${{ env.FILE_SUFFIX }}" ]]; then
-                new_name="${filename%.jar}${{ env.FILE_SUFFIX }}.jar"
+                ext="${filename##*.}"
+                base="${filename%.*}"
+                new_name="${base}${{ env.FILE_SUFFIX }}.${ext}"
               else
                 new_name="$filename"
               fi
