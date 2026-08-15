@@ -45,8 +45,6 @@ jobs:
             "composeApp/libs/libcore-desktop-linux-amd64.jar"
             "composeApp/libs/libcore-desktop-linux-arm64.jar"
             "composeApp/libs/libcore-desktop-windows-amd64.jar"
-            "composeApp/libs/libcore-desktop-windows-arm64.jar"
-            "composeApp/libs/libcore-desktop-darwin-amd64.jar"
             "composeApp/libs/libcore-desktop-darwin-arm64.jar"
           )
           for file in "${required_files[@]}"; do
@@ -135,7 +133,7 @@ jobs:
         run: |
           export CRONET_GO_ROOT="$GITHUB_WORKSPACE/cronet-go"
           make libcore_android
-          make libcore_desktop DESKTOP_TARGETS=linux/amd64,linux/arm64,windows/amd64,windows/arm64,darwin/amd64,darwin/arm64 JNI_INCLUDE="$JNI_INCLUDE" DARWIN_SDK="$MACOS_SDK_PATH"
+          make libcore_desktop DESKTOP_TARGETS=linux/amd64,linux/arm64,windows/amd64,darwin/arm64 JNI_INCLUDE="$JNI_INCLUDE" DARWIN_SDK="$MACOS_SDK_PATH"
       - name: Upload libcore
         uses: actions/upload-artifact@v7
         with:
@@ -221,14 +219,6 @@ jobs:
           - name: windows-amd64
             target: windows/amd64
             platform: windows
-            runs_on: ubuntu-latest
-          - name: windows-arm64
-            target: windows/arm64
-            platform: windows
-            runs_on: ubuntu-latest
-          - name: macos-amd64
-            target: darwin/amd64
-            platform: macos
             runs_on: ubuntu-latest
           - name: macos-arm64
             target: darwin/arm64
