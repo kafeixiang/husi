@@ -11,207 +11,105 @@ on:
 jobs:
   build:
     name: Build ${{ matrix.platform }} (${{ matrix.arch }})
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
-        platform: [macos, windows]
-        arch: [arm64, amd64]
+        include:
+          - platform: macos
+            arch: arm64
+          - platform: windows
+            arch: amd64
       fail-fast: false
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
+      - name: Checkout source code
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           submodules: recursive
 
-      - name: Extract Project Version
-        id: project_version
-        run: |
-          VERSION=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          # 自动补全 Git Tag 满足 package.sh 校验逻辑
-          git config --global user.name "kafeixiang"
-          git config --global user.email "kafeixiang@github.com"
-          git tag "v$VERSION" || true
+      - uses: ./.github/actions/load-build-versions
 
       - name: Set Release Tag and Suffix
         run: |
-          # 提取 husi.properties 中的版本号作为唯一标识
-          VERSION="${{ steps.project_version.outputs.version }}"
-          echo "RELEASE_TAG=v${VERSION}-Desktop" >> $GITHUB_ENV
+          VERSION_NAME=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
+          echo "RELEASE_TAG=v${VERSION_NAME}-Desktop" >> $GITHUB_ENV
           
-          # 获取清理后的分支名用于文件名后缀
           REF_NAME="${{ github.ref_name }}"
           CLEAN_REF="${REF_NAME//\//-}"
           
-          # 只有非 Tag 触发时才添加文件名后缀，防止同一版本多分支冲突
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "FILE_SUFFIX=" >> $GITHUB_ENV
           else
             echo "FILE_SUFFIX=-${CLEAN_REF}" >> $GITHUB_ENV
           fi
+          
+          git config --global user.name "kafeixiang"
+          git config --global user.email "kafeixiang@github.com"
+          git tag "v$VERSION_NAME" || true
 
-      - name: Golang Status
-        run: find buildScript libcore/*.sh | xargs cat | sha1sum > golang_status
-      - name: Libcore Status
-        run: git ls-files libcore | xargs cat | sha1sum > libcore_status
-      
-      - name: LibCore Cache
-        id: cache
-        uses: actions/cache@v5
+      - uses: actions/setup-java@v5
         with:
-          path: |
-            composeApp/libs
-          key: libcore-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('.github/workflows/*', 'golang_status', 'libcore_status') }}
-      
-      - name: Verify LibCore cache
-        id: verify_libcore
-        run: |
-          if [ "${{ matrix.platform }}" = "macos" ]; then
-            TARGET_FILE="composeApp/libs/libcore-desktop-darwin-${{ matrix.arch }}.jar"
-          else
-            TARGET_FILE="composeApp/libs/libcore-desktop-windows-${{ matrix.arch }}.jar"
-          fi
-          if [ -f "$TARGET_FILE" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-          fi
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
 
-      - name: Golang Version
-        if: steps.verify_libcore.outputs.ready != 'true'
-        id: version
-        run: |
-          source buildScript/init/version.sh
-          echo go_version=$GO_VERSION >> $GITHUB_OUTPUT
+      - uses: burrunan/gradle-cache-action@v3
 
-      - name: Install Golang
-        if: steps.verify_libcore.outputs.ready != 'true'
-        uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         with:
-          go-version: ${{ steps.version.outputs.go_version }}
+          go-version: ${{ env.GO_VERSION }}
           cache: true
-          cache-dependency-path: libcore/go.sum
+          cache-dependency-path: 'libcore/go.sum'
 
-      - name: Set up Java
-        uses: actions/setup-java@v5
+      - uses: mlugg/setup-zig@v2
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          version: ${{ env.ZIG_VERSION }}
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v5
+      - name: Install system packaging tools
+        run: sudo apt-get update && sudo apt-get install -y nsis xorriso zstd libarchive-tools
 
-      - name: Set up Zig
-        uses: mlugg/setup-zig@v2
+      - name: Checkout JNI headers
+        uses: actions/checkout@v7
         with:
-          version: 0.16.0
+          repository: Casterlabs/jni-headers
+          ref: ${{ env.JNI_HEADERS_COMMIT }}
+          path: jni-headers
+          sparse-checkout: versions/${{ env.JNI_HEADERS_VERSION }}
 
-      - name: Install Packaging Tools
-        run: |
-          sudo apt-get update
-          if [ "${{ matrix.platform }}" = "macos" ]; then
-            sudo apt-get install -y xorriso zstd libarchive-tools
-          else
-            sudo apt-get install -y nsis python3
-          fi
+      - name: Checkout macOS SDK
+        if: matrix.platform == 'macos'
+        uses: actions/checkout@v7
+        with:
+          repository: alexey-lysiuk/macos-sdk
+          ref: ${{ env.MACOS_SDK_COMMIT }}
+          path: macos-sdk
+          sparse-checkout: MacOSX${{ env.MACOS_SDK_VERSION }}.sdk
 
       - name: Build Assets
         run: make assets
 
-      - name: Download JNI Headers
-        if: steps.verify_libcore.outputs.ready != 'true'
+      - name: Build desktop libcore
         run: |
-          git clone --depth=1 https://github.com/Casterlabs/jni-headers.git $HOME/jni-headers
-
-      # --- macOS Specific Build Logic ---
-      - name: Download macOS 14.5 SDK
-        if: matrix.platform == 'macos' && steps.verify_libcore.outputs.ready != 'true'
-        run: |
-          mkdir -p $HOME/macos-sdk
-          SDK_VER="14.5"
-          SDK_URL="https://github.com/joseluisq/macosx-sdks/releases/download/${SDK_VER}/MacOSX${SDK_VER}.sdk.tar.xz"
-          curl -L "$SDK_URL" -o "MacOSX${SDK_VER}.sdk.tar.xz"
-          tar -xJ -f "MacOSX${SDK_VER}.sdk.tar.xz" -C $HOME/macos-sdk
-          echo "DARWIN_SDKROOT=$HOME/macos-sdk/MacOSX${SDK_VER}.sdk" >> $GITHUB_ENV
-          echo "DARWIN_MACOSX_DEPLOYMENT_TARGET=12.0" >> $GITHUB_ENV
-
-      - name: Prepare Cross-Compilation JDK
-        if: steps.verify_libcore.outputs.ready != 'true'
-        run: |
-          # 构造一个包含所有平台头文件的 JDK 环境，满足 anja 的检查需求
-          mkdir -p $HOME/cross-jdk/include
-          cp -r $JAVA_HOME/include/* $HOME/cross-jdk/include/
-          # 补充缺失的平台头文件 (从 Casterlabs 仓库的对应版本目录获取)
-          if [ -d "$HOME/jni-headers/versions/21/include" ]; then
-            cp -rv $HOME/jni-headers/versions/21/include/* $HOME/cross-jdk/include/
-          else
-            # 兜底逻辑
-            cp -rv $HOME/jni-headers/darwin $HOME/cross-jdk/include/ || true
-            cp -rv $HOME/jni-headers/win32 $HOME/cross-jdk/include/ || true
-          fi
-          # 链接必要的二进制工具
-          mkdir -p $HOME/cross-jdk/bin
-          ln -s $JAVA_HOME/bin/* $HOME/cross-jdk/bin/
-          echo "JAVA_HOME=$HOME/cross-jdk" >> $GITHUB_ENV
-
-      - name: Build libcore
-        if: steps.verify_libcore.outputs.ready != 'true'
-        env:
-          DARWIN_SDKROOT: ${{ env.DARWIN_SDKROOT }}
-        run: |
-          JNI_PATH="$HOME/jni-headers/versions/21/include"
-          if [ ! -d "$JNI_PATH" ]; then JNI_PATH="$HOME/jni-headers"; fi
-          
           if [ "${{ matrix.platform }}" = "macos" ]; then
-            ./run lib core --desktop --desktoptargets darwin/${{ matrix.arch }} --jniinclude "$JNI_PATH" --darwinsdk "$DARWIN_SDKROOT"
+            make libcore_desktop DESKTOP_TARGETS=darwin/${{ matrix.arch }} JNI_INCLUDE="$JNI_INCLUDE" DARWIN_SDK="$MACOS_SDK_PATH"
           else
-            # Windows 编译不需要 --darwinsdk
-            ./run lib core --desktop --desktoptargets windows/${{ matrix.arch }} --jniinclude "$JNI_PATH"
+            make libcore_desktop DESKTOP_TARGETS=windows/${{ matrix.arch }} JNI_INCLUDE="$JNI_INCLUDE"
           fi
 
-      - name: Upload libcore Artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: libcore-jar-${{ matrix.platform }}-${{ matrix.arch }}
-          path: |
-            composeApp/libs/libcore-desktop-darwin-${{ matrix.arch }}.jar
-            composeApp/libs/libcore-desktop-windows-${{ matrix.arch }}.jar
-          if-no-files-found: ignore
-
-      # --- Final Packaging ---
-      - name: Build launcher for macOS ${{ matrix.arch }}
-        if: matrix.platform == 'macos'
-        run: |
-          if [ "${{ matrix.arch }}" = "arm64" ]; then ZIG_TARGET="aarch64-macos"; else ZIG_TARGET="x86_64-macos"; fi
-          cd launcher && zig build -Doptimize=ReleaseSmall -Dtarget=${ZIG_TARGET} -Dpackage-name=fr.husi && cd ..
-
-      - name: Build desktop uber JAR for macOS ${{ matrix.arch }}
-        if: matrix.platform == 'macos'
-        run: |
-          export BUILD_PLUGIN=none
-          ./gradlew clean :composeApp:packageUberJarForCurrentOS -PdesktopTarget=darwin/${{ matrix.arch }} -Dorg.gradle.jvmargs="-Xmx4096m"
-
-      - name: Package macOS DMG
+      - name: Package macOS
         if: matrix.platform == 'macos'
         run: |
           # 在 Linux 环境下，genisoimage 对 -modification-date 的支持有问题
-          # 我们在运行时动态移除该参数，以确保打包成功，且不修改源码文件
           sed -i '/-modification-date/d' release/macos/package.sh
-
-          ./release/macos/package.sh --target darwin/${{ matrix.arch }}
+          make desktop_package_macos DESKTOP_TARGET=darwin/${{ matrix.arch }}
           if [[ -n "${{ env.FILE_SUFFIX }}" ]]; then
             find composeApp/build/compose/packages/macos -name "*.dmg" -exec bash -c 'mv "$1" "${1%.dmg}$FILE_SUFFIX.dmg"' _ {} \;
           fi
 
       - name: Package Windows
         if: matrix.platform == 'windows'
-        env:
-          BUILD_PLUGIN: none
         run: |
-          chmod +x release/windows/package.sh
-          make desktop_package_windows DESKTOP_TARGET=windows/${{ matrix.arch }}
+          make desktop_package_windows DESKTOP_TARGET=windows/${{ matrix.arch }} WINDOWS_NO_SIGN=1
           if [[ -n "${{ env.FILE_SUFFIX }}" ]]; then
             find composeApp/build/compose/packages/windows -name "*.zip" -exec bash -c 'mv "$1" "${1%.zip}$FILE_SUFFIX.zip"' _ {} \;
             find composeApp/build/compose/packages/windows -name "*-installer.exe" -exec bash -c 'mv "$1" "${1%-installer.exe}$FILE_SUFFIX-installer.exe"' _ {} \;
@@ -226,7 +124,6 @@ jobs:
             composeApp/build/compose/packages/windows/*
           retention-days: 30
 
-      # --- Unified Release Logic ---
       - name: Create and Upload Release
         if: github.event_name != 'pull_request'
         env:
@@ -234,14 +131,12 @@ jobs:
         run: |
           if [ "${{ matrix.platform }}" = "macos" ]; then
             FILES=(composeApp/build/compose/packages/macos/*.dmg)
-            NOTES=$'# :memo: Release Notes (macOS)\n\n* Fixes and improvements.\n* Build for ${{ matrix.arch }}.\n\n> **注意 / Note:**\n> 如果应用提示损坏或闪退，请在终端执行：\n> `sudo xattr -cr /Applications/Husi.app` \n> `codesign --force --deep -s - /Applications/Husi.app`'
+            NOTES=$'# :memo: Release Notes (macOS)\n\n* Build for ${{ matrix.arch }}.\n\n> **注意 / Note:**\n> 如果应用提示损坏或闪退，请在终端执行：\n> `sudo xattr -cr /Applications/Husi.app` \n> `codesign --force --deep -s - /Applications/Husi.app`'
           else
             FILES=(composeApp/build/compose/packages/windows/*.exe composeApp/build/compose/packages/windows/*.zip)
-            NOTES=$'# :memo: Release Notes (Windows)\n\n* Fixes and improvements.\n* Build for ${{ matrix.arch }}.'
+            NOTES=$'# :memo: Release Notes (Windows)\n\n* Build for ${{ matrix.arch }}.'
           fi
           
           gh release create "${{ env.RELEASE_TAG }}" --title "${{ env.RELEASE_TAG }}" --prerelease --notes "$NOTES" 2>/dev/null || true
-          
           gh release edit "${{ env.RELEASE_TAG }}" --notes "$NOTES"
-          
           gh release upload "${{ env.RELEASE_TAG }}" "${FILES[@]}" --clobber
