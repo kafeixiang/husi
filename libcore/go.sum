@@ -146,8 +146,8 @@ github.com/mdlayher/netlink v1.11.2 h1:HKh2jqe+omdSWcQ88nrT7INE61B0NXfiSPFdgL4Yb
 github.com/mdlayher/netlink v1.11.2/go.mod h1:uT2Yc/QLaZubzDpZIBi9d4GoeLwtp3x1AMeqSRrK2sA=
 github.com/mdlayher/socket v0.6.0 h1:ScZPaAGyO1icQnbFrhPM8mnXyMu9qukC1K4ZoM2IQKU=
 github.com/mdlayher/socket v0.6.0/go.mod h1:q7vozUAnxSqnjHc12Fik5yUKIzfZ8ITCfMkhOtE9z18=
-github.com/metacubex/chacha v0.1.5 h1:fKWMb/5c7ZrY8Uoqi79PPFxl+qwR7X/q0OrsAubyX2M=
-github.com/metacubex/chacha v0.1.5/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
+github.com/metacubex/chacha v0.1.6-0.20250812085457-7b981d42c3ba h1:uYSI4GNiPPyKTPeQeVIm264uUfGDdWT9QsjUSXxXdTc=
+github.com/metacubex/chacha v0.1.6-0.20250812085457-7b981d42c3ba/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
 github.com/metacubex/mihomo v1.19.30 h1:2lTz7fcyZAQQzwbPuETChtwSHIHsT4zYhBSC3i/fRVI=
 github.com/metacubex/mihomo v1.19.30/go.mod h1:Hz4RFW7f5YF+dmIVj4j9IRDBoxBBvbbxg9ArBP9EzQg=
 github.com/metacubex/randv2 v0.2.0 h1:uP38uBvV2SxYfLj53kuvAjbND4RUDfFJjwr4UigMiLs=

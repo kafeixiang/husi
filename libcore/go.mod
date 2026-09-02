@@ -94,7 +94,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible // indirect
 	github.com/mdlayher/netlink v1.11.2 // indirect
 	github.com/mdlayher/socket v0.6.0 // indirect
-	github.com/metacubex/chacha v0.1.5 // indirect
+	github.com/metacubex/chacha v0.1.6-0.20250812085457-7b981d42c3ba // indirect
 	github.com/metacubex/randv2 v0.2.0 // indirect
 	github.com/metacubex/sing v0.5.7 // indirect
 	github.com/metacubex/utls v1.8.7 // indirect
