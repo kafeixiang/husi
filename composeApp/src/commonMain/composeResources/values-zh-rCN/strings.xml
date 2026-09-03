@@ -723,6 +723,7 @@
     <string name="connection_status_closed">已关闭</string>
     <string name="can_not_be_empty">不能为空</string>
     <string name="juicity_provider">Juicity 提供程序</string>
+    <string name="mieru_provider">Mieru 提供程序</string>
     <string name="action_format">格式化</string>
     <string name="action_test_config">测试配置</string>
     <string name="mutual_tls">双向 TLS</string>
