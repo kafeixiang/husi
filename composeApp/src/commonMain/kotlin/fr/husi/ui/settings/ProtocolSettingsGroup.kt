@@ -20,6 +20,7 @@ import fr.husi.resources.hysteria2_provider
 import fr.husi.resources.hysteria_download_mbps
 import fr.husi.resources.hysteria_upload_mbps
 import fr.husi.resources.juicity_provider
+import fr.husi.resources.mieru_provider
 import fr.husi.resources.plugin
 import fr.husi.resources.provider_naive
 import fr.husi.ui.StringOrRes
@@ -112,6 +113,26 @@ internal fun ProtocolSettingsGroup(
             )
         },
         summary = { Text(stringOrRes(pluginProviderText(juicityProviderValue))) },
+        type = ListPreferenceType.DROPDOWN_MENU,
+        valueToText = { AnnotatedString(stringOrRes(pluginProviderText(it))) },
+    )
+
+    val mieruProviderValue by DataStore.providerMieru.collectAsStateWithLifecycle()
+    ListPreference(
+        value = mieruProviderValue,
+        onValueChange = {
+            DataStore.providerMieru.setBlocking(it)
+            needReload()
+        },
+        values = listOf(ProtocolProvider.CORE, ProtocolProvider.PLUGIN),
+        title = { Text(stringResource(Res.string.mieru_provider)) },
+        icon = {
+            MaskedIcon(
+                Res.drawable.flight_takeoff,
+                color = IconMaskColors.IconLightYellow,
+            )
+        },
+        summary = { Text(stringOrRes(pluginProviderText(mieruProviderValue))) },
         type = ListPreferenceType.DROPDOWN_MENU,
         valueToText = { AnnotatedString(stringOrRes(pluginProviderText(it))) },
     )
