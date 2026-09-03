@@ -53,6 +53,8 @@ import fr.husi.fmt.juicity.JuicityBean
 import fr.husi.fmt.juicity.buildSingBoxOutboundJuicityBean
 import fr.husi.fmt.masque.MASQUEBean
 import fr.husi.fmt.masque.buildSingBoxEndpointMASQUEBean
+import fr.husi.fmt.mieru.MieruBean
+import fr.husi.fmt.mieru.buildSingBoxOutboundMieruBean
 import fr.husi.fmt.naive.NaiveBean
 import fr.husi.fmt.naive.buildSingBoxOutboundNaiveBean
 import fr.husi.fmt.openconnect.OpenConnectBean
@@ -62,6 +64,8 @@ import fr.husi.fmt.openvpn.buildSingBoxEndpointOpenVPNBean
 import fr.husi.fmt.shadowquic.ShadowQUICBean
 import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.shadowsocks.buildSingBoxOutboundShadowsocksBean
+import fr.husi.fmt.ssr.SSRBean
+import fr.husi.fmt.ssr.buildSingBoxOutboundSSRBean
 import fr.husi.fmt.shadowtls.ShadowTLSBean
 import fr.husi.fmt.shadowtls.buildSingBoxOutboundShadowTLSBean
 import fr.husi.fmt.snell.SnellBean
@@ -909,6 +913,8 @@ suspend fun buildConfig(
 
                         is SnellBean -> buildSingBoxOutboundSnellBean(bean).asKxsMap()
 
+                        is SSRBean -> buildSingBoxOutboundSSRBean(bean).asKxsMap()
+
                         is WireGuardBean -> buildSingBoxEndpointWireGuardBean(bean).asKxsMap()
 
                         is OpenConnectBean -> {
@@ -942,6 +948,8 @@ suspend fun buildConfig(
                         is AnyTLSBean -> buildSingBoxOutboundAnyTLSBean(bean).asKxsMap()
 
                         is JuicityBean -> buildSingBoxOutboundJuicityBean(bean).asKxsMap()
+
+                        is MieruBean -> buildSingBoxOutboundMieruBean(bean).asKxsMap()
 
                         is NaiveBean -> buildSingBoxOutboundNaiveBean(bean).asKxsMap()
 

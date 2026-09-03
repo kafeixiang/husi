@@ -185,6 +185,7 @@ var outboundList = []any{
 	option.SnellOutboundOptions{},
 	option.TailcatOutboundOptions{},
 	option.BridgeOutboundOptions{},
+	pluginoption.SSROutboundOptions{},
 	pluginoption.BalancerOutboundOptions{},
 }
 
