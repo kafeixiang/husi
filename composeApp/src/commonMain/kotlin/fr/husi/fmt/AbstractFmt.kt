@@ -16,6 +16,7 @@ import fr.husi.fmt.SingBoxOptions.TYPE_HTTP
 import fr.husi.fmt.SingBoxOptions.TYPE_HYSTERIA
 import fr.husi.fmt.SingBoxOptions.TYPE_HYSTERIA2
 import fr.husi.fmt.SingBoxOptions.TYPE_MASQUE_CLIENT
+import fr.husi.fmt.SingBoxOptions.TYPE_MIERU
 import fr.husi.fmt.SingBoxOptions.TYPE_NAIVE
 import fr.husi.fmt.SingBoxOptions.TYPE_OPENCONNECT
 import fr.husi.fmt.SingBoxOptions.TYPE_OPENVPN_CLIENT
@@ -47,6 +48,8 @@ import fr.husi.fmt.masque.MASQUEBean
 import fr.husi.fmt.masque.buildSingBoxEndpointMASQUEBean
 import fr.husi.fmt.masque.parseMASQUEEndpoint
 import fr.husi.fmt.mieru.MieruBean
+import fr.husi.fmt.mieru.buildSingBoxOutboundMieruBean
+import fr.husi.fmt.mieru.parseMieruOutbound
 import fr.husi.fmt.naive.NaiveBean
 import fr.husi.fmt.naive.buildSingBoxOutboundNaiveBean
 import fr.husi.fmt.naive.parseNaiveOutbound
@@ -60,6 +63,9 @@ import fr.husi.fmt.shadowquic.ShadowQUICBean
 import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.shadowsocks.buildSingBoxOutboundShadowsocksBean
 import fr.husi.fmt.shadowsocks.parseShadowsocksOutbound
+import fr.husi.fmt.ssr.SSRBean
+import fr.husi.fmt.ssr.buildSingBoxOutboundSSRBean
+import fr.husi.fmt.ssr.parseSSROutbound
 import fr.husi.fmt.shadowtls.ShadowTLSBean
 import fr.husi.fmt.snell.SnellBean
 import fr.husi.fmt.snell.buildSingBoxOutboundSnellBean
@@ -139,6 +145,7 @@ fun AbstractBean.toJsonStringKxs(): String = when (this) {
     is OpenVPNBean -> kxs.encodeToString(this)
     is ShadowQUICBean -> kxs.encodeToString(this)
     is ShadowsocksBean -> kxs.encodeToString(this)
+    is SSRBean -> kxs.encodeToString(this)
     is ShadowTLSBean -> kxs.encodeToString(this)
     is SnellBean -> kxs.encodeToString(this)
     is SOCKSBean -> kxs.encodeToString(this)
@@ -166,6 +173,8 @@ suspend fun buildSingBoxOutbound(bean: AbstractBean): String = when (bean) {
 
     is SnellBean ->
         kxs.encodeToString(buildSingBoxOutboundSnellBean(bean).apply { tag = bean.name })
+    is SSRBean ->
+        kxs.encodeToString(buildSingBoxOutboundSSRBean(bean).apply { tag = bean.name })
 
     is SOCKSBean -> kxs.encodeToString(buildSingBoxOutboundSocksBean(bean).apply { tag = bean.name })
     is SSHBean -> kxs.encodeToString(buildSingBoxOutboundSSHBean(bean).apply { tag = bean.name })
@@ -188,6 +197,8 @@ suspend fun buildSingBoxOutbound(bean: AbstractBean): String = when (bean) {
     is NaiveBean ->
         kxs.encodeToString(buildSingBoxOutboundNaiveBean(bean).apply { tag = bean.name })
 
+    is MieruBean ->
+        buildSingBoxOutboundMieruBean(bean).apply { tag = bean.name }.toJsonStringKxs()
     is TrustTunnelBean ->
         kxs.encodeToString(buildSingBoxOutboundTrustTunnelBean(bean).apply { tag = bean.name })
 
@@ -243,6 +254,8 @@ fun parseOutbound(json: JSONMap): AbstractBean? = when (json["type"].toString())
 
     TYPE_SNELL -> parseSnellOutbound(json)
 
+    "ssr" -> parseSSROutbound(json)
+
     TYPE_VMESS, TYPE_VLESS, TYPE_TROJAN -> parseStandardV2RayOutbound(json)
 
     TYPE_WIREGUARD -> parseWireGuardEndpoint(json)
@@ -264,6 +277,8 @@ fun parseOutbound(json: JSONMap): AbstractBean? = when (json["type"].toString())
     TYPE_ANYTLS -> parseAnyTLSOutbound(json)
 
     TYPE_NAIVE -> parseNaiveOutbound(json)
+
+    TYPE_MIERU -> parseMieruOutbound(json)
 
     else -> null
 }
