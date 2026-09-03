@@ -36,10 +36,14 @@ github.com/database64128/netx-go v0.1.1 h1:dT5LG7Gs7zFZBthFBbzWE6K8wAHjSNAaK7wCY
 github.com/database64128/netx-go v0.1.1/go.mod h1:LNlYVipaYkQArRFDNNJ02VkNV+My9A5XR/IGS7sIBQc=
 github.com/database64128/tfo-go/v2 v2.3.2 h1:UhZMKiMq3swZGUiETkLBDzQnZBPSAeBMClpJGlnJ5Fw=
 github.com/database64128/tfo-go/v2 v2.3.2/go.mod h1:GC3uB5oa4beGpCUbRb2ZOWP73bJJFmMyAVgQSO7r724=
+github.com/deatil/go-cryptobin v1.1.1003-0.20250606044017-a20f36bd45c6 h1:mFpKLilwNRtr1kqG3QvTVAJtWyI8G8KL31bgtQ2n9v4=
+github.com/deatil/go-cryptobin v1.1.1003-0.20250606044017-a20f36bd45c6/go.mod h1:x+/+SzyfbxliY2y0Fwe+OoLU0DEt9kWs6OMiwghcfJ0=
 github.com/dgryski/go-camellia v0.0.0-20191119043421-69a8a13fb23d h1:CPqTNIigGweVPT4CYb+OO2E6XyRKFOmvTHwWRLgCAlE=
 github.com/dgryski/go-camellia v0.0.0-20191119043421-69a8a13fb23d/go.mod h1:QX5ZVULjAfZJux/W62Y91HvCh9hyW6enAwcrrv/sLj0=
 github.com/ebitengine/purego v0.10.0 h1:QIw4xfpWT6GWTzaW5XEKy3HXoqrJGx1ijYHzTF0/ISU=
 github.com/ebitengine/purego v0.10.0/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI0mRfJZTmQ=
+github.com/emmansun/gmsm v0.30.1 h1:IEBk+r4hcfVviNH1Q8KlMfreeIUnhZchMtsAgc7MsSI=
+github.com/emmansun/gmsm v0.30.1/go.mod h1:XRXzKUpqVGZy9ynVKPE8xFuKaPi8jtzk4ZEFG6/WewY=
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
