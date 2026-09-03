@@ -226,7 +226,7 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
                 }
             }
 
-            "mierus" -> {
+            "mieru", "mierus" -> {
                 Logs.d("Try parse Mieru link: $this")
                 runCatching {
                     entities.add(parseMieru(this))
