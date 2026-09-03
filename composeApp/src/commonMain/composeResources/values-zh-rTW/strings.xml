@@ -51,6 +51,9 @@
     <string name="password">密碼</string>
     <string name="enc_method">加密方式</string>
     <string name="protocol">協定</string>
+    <string name="protocol_param">協定參數</string>
+    <string name="obfs">混淆</string>
+    <string name="obfs_param">混淆參數</string>
     <string name="uuid">使用者 ID</string>
     <string name="alter_id">替代 ID</string>
     <string name="network">網路</string>
@@ -655,4 +658,5 @@
     <string name="app_update_installing">安裝中…</string>
     <string name="app_update_install_failed">安裝失敗：%1$s</string>
     <string name="app_update_no_matching_asset">沒有與此裝置匹配的安裝套件。請開啟發布頁面手動下載。</string>
+    <string name="udp">UDP 轉送</string>
 </resources>
