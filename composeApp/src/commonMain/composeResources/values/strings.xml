@@ -49,6 +49,12 @@
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="protocol">Protocol</string>
+    <string name="protocol_param">Protocol Parameter</string>
+    <string name="obfs">Obfuscation</string>
+    <string name="obfs_param">Obfuscation Parameter</string>
+    <string name="uuid">User ID</string>
+    <string name="alter_id">Alter ID</string>
+    <string name="security">Transport layer encryption</string>
     <string name="network">Network</string>
     <string name="http_host">HTTP Host</string>
     <string name="proxy">Proxy</string>
@@ -61,6 +67,24 @@
     <string name="settings">Settings</string>
     <string name="edit">Edit</string>
     <string name="share">Share</string>
+    <string name="add_profile">Add Profile</string>
+    <string name="add_group">Add Group</string>
+    <string name="add_proxy_set_members">Add Proxy Set Members</string>
+    <string name="add_source">Add Source</string>
+    <string name="action_socks" translatable="false">SOCKS</string>
+    <string name="action_http" translatable="false">HTTP</string>
+    <string name="action_shadowsocks" translatable="false">Shadowsocks</string>
+    <string name="action_snell" translatable="false">Snell</string>
+    <string name="action_ssr" translatable="false">ShadowsocksR</string>
+    <string name="action_vmess" translatable="false">VMess</string>
+    <string name="action_vless" translatable="false">VLESS</string>
+    <string name="action_trojan" translatable="false">Trojan</string>
+    <string name="action_mieru" translatable="false">Mieru</string>
+    <string name="action_naive" translatable="false">Naïve</string>
+    <string name="action_hysteria" translatable="false">Hysteria</string>
+    <string name="action_hysteria2" translatable="false">Hysteria 2</string>
+    <string name="action_ssh" translatable="false">SSH</string>
+    <string name="action_wireguard" translatable="false">WireGuard</string>
     <string name="action_openconnect" translatable="false">OpenConnect</string>
     <string name="action_openvpn" translatable="false">OpenVPN</string>
     <string name="cipher">Data Cipher</string>
@@ -177,6 +201,31 @@
     <string name="clash_mode">Clash Mode</string>
     <string name="pause">Pause</string>
     <string name="resume">Resume</string>
+    <string name="network_interface_strategy">Network Interface Strategy</string>
+    <string name="network_interface_preference">Network Interface Preference</string>
+    <string name="hybrid">Hybrid</string>
+    <string name="fallback">Fallback</string>
+    <string name="listen_port">Listen Port</string>
+    <string name="reserved" translatable="false">Reserved</string>
+    <string name="certificate_authority">Certificate Authority</string>
+    <string name="mozilla" translatable="false">Mozilla</string>
+    <string name="system_and_user">System and User</string>
+    <string name="system_daemon">System Daemon</string>
+    <string name="http_proxy_bypass">HTTP proxy bypass list</string>
+    <string name="udp_over_tcp" translatable="false">UDP over TCP</string>
+    <string name="udp" translatable="false">UDP</string>
+    <string name="reality_public_key">REALITY Public Key</string>
+    <string name="reality_short_id" translatable="false">REALITY Short ID</string>
+    <string name="ech" translatable="false">ECH</string>
+    <string name="v2ray_transport">V2Ray Transport</string>
+    <string name="http_headers" translatable="false">HTTP Headers</string>
+    <string name="import_http_url">You are importing a HTTP URL. Which action do you want?</string>
+    <string name="idle_session_check_interval">IDLE Session Check Interval</string>
+    <string name="idle_session_timeout">IDLE Session Timeout</string>
+    <string name="min_idle_session">Mininum IDLE Session</string>
+    <string name="anytls_client_metadata">Client Metadata</string>
+    <string name="anytls_client_metadata_sum">The evil proxy provider uses AnyTLS's client metadata to block client. Set this value to oppose discrimination.</string>
+    <string name="persistent_keepalive_interval">Persistent Keepalive Interval</string>
     <string name="language">Language</string>
     <string name="language_system_default">System default</string>
     <string name="proxy_set">Proxy Set</string>
@@ -197,6 +246,11 @@
     <string name="connection_empty_search">No matching connections</string>
     <string name="connection_empty_no_status">No connection status selected</string>
     <string name="can_not_be_empty">Cann\'t be empty</string>
+    <string name="juicity_provider">Juicity Provider</string>
+    <string name="mieru_provider">Mieru Provider</string>
+    <string name="action_format">Format</string>
+    <string name="action_test_config">Test config</string>
+    <string name="mutual_tls">Mutual TLS</string>
     <string name="menu">Menu</string>
     <string name="more">More</string>
     <string name="back">Back</string>

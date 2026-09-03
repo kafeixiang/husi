@@ -18,6 +18,7 @@ import fr.husi.fmt.openvpn.OpenVPNBean
 import fr.husi.fmt.plugin.CustomPluginBean
 import fr.husi.fmt.shadowquic.ShadowQUICBean
 import fr.husi.fmt.shadowsocks.ShadowsocksBean
+import fr.husi.fmt.ssr.SSRBean
 import fr.husi.fmt.shadowtls.ShadowTLSBean
 import fr.husi.fmt.snell.SnellBean
 import fr.husi.fmt.socks.SOCKSBean
@@ -96,6 +97,13 @@ class BeanConverters {
         }
 
         @ColumnTypeConverter
+        @JvmStatic
+        fun ssrDeserialize(bytes: ByteArray?): SSRBean? {
+            if (bytes?.isNotEmpty() != true) return null
+            return deserialize(SSRBean(), bytes)
+        }
+
+        @TypeConverter
         @JvmStatic
         fun configDeserialize(bytes: ByteArray?): ConfigBean? {
             if (bytes?.isNotEmpty() != true) return null
