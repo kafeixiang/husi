@@ -4,7 +4,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.AnnotatedString
 import fr.husi.compose.IconMaskColors
-import fr.husi.compose.IconMaskShapes
 import fr.husi.compose.ListPreference
 import fr.husi.compose.MaskedIcon
 import fr.husi.compose.MultilineTextField
@@ -20,14 +19,13 @@ import fr.husi.ktx.intListN
 import fr.husi.resources.Res
 import fr.husi.resources.compare_arrows
 import fr.husi.resources.directions_boat
+import fr.husi.resources.disable
 import fr.husi.resources.emoji_symbols
 import fr.husi.resources.high
 import fr.husi.resources.low
 import fr.husi.resources.middle
 import fr.husi.resources.mtu
 import fr.husi.resources.mux_preference
-import fr.husi.resources.not_set
-import fr.husi.resources.off
 import fr.husi.resources.pattern
 import fr.husi.resources.person
 import fr.husi.resources.profile_config
@@ -40,7 +38,6 @@ import fr.husi.resources.server_address
 import fr.husi.resources.server_port
 import fr.husi.resources.traffic_pattern
 import fr.husi.resources.username
-import fr.husi.resources.vpn_key
 import fr.husi.ui.NavRoutes
 import me.zhanghai.compose.preference.ListPreferenceType
 import org.jetbrains.compose.resources.StringResource
@@ -60,7 +57,7 @@ fun MieruSettingsScreen(
         MieruSettingsViewModel()
     }
 
-    ProfileSettingsScreenScaffold(
+    ProfileSettingsScreenScaffold<MieruBean>(
         title = Res.string.profile_config,
         viewModel = viewModel,
         onResult = onResult,
@@ -74,9 +71,7 @@ private fun LazyListScope.mieruSettings(
     uiState: MieruUiState,
     viewModel: MieruSettingsViewModel,
 ) {
-    val protocols = listOf("TCP", "UDP")
-
-    preferenceGroup {
+    preferenceGroup(key = "name") {
         TextFieldPreference(
             value = uiState.name,
             onValueChange = { viewModel.setName(it) },
@@ -91,22 +86,31 @@ private fun LazyListScope.mieruSettings(
             summary = { Text(contentOrUnset(uiState.name)) },
             valueToText = { it },
         )
+        ListPreference(
+            value = uiState.protocol,
+            values = listOf(MieruBean.PROTOCOL_TCP, MieruBean.PROTOCOL_UDP),
+            onValueChange = { viewModel.setProtocol(it) },
+            title = { Text(stringResource(Res.string.protocol)) },
+            icon = {
+                MaskedIcon(Res.drawable.compare_arrows, color = IconMaskColors.IconCyan)
+            },
+            summary = { Text(uiState.protocol.uppercase()) },
+            type = ListPreferenceType.DROPDOWN_MENU,
+            valueToText = { AnnotatedString(it) },
+        )
     }
 
     item("category_proxy") {
         PreferenceCategory(text = { Text(stringResource(Res.string.proxy_cat)) })
     }
-    preferenceGroup {
+    preferenceGroup(key = "address") {
         TextFieldPreference(
             value = uiState.address,
             onValueChange = { viewModel.setAddress(it) },
             title = { Text(stringResource(Res.string.server_address)) },
             textToValue = { it },
             icon = {
-                MaskedIcon(
-                    Res.drawable.router,
-                    color = IconMaskColors.IconLightBlue,
-                )
+                MaskedIcon(Res.drawable.router, color = IconMaskColors.IconCyan)
             },
             summary = { Text(contentOrUnset(uiState.address)) },
             valueToText = { it },
@@ -116,32 +120,18 @@ private fun LazyListScope.mieruSettings(
             onValueChange = { viewModel.setPort(it) },
             title = { Text(stringResource(Res.string.server_port)) },
             textToValue = { it.toIntOrNull() ?: 443 },
+            enabled = uiState.ports.isBlank(),
             icon = {
                 MaskedIcon(
                     Res.drawable.directions_boat,
-                    color = IconMaskColors.IconLightOrange,
+                    color = IconMaskColors.IconCyan,
                 )
             },
-            summary = { Text(contentOrUnset(uiState.port)) },
+            summary = { Text(uiState.port.toString()) },
             valueToText = { it.toString() },
             textField = { value, onValueChange, onOk ->
                 UIntegerTextField(value, onValueChange, onOk)
             },
-        )
-        ListPreference(
-            value = uiState.protocol,
-            values = protocols,
-            onValueChange = { viewModel.setProtocol(it) },
-            title = { Text(stringResource(Res.string.protocol)) },
-            icon = {
-                MaskedIcon(
-                    Res.drawable.compare_arrows,
-                    color = IconMaskColors.IconLavender,
-                )
-            },
-            summary = { Text(contentOrUnset(uiState.protocol.uppercase())) },
-            type = ListPreferenceType.DROPDOWN_MENU,
-            valueToText = { AnnotatedString(it) },
         )
         TextFieldPreference(
             value = uiState.username,
@@ -149,7 +139,10 @@ private fun LazyListScope.mieruSettings(
             title = { Text(stringResource(Res.string.username)) },
             textToValue = { it },
             icon = {
-                MaskedIcon(Res.drawable.person, color = IconMaskColors.IconCyan)
+                MaskedIcon(
+                    Res.drawable.person,
+                    color = IconMaskColors.IconCyan,
+                )
             },
             summary = { Text(contentOrUnset(uiState.username)) },
             valueToText = { it },
@@ -157,12 +150,6 @@ private fun LazyListScope.mieruSettings(
         PasswordPreference(
             value = uiState.password,
             onValueChange = { viewModel.setPassword(it) },
-            icon = {
-                MaskedIcon(
-                    Res.drawable.vpn_key,
-                    color = IconMaskColors.IconWarmGray,
-                )
-            },
         )
         if (uiState.protocol == MieruBean.PROTOCOL_UDP) {
             TextFieldPreference(
@@ -172,17 +159,22 @@ private fun LazyListScope.mieruSettings(
                 textToValue = { it.toIntOrNull() ?: 1400 },
                 icon = {
                     MaskedIcon(
-                        resource = Res.drawable.public_icon,
-                        color = IconMaskColors.IconLightGreen,
-                        shape = IconMaskShapes.route(),
+                        Res.drawable.public_icon,
+                        color = IconMaskColors.IconWarmGray,
                     )
                 },
-                summary = { Text(contentOrUnset(uiState.mtu)) },
+                summary = { Text(uiState.mtu.toString()) },
                 valueToText = { it.toString() },
                 textField = { value, onValueChange, onOk ->
                     UIntegerTextField(value, onValueChange, onOk)
                 },
             )
+        }
+        fun muxSummary(level: Int): StringResource = when (level) {
+            1 -> Res.string.low
+            2 -> Res.string.middle
+            3 -> Res.string.high
+            else -> Res.string.disable
         }
         ListPreference(
             value = uiState.muxNumber,
@@ -192,39 +184,44 @@ private fun LazyListScope.mieruSettings(
             icon = {
                 MaskedIcon(
                     Res.drawable.compare_arrows,
-                    color = IconMaskColors.IconLightYellow,
-                    shape = IconMaskShapes.route(),
+                    color = IconMaskColors.IconWarmGray,
                 )
             },
-            summary = {
-                val muxSummary: StringResource = when (uiState.muxNumber) {
-                    0 -> Res.string.off
-                    1 -> Res.string.low
-                    2 -> Res.string.middle
-                    3 -> Res.string.high
-                    else -> Res.string.not_set
-                }
-                Text(stringResource(muxSummary))
-            },
+            summary = { Text(stringResource(muxSummary(uiState.muxNumber))) },
             type = ListPreferenceType.DROPDOWN_MENU,
-            valueToText = {
-                val muxSummary: StringResource = when (it) {
-                    0 -> Res.string.off
-                    1 -> Res.string.low
-                    2 -> Res.string.middle
-                    3 -> Res.string.high
-                    else -> Res.string.not_set
-                }
-                AnnotatedString(stringResource(muxSummary))
+            valueToText = { AnnotatedString(stringResource(muxSummary(it))) },
+        )
+        fun handshakeSummary(mode: Int): String = when (mode) {
+            0 -> "DEFAULT"
+            1 -> "STANDARD (1-RTT)"
+            2 -> "NO_WAIT (0-RTT)"
+            else -> "UNKNOWN"
+        }
+        ListPreference(
+            value = uiState.handshakeMode,
+            values = intListN(3),
+            onValueChange = { viewModel.setHandshakeMode(it) },
+            title = { Text("Handshake Mode") },
+            icon = {
+                MaskedIcon(
+                    Res.drawable.compare_arrows,
+                    color = IconMaskColors.IconWarmGray,
+                )
             },
+            summary = { Text(handshakeSummary(uiState.handshakeMode)) },
+            type = ListPreferenceType.DROPDOWN_MENU,
+            valueToText = { AnnotatedString(handshakeSummary(it)) },
         )
         TextFieldPreference(
             value = uiState.trafficPattern,
-            onValueChange = viewModel::setTrafficPattern,
+            onValueChange = { viewModel.setTrafficPattern(it) },
             title = { Text(stringResource(Res.string.traffic_pattern)) },
             textToValue = { it },
             icon = {
-                MaskedIcon(Res.drawable.pattern, color = IconMaskColors.IconCoral)
+                MaskedIcon(
+                    Res.drawable.pattern,
+                    color = IconMaskColors.IconWarmGray,
+                )
             },
             summary = { Text(contentOrUnset(uiState.trafficPattern)) },
             valueToText = { it },
