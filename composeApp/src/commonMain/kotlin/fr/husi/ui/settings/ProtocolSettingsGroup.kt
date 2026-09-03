@@ -117,13 +117,11 @@ internal fun ProtocolSettingsGroup(
         valueToText = { AnnotatedString(stringOrRes(pluginProviderText(it))) },
     )
 
-    val mieruProviderValue by DataStore.configurationStore
-        .intFlow(Key.PROVIDER_MIERU, ProtocolProvider.PLUGIN)
-        .collectAsStateWithLifecycle(ProtocolProvider.PLUGIN)
+    val mieruProviderValue by DataStore.providerMieru.collectAsStateWithLifecycle()
     ListPreference(
         value = mieruProviderValue,
         onValueChange = {
-            DataStore.providerMieru = it
+            DataStore.providerMieru.setBlocking(it)
             needReload()
         },
         values = listOf(ProtocolProvider.CORE, ProtocolProvider.PLUGIN),
@@ -138,7 +136,6 @@ internal fun ProtocolSettingsGroup(
         type = ListPreferenceType.DROPDOWN_MENU,
         valueToText = { AnnotatedString(stringOrRes(pluginProviderText(it))) },
     )
-    PreferenceDivider()
 
     val naiveProviderValue by DataStore.providerNaive.collectAsStateWithLifecycle()
     ListPreference(

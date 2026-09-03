@@ -330,8 +330,8 @@ data class ProxyEntity(
     }
 
     fun mustUsePlugin(): Boolean = when (type) {
-        TYPE_MIERU -> DataStore.providerMieru == ProtocolProvider.PLUGIN
-        TYPE_JUICITY -> DataStore.providerJuicity == ProtocolProvider.PLUGIN
+        TYPE_MIERU -> DataStore.providerMieru.getBlocking() == ProtocolProvider.PLUGIN
+        TYPE_JUICITY -> DataStore.providerJuicity.getBlocking() == ProtocolProvider.PLUGIN
         TYPE_SHADOWQUIC -> true
         else -> false
     }
@@ -387,7 +387,7 @@ data class ProxyEntity(
 
     suspend fun needExternal(): Boolean {
         return when (type) {
-            TYPE_MIERU -> DataStore.providerMieru == ProtocolProvider.PLUGIN
+            TYPE_MIERU -> DataStore.providerMieru.get() == ProtocolProvider.PLUGIN
             TYPE_SHADOWQUIC -> true
 
             TYPE_HYSTERIA -> !hysteriaBean!!.canUseSingBox()

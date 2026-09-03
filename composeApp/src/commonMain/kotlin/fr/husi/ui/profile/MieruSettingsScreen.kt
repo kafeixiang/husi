@@ -4,7 +4,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.AnnotatedString
 import fr.husi.compose.IconMaskColors
-import fr.husi.compose.IconMaskShapes
 import fr.husi.compose.ListPreference
 import fr.husi.compose.MaskedIcon
 import fr.husi.compose.MultilineTextField
@@ -37,7 +36,6 @@ import fr.husi.resources.public_icon
 import fr.husi.resources.router
 import fr.husi.resources.server_address
 import fr.husi.resources.server_port
-import fr.husi.resources.settings
 import fr.husi.resources.traffic_pattern
 import fr.husi.resources.username
 import fr.husi.ui.NavRoutes
@@ -88,7 +86,6 @@ private fun LazyListScope.mieruSettings(
             summary = { Text(contentOrUnset(uiState.name)) },
             valueToText = { it },
         )
-        PreferenceDivider()
         ListPreference(
             value = uiState.protocol,
             values = listOf(MieruBean.PROTOCOL_TCP, MieruBean.PROTOCOL_UDP),
@@ -136,21 +133,6 @@ private fun LazyListScope.mieruSettings(
                 UIntegerTextField(value, onValueChange, onOk)
             },
         )
-        ListPreference(
-            value = uiState.protocol,
-            values = protocols,
-            onValueChange = { viewModel.setProtocol(it) },
-            title = { Text(stringResource(Res.string.protocol)) },
-            icon = {
-                MaskedIcon(
-                    Res.drawable.compare_arrows,
-                    color = IconMaskColors.IconLavender,
-                )
-            },
-            summary = { Text(contentOrUnset(uiState.protocol.uppercase())) },
-            type = ListPreferenceType.DROPDOWN_MENU,
-            valueToText = { AnnotatedString(it) },
-        )
         TextFieldPreference(
             value = uiState.username,
             onValueChange = { viewModel.setUsername(it) },
@@ -187,7 +169,6 @@ private fun LazyListScope.mieruSettings(
                     UIntegerTextField(value, onValueChange, onOk)
                 },
             )
-            PreferenceDivider()
         }
         fun muxSummary(level: Int): StringResource = when (level) {
             1 -> Res.string.low
@@ -210,7 +191,6 @@ private fun LazyListScope.mieruSettings(
             type = ListPreferenceType.DROPDOWN_MENU,
             valueToText = { AnnotatedString(stringResource(muxSummary(it))) },
         )
-        PreferenceDivider()
         fun handshakeSummary(mode: Int): String = when (mode) {
             0 -> "DEFAULT"
             1 -> "STANDARD (1-RTT)"
@@ -231,54 +211,6 @@ private fun LazyListScope.mieruSettings(
             summary = { Text(handshakeSummary(uiState.handshakeMode)) },
             type = ListPreferenceType.DROPDOWN_MENU,
             valueToText = { AnnotatedString(handshakeSummary(it)) },
-        )
-        PreferenceDivider()
-        TextFieldPreference(
-            value = uiState.heartbeatInterval,
-            onValueChange = { viewModel.setHeartbeatInterval(it) },
-            title = { Text("Heartbeat Interval") },
-            textToValue = { it.toIntOrNull() ?: 0 },
-            icon = {
-                MaskedIcon(
-                    Res.drawable.compare_arrows,
-                    color = IconMaskColors.IconLightOrange,
-                )
-            },
-            summary = { Text(if (uiState.heartbeatInterval > 0) "${uiState.heartbeatInterval}s" else "DEFAULT") },
-            valueToText = { it.toString() },
-            textField = { value, onValueChange, onOk ->
-                UIntegerTextField(value, onValueChange, onOk)
-            },
-        )
-        PreferenceDivider()
-        TextFieldPreference(
-            value = uiState.heartbeatJitter,
-            onValueChange = { viewModel.setHeartbeatJitter(it) },
-            title = { Text("Heartbeat Jitter") },
-            textToValue = { it.toDoubleOrNull() ?: 0.0 },
-            icon = {
-                MaskedIcon(
-                    Res.drawable.compare_arrows,
-                    color = IconMaskColors.IconLightOrange,
-                )
-            },
-            summary = { Text(if (uiState.heartbeatJitter > 0.0) uiState.heartbeatJitter.toString() else "DEFAULT") },
-            valueToText = { it.toString() },
-        )
-        PreferenceDivider()
-        TextFieldPreference(
-            value = uiState.userHint,
-            onValueChange = { viewModel.setUserHint(it) },
-            title = { Text("User Hint") },
-            textToValue = { it },
-            icon = {
-                MaskedIcon(
-                    Res.drawable.person,
-                    color = IconMaskColors.IconWarmGray,
-                )
-            },
-            summary = { Text(contentOrUnset(uiState.userHint)) },
-            valueToText = { it },
         )
         TextFieldPreference(
             value = uiState.trafficPattern,

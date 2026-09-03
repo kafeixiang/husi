@@ -77,7 +77,7 @@ class MieruBean : AbstractBean() {
         }
         if (version in 4..5) {
             input.readInt() // heartbeatInterval
-            input.readDouble() // heartbeatJitter
+            Double.fromBits(input.readLong()) // heartbeatJitter
             input.readString() // userHint
         }
         if (version >= 5) {
