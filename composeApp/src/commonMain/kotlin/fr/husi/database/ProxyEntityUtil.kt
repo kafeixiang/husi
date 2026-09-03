@@ -17,6 +17,7 @@ import fr.husi.database.ProxyEntity.Companion.TYPE_SHADOWTLS
 import fr.husi.database.ProxyEntity.Companion.TYPE_SNELL
 import fr.husi.database.ProxyEntity.Companion.TYPE_SOCKS
 import fr.husi.database.ProxyEntity.Companion.TYPE_SS
+import fr.husi.database.ProxyEntity.Companion.TYPE_SSR
 import fr.husi.database.ProxyEntity.Companion.TYPE_SSH
 import fr.husi.database.ProxyEntity.Companion.TYPE_TROJAN
 import fr.husi.database.ProxyEntity.Companion.TYPE_TRUST_TUNNEL
@@ -33,6 +34,7 @@ fun ProxyEntity.displayType(): String = when (type) {
     TYPE_HTTP -> if (httpBean!!.isTLS) "HTTPS" else "HTTP"
     TYPE_SS -> "Shadowsocks"
     TYPE_SNELL -> "Snell"
+    TYPE_SSR -> "ShadowsocksR"
     TYPE_VMESS -> "VMess"
     TYPE_VLESS -> "VLESS"
     TYPE_TROJAN -> "Trojan"
