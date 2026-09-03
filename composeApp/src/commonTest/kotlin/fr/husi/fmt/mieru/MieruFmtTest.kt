@@ -34,7 +34,7 @@ class MieruFmtTest {
     fun `parseMieru should use defaults for missing or unknown optional fields`() {
         val bean = parseMieru("mierus://user:pass@example.com?multiplexing=UNKNOWN")
 
-        assertEquals(1080, bean.serverPort)
+        assertEquals(443, bean.serverPort)
         assertEquals(0, bean.mtu)
         assertEquals(0, bean.serverMuxNumber)
     }
@@ -100,6 +100,7 @@ class MieruFmtTest {
             protocol = MieruBean.PROTOCOL_TCP
             mtu = 1400
             serverMuxNumber = 3
+            handshakeMode = 1
         }
         bean.initializeDefaultValues()
 
@@ -269,5 +270,80 @@ class MieruFmtTest {
 
         assertEquals(42, assertIs<Number>(trafficPattern["seed"]).toInt())
         assertEquals(true, trafficPattern["unlockAll"])
+    }
+
+    @Test
+    fun `applyFeatureSettings should copy features to target without overwriting credentials`() {
+        val template = MieruBean().apply {
+            username = "template_user"
+            password = "template_pass"
+            serverPorts = "1000-2000"
+            protocol = MieruBean.PROTOCOL_UDP
+            mtu = 1350
+            trafficPattern = "custom-pattern"
+            handshakeMode = 2
+            serverMuxNumber = 3
+        }
+        val target = MieruBean().apply {
+            username = "original_user"
+            password = "original_pass"
+            serverPorts = "8080"
+            protocol = MieruBean.PROTOCOL_TCP
+            mtu = 1400
+            trafficPattern = ""
+            handshakeMode = 1
+            serverMuxNumber = 0
+        }
+
+        template.applyFeatureSettings(target)
+
+        assertEquals("original_user", target.username)
+        assertEquals("original_pass", target.password)
+        assertEquals("8080", target.serverPorts)
+        assertEquals(MieruBean.PROTOCOL_UDP, target.protocol)
+        assertEquals(1350, target.mtu)
+        assertEquals("custom-pattern", target.trafficPattern)
+        assertEquals(2, target.handshakeMode)
+        assertEquals(3, target.serverMuxNumber)
+    }
+
+    @Test
+    fun `displayAddress should show serverPorts when configured`() {
+        val bean = MieruBean().apply {
+            serverAddress = "example.com"
+            serverPort = 443
+            serverPorts = "2000-3000"
+        }
+        assertEquals("example.com:2000-3000", bean.displayAddress())
+
+        bean.serverPorts = ""
+        assertEquals("example.com:443", bean.displayAddress())
+    }
+
+    @Test
+    fun `toUri should always include port in query parameter`() {
+        val singlePortBean = MieruBean().apply {
+            serverAddress = "example.com"
+            serverPort = 443
+            username = "user"
+            password = "pass"
+        }
+        val uri = singlePortBean.toUri()
+        val parsed = parseMieru(uri)
+
+        assertEquals(true, uri.contains("port=443"))
+        assertEquals(443, parsed.serverPort)
+
+        val portRangeBean = MieruBean().apply {
+            serverAddress = "example.com"
+            serverPorts = "1000-2000"
+            username = "user"
+            password = "pass"
+        }
+        val rangeUri = portRangeBean.toUri()
+        val rangeParsed = parseMieru(rangeUri)
+
+        assertEquals(true, rangeUri.contains("port=1000-2000"))
+        assertEquals("1000-2000", rangeParsed.serverPorts)
     }
 }
