@@ -213,6 +213,8 @@ object DataStore {
     val providerHysteria2 = configurationStore.int(Key.PROVIDER_HYSTERIA2) { ProtocolProvider.CORE }
     val providerJuicity = configurationStore.int(Key.PROVIDER_JUICITY) { ProtocolProvider.PLUGIN }
     val providerNaive = configurationStore.int(Key.PROVIDER_NAIVE) { ProtocolProvider.CORE }
+    var providerSSR = configurationStore.int(Key.PROVIDER_SSR) { ProtocolProvider.PLUGIN }
+    var providerMieru = configurationStore.int(Key.PROVIDER_MIERU) { ProtocolProvider.PLUGIN }
 
     val tunIpStack = configurationStore.int(Key.TUN_IP_STACK) { TunIpStack.GO }
     val profileTrafficStatistics = configurationStore.boolean(Key.PROFILE_TRAFFIC_STATISTICS) { true }
