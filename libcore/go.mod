@@ -5,10 +5,11 @@ go 1.26
 require (
 	filippo.io/age v1.3.2
 	github.com/coder/websocket v1.8.15
+	github.com/enfein/mieru/v3 v3.35.0
 	github.com/exclavenetwork/sing-juicity v0.3.1-0.20260904055012-342aef37343b
 	github.com/gofrs/uuid/v5 v5.5.1
 	github.com/klauspost/compress v1.19.2
-	github.com/metacubex/mihomo v1.19.29
+	github.com/metacubex/mihomo v1.19.30
 	github.com/miekg/dns v1.1.72
 	github.com/sagernet/cors v1.2.1
 	github.com/sagernet/sing v0.9.1-0.20260902140658-8bb71f553f8d
