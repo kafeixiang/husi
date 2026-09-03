@@ -28,12 +28,8 @@ import fr.husi.database.DataStore
  */
 @OptIn(ExperimentalMaterial3Api::class)
 fun Modifier.husiTopBarBackground(scrollBehavior: TopAppBarScrollBehavior?): Modifier = composed {
-    val isEnabled by DataStore.configurationStore
-        .booleanFlow(Key.THEMED_TOP_BAR, DataStore.themedTopBar)
-        .collectAsStateWithLifecycle(DataStore.themedTopBar)
-    val appTheme by DataStore.configurationStore
-        .intFlow(Key.APP_THEME, DataStore.appTheme)
-        .collectAsStateWithLifecycle(DataStore.appTheme)
+    val isEnabled by DataStore.themedTopBar.collectAsStateWithLifecycle()
+    val appTheme by DataStore.appTheme.collectAsStateWithLifecycle()
 
     // 严格遵循：如果功能关闭或处于动态主题，不添加任何背景修饰符，保持 100% 原生透明滚动效果
     if (!isEnabled || appTheme == DYNAMIC) return@composed this
@@ -52,12 +48,8 @@ fun Modifier.husiTopBarBackground(scrollBehavior: TopAppBarScrollBehavior?): Mod
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun husiAppBarContainerColor(scrollBehavior: TopAppBarScrollBehavior?): Color {
-    val isEnabled by DataStore.configurationStore
-        .booleanFlow(Key.THEMED_TOP_BAR, DataStore.themedTopBar)
-        .collectAsStateWithLifecycle(DataStore.themedTopBar)
-    val appTheme by DataStore.configurationStore
-        .intFlow(Key.APP_THEME, DataStore.appTheme)
-        .collectAsStateWithLifecycle(DataStore.appTheme)
+    val isEnabled by DataStore.themedTopBar.collectAsStateWithLifecycle()
+    val appTheme by DataStore.appTheme.collectAsStateWithLifecycle()
 
     val topAppBarColors = TopAppBarDefaults.topAppBarColors()
     val isThemed = isEnabled && appTheme != DYNAMIC

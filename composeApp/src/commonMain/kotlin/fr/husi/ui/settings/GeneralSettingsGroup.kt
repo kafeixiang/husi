@@ -248,12 +248,10 @@ internal fun GeneralSettingsGroup(
         title = { Text(stringResource(Res.string.theme)) },
     )
 
-    val themedTopBarValue by DataStore.configurationStore
-        .booleanFlow(Key.THEMED_TOP_BAR, false)
-        .collectAsStateWithLifecycle(false)
+    val themedTopBarValue by DataStore.themedTopBar.collectAsStateWithLifecycle()
     SwitchPreference(
         value = themedTopBarValue,
-        onValueChange = { DataStore.themedTopBar = it },
+        onValueChange = { DataStore.themedTopBar.setBlocking(it) },
         title = { Text(stringResource(Res.string.themed_top_bar)) },
         icon = {
             MaskedIcon(
@@ -263,7 +261,6 @@ internal fun GeneralSettingsGroup(
         },
         summary = { Text(stringResource(Res.string.themed_top_bar_summary)) },
     )
-    PreferenceDivider()
 
     fun nightString(index: Int): StringResource = when (index) {
         0 -> Res.string.follow_system
