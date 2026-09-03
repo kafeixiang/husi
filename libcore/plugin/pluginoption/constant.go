@@ -11,6 +11,8 @@ const (
 	TypeBalancer    = "balancer"
 	TypeAnchor      = "anchor"
 	TypeProtect     = "protect"
+	TypeSSR         = "ssr"
+	TypeMieru       = "mieru"
 )
 
 func ProxyDisplayName(proxyType string) string {
@@ -21,6 +23,10 @@ func ProxyDisplayName(proxyType string) string {
 		return "TrustTunnel"
 	case TypeBalancer:
 		return "Balancer"
+	case TypeSSR:
+		return "ShadowsocksR"
+	case TypeMieru:
+		return "Mieru"
 	default:
 		return C.ProxyDisplayName(proxyType)
 	}
