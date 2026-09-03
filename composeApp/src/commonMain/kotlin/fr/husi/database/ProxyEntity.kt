@@ -214,7 +214,7 @@ data class ProxyEntity(
             TYPE_HTTP -> httpBean = BeanConverters.httpDeserialize(byteArray)
             TYPE_SS -> ssBean = BeanConverters.shadowsocksDeserialize(byteArray)
             TYPE_SNELL -> snellBean = BeanConverters.snellDeserialize(byteArray)
-            TYPE_SSR -> ssrBean = KryoConverters.ssrDeserialize(byteArray)
+            TYPE_SSR -> ssrBean = BeanConverters.ssrDeserialize(byteArray)
             TYPE_VMESS -> vmessBean = BeanConverters.vmessDeserialize(byteArray)
             TYPE_VLESS -> vlessBean = BeanConverters.vlessDeserialize(byteArray)
             TYPE_TROJAN -> trojanBean = BeanConverters.trojanDeserialize(byteArray)

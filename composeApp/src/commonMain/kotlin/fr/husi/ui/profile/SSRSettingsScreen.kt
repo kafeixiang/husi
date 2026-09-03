@@ -3,13 +3,13 @@ package fr.husi.ui.profile
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import fr.husi.compose.IconMaskColors
+import fr.husi.compose.ListPreference
 import fr.husi.compose.MaskedIcon
 import fr.husi.compose.PasswordPreference
 import fr.husi.compose.PreferenceCategory
-import fr.husi.compose.PreferenceDivider
+import fr.husi.compose.TextFieldPreference
 import fr.husi.compose.UIntegerTextField
 import fr.husi.compose.material3.Text
 import fr.husi.compose.preferenceGroup
@@ -34,11 +34,8 @@ import fr.husi.resources.server_port
 import fr.husi.resources.settings
 import fr.husi.resources.type_specimen
 import fr.husi.ui.NavRoutes
-import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ListPreferenceType
-import me.zhanghai.compose.preference.TextFieldPreference
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -157,7 +154,6 @@ private fun LazyListScope.ssrSettings(
             summary = { Text(contentOrUnset(uiState.address)) },
             valueToText = { it },
         )
-        PreferenceDivider()
         TextFieldPreference(
             value = uiState.port,
             onValueChange = { viewModel.setPort(it) },
@@ -175,7 +171,6 @@ private fun LazyListScope.ssrSettings(
                 UIntegerTextField(value, onValueChange, onOk, minValue = 1, maxValue = 65535)
             },
         )
-        PreferenceDivider()
         ListPreference(
             value = uiState.method,
             values = encryptionMethods,
@@ -191,7 +186,6 @@ private fun LazyListScope.ssrSettings(
             type = ListPreferenceType.DROPDOWN_MENU,
             valueToText = { AnnotatedString(it) },
         )
-        PreferenceDivider()
         PasswordPreference(
             value = uiState.password,
             onValueChange = { viewModel.setPassword(it) },
@@ -217,7 +211,6 @@ private fun LazyListScope.ssrSettings(
             type = ListPreferenceType.DROPDOWN_MENU,
             valueToText = { AnnotatedString(it) },
         )
-        PreferenceDivider()
         TextFieldPreference(
             value = uiState.protocolParam,
             onValueChange = { viewModel.setProtocolParam(it) },
@@ -232,7 +225,6 @@ private fun LazyListScope.ssrSettings(
             summary = { Text(contentOrUnset(uiState.protocolParam)) },
             valueToText = { it },
         )
-        PreferenceDivider()
         ListPreference(
             value = uiState.obfs,
             values = obfses,
@@ -248,7 +240,6 @@ private fun LazyListScope.ssrSettings(
             type = ListPreferenceType.DROPDOWN_MENU,
             valueToText = { AnnotatedString(it) },
         )
-        PreferenceDivider()
         TextFieldPreference(
             value = uiState.obfsParam,
             onValueChange = { viewModel.setObfsParam(it) },
