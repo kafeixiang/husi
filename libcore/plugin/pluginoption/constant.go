@@ -8,4 +8,5 @@ const (
 	TypeAnchor      = "anchor"
 	TypeProtect     = "protect"
 	TypeSSR         = "ssr"
+	TypeMieru       = "mieru"
 )
