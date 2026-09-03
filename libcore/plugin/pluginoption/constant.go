@@ -7,4 +7,5 @@ const (
 	TypeBalancer    = "balancer"
 	TypeAnchor      = "anchor"
 	TypeProtect     = "protect"
+	TypeSSR         = "ssr"
 )
