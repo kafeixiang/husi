@@ -20,6 +20,7 @@ require (
 	github.com/coder/websocket v1.8.15
 	github.com/deatil/go-cryptobin v1.1.1003-0.20250606044017-a20f36bd45c6
 	github.com/emmansun/gmsm v0.30.1
+	github.com/enfein/mieru/v3 v3.37.0
 	github.com/exclavenetwork/sing-juicity v0.3.1
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/gofrs/uuid/v5 v5.5.1
