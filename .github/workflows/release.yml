@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing release tag
-        required: true
+        description: Release tag (leave empty to auto-generate from husi.properties)
+        required: false
         type: string
       no-publish:
         description: Build artifacts without publishing a GitHub Release
@@ -249,6 +249,10 @@ jobs:
         run: cd libcore && go mod download
       - name: Generate about libraries metadata
         run: make aboutlibraries_go aboutlibraries_desktop DESKTOP_TARGET="${{ matrix.target }}"
+      - name: Ensure release tag exists locally
+        run: |
+          VERSION_NAME=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
+          git tag -f "v${VERSION_NAME}"
       - name: Setup Windows signing
         if: ${{ matrix.package == 'windows' }}
         env:
@@ -303,6 +307,8 @@ jobs:
     if: ${{ !inputs.no-publish }}
     runs-on: ubuntu-26.04
     steps:
+      - name: Checkout source code
+        uses: actions/checkout@v7
       - name: Download Android artifacts
         uses: actions/download-artifact@v8
         with:
@@ -318,9 +324,18 @@ jobs:
         with:
           pattern: mapping-*
           path: mapping
+      - name: Set Release Tag
+        run: |
+          VERSION_NAME=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            echo "RELEASE_TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+            echo "RELEASE_TAG=${BRANCH_NAME}-v${VERSION_NAME}" >> $GITHUB_ENV
+          fi
       - name: Bundle R8 mappings
         env:
-          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+          RELEASE_TAG: ${{ inputs.tag || env.RELEASE_TAG }}
         run: |
           cd mapping
           zip -9 -r -q "$GITHUB_WORKSPACE/release-artifacts/mapping-$RELEASE_TAG.zip" .
@@ -328,11 +343,8 @@ jobs:
         env:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+          TAG: ${{ inputs.tag || env.RELEASE_TAG }}
         run: |
           mapfile -d '' files < <(find release-artifacts -type f -print0)
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" "${files[@]}" --clobber
-          else
-            gh release create "$RELEASE_TAG" "${files[@]}" --generate-notes --prerelease
-          fi
+          gh release create "$TAG" "${files[@]}" --title "$TAG" --generate-notes --prerelease || \
+          gh release upload "$TAG" "${files[@]}" --clobber
