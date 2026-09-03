@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 25,
-    "identityHash": "632ea0c4f394e8fdc549eea0f95dd5b1",
+    "identityHash": "61550ab7561f0a1f871eafa0ec6118fa",
     "entities": [
       {
         "tableName": "proxy_groups",
@@ -63,7 +63,7 @@
       },
       {
         "tableName": "proxy_entities",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `groupId` INTEGER NOT NULL, `type` INTEGER NOT NULL, `userOrder` INTEGER NOT NULL, `tx` INTEGER NOT NULL, `rx` INTEGER NOT NULL, `status` INTEGER NOT NULL, `ping` INTEGER NOT NULL, `error` TEXT, `socksBean` BLOB, `httpBean` BLOB, `ssBean` BLOB, `vmessBean` BLOB, `vlessBean` BLOB, `trojanBean` BLOB, `mieruBean` BLOB, `naiveBean` BLOB, `hysteriaBean` BLOB, `tuicBean` BLOB, `juicityBean` BLOB, `sshBean` BLOB, `wgBean` BLOB, `openConnectBean` BLOB, `openVPNBean` BLOB, `masqueBean` BLOB, `tailscaleBean` BLOB, `tailcatBean` BLOB, `shadowTLSBean` BLOB, `directBean` BLOB, `anyTLSBean` BLOB, `shadowQUICBean` BLOB, `trustTunnelBean` BLOB, `snellBean` BLOB, `proxySetBean` BLOB, `chainBean` BLOB, `configBean` BLOB)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `groupId` INTEGER NOT NULL, `type` INTEGER NOT NULL, `userOrder` INTEGER NOT NULL, `tx` INTEGER NOT NULL, `rx` INTEGER NOT NULL, `status` INTEGER NOT NULL, `ping` INTEGER NOT NULL, `error` TEXT, `socksBean` BLOB, `httpBean` BLOB, `ssBean` BLOB, `ssrBean` BLOB, `vmessBean` BLOB, `vlessBean` BLOB, `trojanBean` BLOB, `mieruBean` BLOB, `naiveBean` BLOB, `hysteriaBean` BLOB, `tuicBean` BLOB, `juicityBean` BLOB, `sshBean` BLOB, `wgBean` BLOB, `openConnectBean` BLOB, `openVPNBean` BLOB, `masqueBean` BLOB, `tailscaleBean` BLOB, `tailcatBean` BLOB, `shadowTLSBean` BLOB, `directBean` BLOB, `anyTLSBean` BLOB, `shadowQUICBean` BLOB, `trustTunnelBean` BLOB, `snellBean` BLOB, `proxySetBean` BLOB, `chainBean` BLOB, `configBean` BLOB)",
         "fields": [
           {
             "fieldPath": "id",
@@ -131,6 +131,11 @@
           {
             "fieldPath": "ssBean",
             "columnName": "ssBean",
+            "affinity": "BLOB"
+          },
+          {
+            "fieldPath": "ssrBean",
+            "columnName": "ssrBean",
             "affinity": "BLOB"
           },
           {
@@ -662,7 +667,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '632ea0c4f394e8fdc549eea0f95dd5b1')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '61550ab7561f0a1f871eafa0ec6118fa')"
     ]
   }
 }
