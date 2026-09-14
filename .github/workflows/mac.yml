@@ -16,6 +16,11 @@ jobs:
       matrix:
         platform: [macos, windows]
         arch: [arm64, amd64]
+        exclude:
+          - platform: macos
+            arch: amd64
+          - platform: windows
+            arch: arm64
       fail-fast: false
 
     steps:
@@ -40,11 +45,11 @@ jobs:
           # 提取 husi.properties 中的版本号作为唯一标识
           VERSION="${{ steps.project_version.outputs.version }}"
           echo "RELEASE_TAG=v${VERSION}-Desktop" >> $GITHUB_ENV
-          
+
           # 获取清理后的分支名用于文件名后缀
           REF_NAME="${{ github.ref_name }}"
           CLEAN_REF="${REF_NAME//\//-}"
-          
+
           # 只有非 Tag 触发时才添加文件名后缀，防止同一版本多分支冲突
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "FILE_SUFFIX=" >> $GITHUB_ENV
@@ -56,7 +61,7 @@ jobs:
         run: find buildScript libcore/*.sh | xargs cat | sha1sum > golang_status
       - name: Libcore Status
         run: git ls-files libcore | xargs cat | sha1sum > libcore_status
-      
+
       - name: LibCore Cache
         id: cache
         uses: actions/cache@v5
@@ -64,7 +69,7 @@ jobs:
           path: |
             composeApp/libs
           key: libcore-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('.github/workflows/*', 'golang_status', 'libcore_status') }}
-      
+
       - name: Verify LibCore cache
         id: verify_libcore
         run: |
@@ -163,7 +168,7 @@ jobs:
         run: |
           JNI_PATH="$HOME/jni-headers/versions/21/include"
           if [ ! -d "$JNI_PATH" ]; then JNI_PATH="$HOME/jni-headers"; fi
-          
+
           if [ "${{ matrix.platform }}" = "macos" ]; then
             ./run lib core --desktop --desktoptargets darwin/${{ matrix.arch }} --jniinclude "$JNI_PATH" --darwinsdk "$DARWIN_SDKROOT"
           else
@@ -181,26 +186,16 @@ jobs:
           if-no-files-found: ignore
 
       # --- Final Packaging ---
-      - name: Build launcher for macOS ${{ matrix.arch }}
+      - name: Package macOS
         if: matrix.platform == 'macos'
-        run: |
-          if [ "${{ matrix.arch }}" = "arm64" ]; then ZIG_TARGET="aarch64-macos"; else ZIG_TARGET="x86_64-macos"; fi
-          cd launcher && zig build -Doptimize=ReleaseSmall -Dtarget=${ZIG_TARGET} -Dpackage-name=fr.husi && cd ..
-
-      - name: Build desktop uber JAR for macOS ${{ matrix.arch }}
-        if: matrix.platform == 'macos'
-        run: |
-          export BUILD_PLUGIN=none
-          ./gradlew clean :composeApp:packageUberJarForCurrentOS -PdesktopTarget=darwin/${{ matrix.arch }} -Dorg.gradle.jvmargs="-Xmx4096m"
-
-      - name: Package macOS DMG
-        if: matrix.platform == 'macos'
+        env:
+          BUILD_PLUGIN: none
         run: |
           # 在 Linux 环境下，genisoimage 对 -modification-date 的支持有问题
           # 我们在运行时动态移除该参数，以确保打包成功，且不修改源码文件
           sed -i '/-modification-date/d' release/macos/package.sh
 
-          ./release/macos/package.sh --target darwin/${{ matrix.arch }}
+          make desktop_package_macos DESKTOP_TARGET=darwin/${{ matrix.arch }}
           if [[ -n "${{ env.FILE_SUFFIX }}" ]]; then
             find composeApp/build/compose/packages/macos -name "*.dmg" -exec bash -c 'mv "$1" "${1%.dmg}$FILE_SUFFIX.dmg"' _ {} \;
           fi
@@ -209,6 +204,7 @@ jobs:
         if: matrix.platform == 'windows'
         env:
           BUILD_PLUGIN: none
+          WINDOWS_NO_SIGN: 1
         run: |
           chmod +x release/windows/package.sh
           make desktop_package_windows DESKTOP_TARGET=windows/${{ matrix.arch }}
@@ -239,9 +235,9 @@ jobs:
             FILES=(composeApp/build/compose/packages/windows/*.exe composeApp/build/compose/packages/windows/*.zip)
             NOTES=$'# :memo: Release Notes (Windows)\n\n* Fixes and improvements.\n* Build for ${{ matrix.arch }}.'
           fi
-          
+
           gh release create "${{ env.RELEASE_TAG }}" --title "${{ env.RELEASE_TAG }}" --prerelease --notes "$NOTES" 2>/dev/null || true
-          
+
           gh release edit "${{ env.RELEASE_TAG }}" --notes "$NOTES"
-          
+
           gh release upload "${{ env.RELEASE_TAG }}" "${FILES[@]}" --clobber
