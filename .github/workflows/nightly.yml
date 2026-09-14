@@ -7,12 +7,15 @@ on:
       - "androidApp/**"
       - "composeApp/**"
       - "buildScript/**"
+      - "buildSrc/**"
       - "release/linux/**"
       - "launcher/**"
-      - "buildScr/**"
       - "libcore/**"
-      - "grade/**"
+      - "gradle/**"
       - ".github/workflows/nightly.yml"
+
+permissions:
+  contents: write
 
 jobs:
   libcore:
@@ -23,8 +26,9 @@ jobs:
         uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: ./.github/actions/load-build-versions
       - name: Golang Status
-        run: find buildScript libcore/*.sh | xargs cat | sha1sum > golang_status
+        run: git ls-files buildScript libcore | xargs cat | sha1sum > golang_status
       - name: Libcore Status
         run: git ls-files libcore | xargs cat | sha1sum > libcore_status
       - name: LibCore Cache
@@ -54,72 +58,28 @@ jobs:
             exit 0
           fi
           echo "ready=false" >> "$GITHUB_OUTPUT"
-      - name: Golang Version
-        if: steps.verify_libcore.outputs.ready != 'true'
-        id: version
-        run: |
-          source buildScript/init/version.sh
-          echo go_version=$GO_VERSION >> $GITHUB_OUTPUT
       - name: Install Golang
         if: steps.verify_libcore.outputs.ready != 'true'
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: ${{ steps.version.outputs.go_version }}
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
           cache-dependency-path: libcore/go.sum
-      - uses: actions/setup-java@v5
+      - name: Setup Java
         if: steps.verify_libcore.outputs.ready != 'true'
+        uses: actions/setup-java@v6
         with:
-          java-version: "21"
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
-      - name: Setup Android NDK
+      - name: Setup Zig
         if: steps.verify_libcore.outputs.ready != 'true'
-        # Pin NDK version for `gomobile`.
-        id: setup-ndk
-        uses: nttld/setup-ndk@v1
+        uses: ./.github/actions/setup-zig
         with:
-          add-to-path: true
-          ndk-version: r29
-          local-cache: false
-      - name: Resolve cronet-go version
-        if: steps.verify_libcore.outputs.ready != 'true'
-        id: cronet-go-version
-        run: |
-          echo "version=$(tr -d '[:space:]' < .github/CRONET_GO_VERSION)" >> "$GITHUB_OUTPUT"
-      - name: Checkout cronet-go
-        if: steps.verify_libcore.outputs.ready != 'true'
-        uses: actions/checkout@v7
-        with:
-          repository: sagernet/cronet-go
-          ref: ${{ steps.cronet-go-version.outputs.version }}
-          path: cronet-go
-          submodules: recursive
-          fetch-depth: 1
-      - name: Cache Chromium toolchain
-        if: steps.verify_libcore.outputs.ready != 'true'
-        uses: actions/cache@v6
-        with:
-          path: |
-            cronet-go/naiveproxy/src/third_party/llvm-build/
-            cronet-go/naiveproxy/src/gn/out/
-            cronet-go/naiveproxy/src/chrome/build/pgo_profiles/
-            cronet-go/naiveproxy/src/out/sysroot-build/
-          key: cronet-toolchain-linux-amd64-arm64-${{ steps.cronet-go-version.outputs.version }}
-      - name: Download Chromium toolchain
-        if: steps.verify_libcore.outputs.ready != 'true'
-        run: |
-          set -xeuo pipefail
-          rm -f "$GITHUB_WORKSPACE/cronet-go/naiveproxy/src/build/linux/sysroot_scripts/keyring.gpg"
-          cd "$GITHUB_WORKSPACE/cronet-go"
-          GPG_TTY=/dev/null ./naiveproxy/src/build/linux/sysroot_scripts/generate_keyring.sh
-          go run ./cmd/build-naive --target=linux/amd64 download-toolchain
-          go run ./cmd/build-naive --target=linux/arm64 download-toolchain
+          cache-name: libcore-nightly
+          cache-hash: ${{ hashFiles('launcher/**', 'libcore/shim/**') }}
       - name: Native Build
         if: steps.verify_libcore.outputs.ready != 'true'
-        env:
-          ANDROID_NDK_HOME: ${{ steps.setup-ndk.outputs.ndk-path }}
         run: |
-          export CRONET_GO_ROOT="$GITHUB_WORKSPACE/cronet-go"
-          # ./run lib core --android --desktop --desktoptargets linux/amd64,linux/arm64,darwin/amd64,darwin/arm64,windows/amd64,windows/arm64
           ./run lib core --android --desktop --desktoptargets linux/amd64,linux/arm64
       - name: Upload libcore
         uses: actions/upload-artifact@v7
@@ -141,6 +101,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: ./.github/actions/load-build-versions
       - name: LibCore Artifact
         uses: actions/download-artifact@v8
         with:
@@ -151,24 +112,19 @@ jobs:
           ls -la composeApp/libs || true
           test -f composeApp/libs/libcore.aar
           test -f composeApp/libs/libcore-desktop-linux-amd64.jar
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
-          java-version: "21"
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
       - uses: gradle/actions/setup-gradle@v5
-      - name: Golang Version
-        id: version
-        run: |
-          source buildScript/init/version.sh
-          echo go_version=$GO_VERSION >> $GITHUB_OUTPUT
       - name: Install Golang
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: ${{ steps.version.outputs.go_version }}
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: libcore/go.sum
       - name: Build Assets
         run: |
-          ./run init action gradle
+          make assets
       - name: Gradle Build
         env:
           BUILD_PLUGIN: none
@@ -179,7 +135,7 @@ jobs:
           KEYSTORE_PASS="${{ secrets.KEYSTORE_PASS }}" ALIAS_NAME="${{ secrets.ALIAS_NAME }}" ALIAS_PASS="${{ secrets.ALIAS_PASS}}" ./gradlew clean androidApp:assembleFossDebug
           APK=$(find androidApp/build/outputs/apk -name '*arm64-v8a*.apk')
           APK=$(dirname $APK)
-          rm $APK/output-metadata.json
+          rm -f $APK/output-metadata.json
           echo "APK=$APK" >> $GITHUB_ENV
       - uses: actions/upload-artifact@v7
         with:
@@ -201,15 +157,12 @@ jobs:
           - name: linux-arm64
             target: linux/arm64
             runs_on: ubuntu-24.04-arm
-    #          - darwin/amd64
-    #          - darwin/arm64
-    #          - windows/amd64
-    #          - windows/arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           submodules: recursive
+      - uses: ./.github/actions/load-build-versions
       - name: LibCore Artifact
         uses: actions/download-artifact@v8
         with:
@@ -224,24 +177,19 @@ jobs:
           ls -la composeApp/libs || true
           test -f composeApp/libs/libcore.aar
           test -f "$required_jar"
-      - uses: actions/setup-java@v5
+      - uses: actions/setup-java@v6
         with:
-          java-version: "21"
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: "temurin"
       - uses: gradle/actions/setup-gradle@v5
-      - name: Golang Version
-        id: version
-        run: |
-          source buildScript/init/version.sh
-          echo go_version=$GO_VERSION >> $GITHUB_OUTPUT
       - name: Install Golang
-        uses: actions/setup-go@v6
+        uses: actions/setup-go@v7
         with:
-          go-version: ${{ steps.version.outputs.go_version }}
+          go-version: ${{ env.GO_VERSION }}
           cache-dependency-path: libcore/go.sum
       - name: Build Assets
         run: |
-          ./run init action gradle
+          make assets
       - name: Desktop Package
         env:
           BUILD_PLUGIN: none
@@ -287,10 +235,10 @@ jobs:
         run: |
           VERSION=$(grep '^VERSION_NAME=' husi.properties | cut -d'=' -f2 | tr -d '\r')
           echo "RELEASE_TAG=v${VERSION}-DEBUG" >> $GITHUB_ENV
-          
+
           REF_NAME="${{ github.ref_name }}"
           CLEAN_REF="${REF_NAME//\//-}"
-          
+
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "FILE_SUFFIX=" >> $GITHUB_ENV
           else
@@ -298,10 +246,11 @@ jobs:
           fi
       - name: Release
         env:
+          GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir release-assets
-          
+
           # Process APKs
           if [ -d artifacts ]; then
             find artifacts -name "*.apk" | while read -r file; do
@@ -314,7 +263,7 @@ jobs:
               cp "$file" "release-assets/$new_name"
             done
           fi
-          
+
           # Process Desktop Jars
           if [ -d desktop-jars ]; then
             find desktop-jars -name "*.jar" | while read -r file; do
@@ -331,7 +280,7 @@ jobs:
           # 创建 GitHub Release
           gh release create "${{ env.RELEASE_TAG }}" --title "${{ env.RELEASE_TAG }}" --prerelease \
             --notes $'# :memo: Debug Build Notes\n\n* Fixes and improvements.' 2>/dev/null || true
-          
+
           # 核心修改：利用通配符，让 gh release 仅上传 apk 文件
           gh release upload "${{ env.RELEASE_TAG }}" ./release-assets/*.apk --clobber
 
