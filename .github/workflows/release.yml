@@ -71,6 +71,11 @@ jobs:
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:
+          name: libcore-android
+          path: composeApp/libs/libcore.aar
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
           name: mapping-android
           path: androidApp/build/outputs/mapping/fossRelease/mapping.txt
           if-no-files-found: error
@@ -285,6 +290,11 @@ jobs:
         with:
           name: desktop-${{ matrix.id }}
           path: composeApp/build/compose/packages
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v7
+        with:
+          name: libcore-${{ matrix.id }}
+          path: composeApp/libs/libcore-desktop-*.jar
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:
