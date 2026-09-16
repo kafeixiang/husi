@@ -100,6 +100,7 @@ class MieruFmtTest {
             protocol = MieruBean.PROTOCOL_TCP
             mtu = 1400
             serverMuxNumber = 3
+            handshakeMode = 1
         }
         bean.initializeDefaultValues()
 
