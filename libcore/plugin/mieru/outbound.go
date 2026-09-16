@@ -5,22 +5,26 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"time"
+	"strconv"
+	"strings"
+	"sync"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/outbound"
 	"github.com/sagernet/sing-box/common/dialer"
 	"github.com/sagernet/sing-box/log"
-	"github.com/sagernet/sing/common"
+	"github.com/sagernet/sing/common/bufio"
 	E "github.com/sagernet/sing/common/exceptions"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+	"github.com/sagernet/sing/service"
 
 	mieruclient "github.com/enfein/mieru/v3/apis/client"
 	mierucommon "github.com/enfein/mieru/v3/apis/common"
 	mierumodel "github.com/enfein/mieru/v3/apis/model"
 	mierutp "github.com/enfein/mieru/v3/apis/trafficpattern"
 	mierupb "github.com/enfein/mieru/v3/pkg/appctl/appctlpb"
+	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/mieruproto"
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/pluginoption"
 	"google.golang.org/protobuf/proto"
 )
@@ -29,13 +33,17 @@ func RegisterOutbound(registry *outbound.Registry) {
 	outbound.Register[pluginoption.MieruOutboundOptions](registry, pluginoption.TypeMieru, NewOutbound)
 }
 
-var _ adapter.Outbound = (*Outbound)(nil)
+var (
+	_ adapter.Outbound                = (*Outbound)(nil)
+	_ adapter.InterfaceUpdateListener = (*Outbound)(nil)
+)
 
 type Outbound struct {
 	outbound.Adapter
 	dialer N.Dialer
 	logger log.ContextLogger
 	client mieruclient.Client
+	mu     sync.Mutex
 }
 
 func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextLogger, tag string, options pluginoption.MieruOutboundOptions) (adapter.Outbound, error) {
@@ -48,7 +56,8 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 		return nil, err
 	}
 
-	config, err := buildMieruClientConfig(options, mieruDialer{dialer: outboundDialer})
+	dnsRouter := service.FromContext[adapter.DNSRouter](ctx)
+	config, err := buildMieruClientConfig(options, mieruDialer{dialer: outboundDialer}, dnsRouter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build mieru client config: %w", err)
 	}
@@ -56,10 +65,6 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	if err := c.Store(config); err != nil {
 		return nil, fmt.Errorf("failed to store mieru client config: %w", err)
 	}
-	if err := c.Start(); err != nil {
-		return nil, fmt.Errorf("failed to start mieru client: %w", err)
-	}
-	logger.InfoContext(ctx, "mieru client is started")
 
 	return &Outbound{
 		Adapter: outbound.NewAdapterWithDialerOptions(pluginoption.TypeMieru, tag, []string{N.NetworkTCP, N.NetworkUDP}, options.DialerOptions),
@@ -69,10 +74,29 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	}, nil
 }
 
+func (o *Outbound) ensureClientIsRunning() error {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	if o.client.IsRunning() {
+		return nil
+	}
+
+	if err := o.client.Start(); err != nil {
+		return fmt.Errorf("failed to start mieru client: %w", err)
+	}
+	return nil
+}
+
 func (o *Outbound) DialContext(ctx context.Context, network string, destination M.Socksaddr) (net.Conn, error) {
 	ctx, metadata := adapter.ExtendContext(ctx)
 	metadata.Outbound = o.Tag()
 	metadata.Destination = destination
+
+	if err := o.ensureClientIsRunning(); err != nil {
+		return nil, err
+	}
+
 	switch N.NetworkName(network) {
 	case N.NetworkTCP:
 		o.logger.InfoContext(ctx, "outbound connection to ", destination)
@@ -91,10 +115,10 @@ func (o *Outbound) DialContext(ctx context.Context, network string, destination 
 		if err != nil {
 			return nil, err
 		}
-		return &streamer{
+		udpWrapper := &threadSafePacketConn{
 			PacketConn: mierucommon.NewUDPAssociateWrapper(mierucommon.NewPacketOverStreamTunnel(streamConn)),
-			Remote:     destination,
-		}, nil
+		}
+		return bufio.NewBindPacketConn(udpWrapper, destination), nil
 	default:
 		return nil, os.ErrInvalid
 	}
@@ -104,6 +128,11 @@ func (o *Outbound) ListenPacket(ctx context.Context, destination M.Socksaddr) (n
 	ctx, metadata := adapter.ExtendContext(ctx)
 	metadata.Outbound = o.Tag()
 	metadata.Destination = destination
+
+	if err := o.ensureClientIsRunning(); err != nil {
+		return nil, err
+	}
+
 	o.logger.InfoContext(ctx, "outbound UoT packet connection to ", destination)
 	d, err := socksAddrToNetAddrSpec(destination, "udp")
 	if err != nil {
@@ -113,11 +142,26 @@ func (o *Outbound) ListenPacket(ctx context.Context, destination M.Socksaddr) (n
 	if err != nil {
 		return nil, err
 	}
-	return mierucommon.NewUDPAssociateWrapper(mierucommon.NewPacketOverStreamTunnel(streamConn)), nil
+	return &threadSafePacketConn{
+		PacketConn: mierucommon.NewUDPAssociateWrapper(mierucommon.NewPacketOverStreamTunnel(streamConn)),
+	}, nil
+}
+
+func (o *Outbound) InterfaceUpdated(ctx context.Context) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if o.client != nil && o.client.IsRunning() {
+		_ = o.client.Stop()
+	}
 }
 
 func (o *Outbound) Close() error {
-	return common.Close(o.client)
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if o.client != nil && o.client.IsRunning() {
+		return o.client.Stop()
+	}
+	return nil
 }
 
 // mieruDialer is an adapter to mieru dialer interface.
@@ -140,41 +184,52 @@ var (
 	_ mierucommon.PacketDialer = (*mieruDialer)(nil)
 )
 
-// streamer converts a net.PacketConn to a net.Conn.
-type streamer struct {
+type mieruResolver struct {
+	dnsRouter adapter.DNSRouter
+}
+
+var _ mierucommon.DNSResolver = (*mieruResolver)(nil)
+
+func (r mieruResolver) LookupIP(ctx context.Context, network, host string) ([]net.IP, error) {
+	if r.dnsRouter != nil {
+		addrs, err := r.dnsRouter.Lookup(ctx, host, adapter.DNSQueryOptions{})
+		if err == nil && len(addrs) > 0 {
+			netIPs := make([]net.IP, len(addrs))
+			for i, addr := range addrs {
+				netIPs[i] = addr.AsSlice()
+			}
+			return netIPs, nil
+		}
+	}
+	if dnsRouter := service.FromContext[adapter.DNSRouter](ctx); dnsRouter != nil {
+		addrs, err := dnsRouter.Lookup(ctx, host, adapter.DNSQueryOptions{})
+		if err == nil && len(addrs) > 0 {
+			netIPs := make([]net.IP, len(addrs))
+			for i, addr := range addrs {
+				netIPs[i] = addr.AsSlice()
+			}
+			return netIPs, nil
+		}
+	}
+	return net.DefaultResolver.LookupIP(ctx, "ip", host)
+}
+
+type threadSafePacketConn struct {
 	net.PacketConn
-	Remote net.Addr
+	readMu  sync.Mutex
+	writeMu sync.Mutex
 }
 
-var _ net.Conn = (*streamer)(nil)
-
-func (s *streamer) Read(b []byte) (n int, err error) {
-	n, _, err = s.PacketConn.ReadFrom(b)
-	return
+func (c *threadSafePacketConn) ReadFrom(p []byte) (n int, addr net.Addr, err error) {
+	c.readMu.Lock()
+	defer c.readMu.Unlock()
+	return c.PacketConn.ReadFrom(p)
 }
 
-func (s *streamer) Write(b []byte) (n int, err error) {
-	return s.WriteTo(b, s.Remote)
-}
-
-func (s *streamer) RemoteAddr() net.Addr {
-	return s.Remote
-}
-
-func (s *streamer) LocalAddr() net.Addr {
-	return s.PacketConn.LocalAddr()
-}
-
-func (s *streamer) SetDeadline(t time.Time) error {
-	return s.PacketConn.SetDeadline(t)
-}
-
-func (s *streamer) SetReadDeadline(t time.Time) error {
-	return s.PacketConn.SetReadDeadline(t)
-}
-
-func (s *streamer) SetWriteDeadline(t time.Time) error {
-	return s.PacketConn.SetWriteDeadline(t)
+func (c *threadSafePacketConn) WriteTo(p []byte, addr net.Addr) (n int, err error) {
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
+	return c.PacketConn.WriteTo(p, addr)
 }
 
 // socksAddrToNetAddrSpec converts a Socksaddr object to NetAddrSpec, and overrides the network.
@@ -187,30 +242,61 @@ func socksAddrToNetAddrSpec(sa M.Socksaddr, network string) (mierumodel.NetAddrS
 	return nas, nil
 }
 
-func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mieruDialer) (*mieruclient.ClientConfig, error) {
+func parseTrafficPattern(s string) (*mierupb.TrafficPattern, error) {
+	s = strings.TrimSpace(s)
+	if strings.HasPrefix(s, "{") {
+		encoded, err := mieruproto.EncodeJSONBase64(s)
+		if err != nil {
+			return nil, fmt.Errorf("encode json traffic pattern: %w", err)
+		}
+		s = encoded
+	}
+	return mierutp.Decode(s)
+}
+
+func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mieruDialer, dnsRouter adapter.DNSRouter) (*mieruclient.ClientConfig, error) {
 	if err := validateMieruOptions(options); err != nil {
 		return nil, fmt.Errorf("failed to validate mieru options: %w", err)
 	}
 
+	transport := strings.ToUpper(options.Transport)
+	if transport == "" {
+		transport = "TCP"
+	}
+
 	var transportProtocol *mierupb.TransportProtocol
-	switch options.Transport {
+	switch transport {
 	case "TCP":
 		transportProtocol = mierupb.TransportProtocol_TCP.Enum()
 	case "UDP":
 		transportProtocol = mierupb.TransportProtocol_UDP.Enum()
 	}
 	server := &mierupb.ServerEndpoint{}
+	boundPorts := make(map[int32]bool)
 	if options.ServerPort != 0 {
+		port := int32(options.ServerPort)
 		server.PortBindings = append(server.PortBindings, &mierupb.PortBinding{
-			Port:     proto.Int32(int32(options.ServerPort)),
+			Port:     proto.Int32(port),
 			Protocol: transportProtocol,
 		})
+		boundPorts[port] = true
 	}
 	for _, pr := range options.ServerPortRanges {
-		server.PortBindings = append(server.PortBindings, &mierupb.PortBinding{
-			PortRange: proto.String(pr),
-			Protocol:  transportProtocol,
-		})
+		if portNum, err := strconv.Atoi(pr); err == nil {
+			port := int32(portNum)
+			if !boundPorts[port] {
+				server.PortBindings = append(server.PortBindings, &mierupb.PortBinding{
+					Port:     proto.Int32(port),
+					Protocol: transportProtocol,
+				})
+				boundPorts[port] = true
+			}
+		} else {
+			server.PortBindings = append(server.PortBindings, &mierupb.PortBinding{
+				PortRange: proto.String(pr),
+				Protocol:  transportProtocol,
+			})
+		}
 	}
 	if M.IsDomainName(options.Server) {
 		server.DomainName = proto.String(options.Server)
@@ -228,6 +314,7 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 		},
 		Dialer:       dialer,
 		PacketDialer: dialer,
+		Resolver:     mieruResolver{dnsRouter: dnsRouter},
 		DNSConfig: &mierucommon.ClientDNSConfig{
 			BypassDialerDNS: true,
 		},
@@ -240,11 +327,14 @@ func buildMieruClientConfig(options pluginoption.MieruOutboundOptions, dialer mi
 			Level: multiplexing.Enum(),
 		}
 	}
-	if handshakeMode, ok := mierupb.HandshakeMode_value[options.HandshakeMode]; ok {
-		config.Profile.HandshakeMode = mierupb.HandshakeMode(handshakeMode).Enum()
+	if handshakeMode, ok := mieruHandshakeValue(options.HandshakeMode); ok {
+		config.Profile.HandshakeMode = (&handshakeMode).Enum()
 	}
 	if options.TrafficPattern != "" {
-		trafficPattern, _ := mierutp.Decode(options.TrafficPattern)
+		trafficPattern, err := parseTrafficPattern(options.TrafficPattern)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse traffic pattern: %w", err)
+		}
 		config.Profile.TrafficPattern = trafficPattern
 	}
 	return config, nil
@@ -258,9 +348,9 @@ func validateMieruOptions(options pluginoption.MieruOutboundOptions) error {
 		return fmt.Errorf("either server_port or server_ports must be set")
 	}
 	for _, pr := range options.ServerPortRanges {
-		begin, end, err := beginAndEndPortFromPortRange(pr)
+		begin, end, err := parsePortOrRange(pr)
 		if err != nil {
-			return fmt.Errorf("invalid server_ports format")
+			return fmt.Errorf("invalid server_ports format %q: %w", pr, err)
 		}
 		if begin < 1 || begin > 65535 {
 			return fmt.Errorf("begin port must be between 1 and 65535")
@@ -272,7 +362,8 @@ func validateMieruOptions(options pluginoption.MieruOutboundOptions) error {
 			return fmt.Errorf("begin port must be less than or equal to end port")
 		}
 	}
-	if options.Transport != "TCP" && options.Transport != "UDP" {
+	transport := strings.ToUpper(options.Transport)
+	if transport != "" && transport != "TCP" && transport != "UDP" {
 		return fmt.Errorf("transport must be TCP or UDP")
 	}
 	if options.UserName == "" {
@@ -287,12 +378,12 @@ func validateMieruOptions(options pluginoption.MieruOutboundOptions) error {
 		}
 	}
 	if options.HandshakeMode != "" {
-		if _, ok := mierupb.HandshakeMode_value[options.HandshakeMode]; !ok {
+		if _, ok := mieruHandshakeValue(options.HandshakeMode); !ok {
 			return fmt.Errorf("invalid handshake mode: %s", options.HandshakeMode)
 		}
 	}
 	if options.TrafficPattern != "" {
-		trafficPattern, err := mierutp.Decode(options.TrafficPattern)
+		trafficPattern, err := parseTrafficPattern(options.TrafficPattern)
 		if err != nil {
 			return fmt.Errorf("failed to decode traffic pattern %q: %w", options.TrafficPattern, err)
 		}
@@ -307,8 +398,16 @@ func mieruMuxValue(s string) (mierupb.MultiplexingLevel, bool) {
 	if v, ok := mierupb.MultiplexingLevel_value[s]; ok {
 		return mierupb.MultiplexingLevel(v), true
 	}
-	switch s {
-	case "MIDDLE", "MEDIUM", "MULTIPLEXING_MEDIUM":
+	if v, ok := mierupb.MultiplexingLevel_value[strings.ToUpper(s)]; ok {
+		return mierupb.MultiplexingLevel(v), true
+	}
+	if num, err := strconv.Atoi(s); err == nil {
+		if _, ok := mierupb.MultiplexingLevel_name[int32(num)]; ok {
+			return mierupb.MultiplexingLevel(num), true
+		}
+	}
+	switch strings.ToUpper(s) {
+	case "MIDDLE", "MEDIUM", "MULTIPLEXING_MEDIUM", "MULTIPLEXING_MIDDLE":
 		return mierupb.MultiplexingLevel_MULTIPLEXING_MIDDLE, true
 	case "LOW", "MULTIPLEXING_LOW":
 		return mierupb.MultiplexingLevel_MULTIPLEXING_LOW, true
@@ -320,8 +419,34 @@ func mieruMuxValue(s string) (mierupb.MultiplexingLevel, bool) {
 	return 0, false
 }
 
-func beginAndEndPortFromPortRange(portRange string) (int, int, error) {
+func mieruHandshakeValue(s string) (mierupb.HandshakeMode, bool) {
+	if v, ok := mierupb.HandshakeMode_value[s]; ok {
+		return mierupb.HandshakeMode(v), true
+	}
+	if v, ok := mierupb.HandshakeMode_value[strings.ToUpper(s)]; ok {
+		return mierupb.HandshakeMode(v), true
+	}
+	if num, err := strconv.Atoi(s); err == nil {
+		if _, ok := mierupb.HandshakeMode_name[int32(num)]; ok {
+			return mierupb.HandshakeMode(num), true
+		}
+	}
+	switch strings.ToUpper(s) {
+	case "DEFAULT", "HANDSHAKE_DEFAULT":
+		return mierupb.HandshakeMode_HANDSHAKE_DEFAULT, true
+	case "STANDARD", "HANDSHAKE_STANDARD", "1-RTT":
+		return mierupb.HandshakeMode_HANDSHAKE_STANDARD, true
+	case "NO_WAIT", "HANDSHAKE_NO_WAIT", "0-RTT":
+		return mierupb.HandshakeMode_HANDSHAKE_NO_WAIT, true
+	}
+	return 0, false
+}
+
+func parsePortOrRange(s string) (int, int, error) {
+	if p, err := strconv.Atoi(s); err == nil {
+		return p, p, nil
+	}
 	var begin, end int
-	_, err := fmt.Sscanf(portRange, "%d-%d", &begin, &end)
+	_, err := fmt.Sscanf(s, "%d-%d", &begin, &end)
 	return begin, end, err
 }
