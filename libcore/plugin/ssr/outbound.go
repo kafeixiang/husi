@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/outbound"
@@ -16,14 +17,13 @@ import (
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 
-	EN "github.com/metacubex/mihomo/common/net"
-	"github.com/metacubex/mihomo/transport/shadowsocks/core"
-	"github.com/metacubex/mihomo/transport/shadowsocks/shadowaead"
-	"github.com/metacubex/mihomo/transport/shadowsocks/shadowstream"
-	"github.com/metacubex/mihomo/transport/socks5"
-	"github.com/metacubex/mihomo/transport/ssr/obfs"
-	"github.com/metacubex/mihomo/transport/ssr/protocol"
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/pluginoption"
+	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/ssr/internal/core"
+	EN "github.com/xchacha20-poly1305/husi/libcore/v2/plugin/ssr/internal/net"
+	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/ssr/internal/obfs"
+	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/ssr/internal/protocol"
+	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/ssr/internal/shadowstream"
+	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/ssr/internal/socks5"
 )
 
 func RegisterOutbound(registry *outbound.Registry) {
@@ -51,9 +51,9 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 		dialer:     outboundDialer,
 		serverAddr: options.ServerOptions.Build(),
 	}
-	// SSR protocol compatibility: treat "none" as "dummy"
-	cipherName := options.Method
-	if cipherName == "none" {
+	// SSR protocol compatibility: strip "_compatible" suffix and normalize defaults
+	cipherName := strings.TrimSuffix(options.Method, "_compatible")
+	if cipherName == "none" || cipherName == "plain" || cipherName == "" {
 		cipherName = "dummy"
 	}
 	coreCipher, err := core.PickCipher(cipherName, nil, options.Password)
@@ -76,7 +76,12 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 		ivSize = streamCipher.IVSize()
 		key = streamCipher.Key
 	}
-	ssrObfs, obfsOverhead, err := obfs.PickObfs(options.Obfs, &obfs.Base{
+
+	obfsName := strings.TrimSuffix(options.Obfs, "_compatible")
+	if obfsName == "" {
+		obfsName = "plain"
+	}
+	ssrObfs, obfsOverhead, err := obfs.PickObfs(obfsName, &obfs.Base{
 		Host:   options.Server,
 		Port:   int(options.ServerPort),
 		Key:    key,
@@ -86,7 +91,12 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	if err != nil {
 		return nil, E.Cause(err, "initialize obfs")
 	}
-	ssrProtocol, err := protocol.PickProtocol(options.Protocol, &protocol.Base{
+
+	protocolName := strings.TrimSuffix(options.Protocol, "_compatible")
+	if protocolName == "" {
+		protocolName = "origin"
+	}
+	ssrProtocol, err := protocol.PickProtocol(protocolName, &protocol.Base{
 		Key:      key,
 		Overhead: obfsOverhead,
 		Param:    options.ProtocolParam,
@@ -119,8 +129,6 @@ func (h *Outbound) DialContext(ctx context.Context, network string, destination 
 				conn.Close()
 				return nil, err
 			}
-		case *shadowaead.Conn:
-			return nil, fmt.Errorf("invalid connection type")
 		}
 		conn = h.protocol.StreamConn(conn, writeIv)
 		err = M.SocksaddrSerializer.WriteAddrPort(conn, destination)
@@ -155,20 +163,24 @@ func (h *Outbound) ListenPacket(ctx context.Context, destination M.Socksaddr) (n
 }
 
 type ssPacketConn struct {
-	net.PacketConn
+	EN.EnhancePacketConn
 	rAddr net.Addr
 }
 
-func (spc *ssPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
+func (spc *ssPacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
 	packet, err := socks5.EncodeUDPPacket(socks5.ParseAddrToSocksAddr(addr), b)
 	if err != nil {
-		return
+		return 0, err
 	}
-	return spc.PacketConn.WriteTo(packet[3:], spc.rAddr)
+	_, err = spc.EnhancePacketConn.WriteTo(packet[3:], spc.rAddr)
+	if err != nil {
+		return 0, err
+	}
+	return len(b), nil
 }
 
 func (spc *ssPacketConn) ReadFrom(b []byte) (int, net.Addr, error) {
-	n, _, e := spc.PacketConn.ReadFrom(b)
+	n, _, e := spc.EnhancePacketConn.ReadFrom(b)
 	if e != nil {
 		return 0, nil, e
 	}
@@ -185,4 +197,31 @@ func (spc *ssPacketConn) ReadFrom(b []byte) (int, net.Addr, error) {
 
 	copy(b, b[len(addr):])
 	return n - len(addr), udpAddr, e
+}
+
+func (spc *ssPacketConn) WaitReadFrom() (data []byte, put func(), addr net.Addr, err error) {
+	data, put, _, err = spc.EnhancePacketConn.WaitReadFrom()
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	_addr := socks5.SplitAddr(data)
+	if _addr == nil {
+		if put != nil {
+			put()
+		}
+		return nil, nil, nil, errors.New("parse addr error")
+	}
+
+	udpAddr := _addr.UDPAddr()
+	if udpAddr == nil {
+		if put != nil {
+			put()
+		}
+		return nil, nil, nil, errors.New("parse addr error")
+	}
+	addr = udpAddr
+
+	data = data[len(_addr):]
+	return
 }
