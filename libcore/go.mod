@@ -5,11 +5,12 @@ go 1.26.0
 require (
 	filippo.io/age v1.3.2
 	github.com/coder/websocket v1.8.15
+	github.com/deatil/go-cryptobin v1.1.1003-0.20250606044017-a20f36bd45c6
+	github.com/emmansun/gmsm v0.30.1
 	github.com/exclavenetwork/sing-juicity v0.3.1-0.20260904153201-e6f55d83049c
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/gofrs/uuid/v5 v5.5.1
 	github.com/klauspost/compress v1.20.0
-	github.com/metacubex/mihomo v1.19.31
 	github.com/miekg/dns v1.1.72
 	github.com/sagernet/cors v1.2.1
 	github.com/sagernet/quic-go v0.61.0-sing-box-mod.7
@@ -47,8 +48,6 @@ replace (
 
 // github.com/sagernet/sing-box => ../../sing-box
 )
-
-replace github.com/metacubex/sing-shadowsocks2 => github.com/Restia-Ashbell/sing-shadowsocks2 v0.0.0-20250606153500-31ef7b14aaa6
 
 // cmd
 require (

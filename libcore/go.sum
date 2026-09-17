@@ -45,6 +45,10 @@ github.com/enfein/mieru/v3 v3.37.0/go.mod h1:zJBUCsi5rxyvHM8fjFf+GLaEl4OEjjBXr1s
 github.com/envoyproxy/go-control-plane v0.9.0/go.mod h1:YTl/9mNaCwkRvm6d1a2C3ymFceY/DCBVvsKhRF0iEA4=
 github.com/envoyproxy/go-control-plane v0.9.4/go.mod h1:6rpuAdCZL397s3pYoYcLgu1mIlRU8Am5FuJP05cCM98=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
+github.com/deatil/go-cryptobin v1.1.1003-0.20250606044017-a20f36bd45c6 h1:mFpKLilwNRtr1kqG3QvTVAJtWyI8G8KL31bgtQ2n9v4=
+github.com/deatil/go-cryptobin v1.1.1003-0.20250606044017-a20f36bd45c6/go.mod h1:x+/+SzyfbxliY2y0Fwe+OoLU0DEt9kWs6OMiwghcfJ0=
+github.com/emmansun/gmsm v0.30.1 h1:IEBk+r4hcfVviNH1Q8KlMfreeIUnhZchMtsAgc7MsSI=
+github.com/emmansun/gmsm v0.30.1/go.mod h1:XRXzKUpqVGZy9ynVKPE8xFuKaPi8jtzk4ZEFG6/WewY=
 github.com/exclavenetwork/sing-juicity v0.3.1-0.20260904153201-e6f55d83049c h1:YKi/PbjrSKR+EqlzaPzrzKydccDfR5zQyCtErbDWZwo=
 github.com/exclavenetwork/sing-juicity v0.3.1-0.20260904153201-e6f55d83049c/go.mod h1:QiJ2Fw+84od6FozwppgBbW4gPvZzkGGXVVPDS6zSPK4=
 github.com/florianl/go-nfqueue/v2 v2.1.0 h1:Fywt30TY/evxyDySpXjxQ1jsRW7nQbLpOhELqpr4068=
@@ -141,8 +145,6 @@ github.com/mdlayher/socket v0.6.0 h1:ScZPaAGyO1icQnbFrhPM8mnXyMu9qukC1K4ZoM2IQKU
 github.com/mdlayher/socket v0.6.0/go.mod h1:q7vozUAnxSqnjHc12Fik5yUKIzfZ8ITCfMkhOtE9z18=
 github.com/metacubex/chacha v0.1.6-0.20250812085457-7b981d42c3ba h1:uYSI4GNiPPyKTPeQeVIm264uUfGDdWT9QsjUSXxXdTc=
 github.com/metacubex/chacha v0.1.6-0.20250812085457-7b981d42c3ba/go.mod h1:Djn9bPZxLTXbJFSeyo0/qzEzQI+gUSSzttuzZM75GH8=
-github.com/metacubex/mihomo v1.19.31 h1:gqtGzDf8DtNCj8gGE5XSgGeF2j40ZUBB0nlwiSyxg5g=
-github.com/metacubex/mihomo v1.19.31/go.mod h1:LrKKxtHjjlgYjYiTrYyvI8bOWwHW0HUH0c1LXlf3Kcg=
 github.com/metacubex/randv2 v0.2.0 h1:uP38uBvV2SxYfLj53kuvAjbND4RUDfFJjwr4UigMiLs=
 github.com/metacubex/randv2 v0.2.0/go.mod h1:kFi2SzrQ5WuneuoLLCMkABtiBu6VRrMrWFqSPyj2cxY=
 github.com/metacubex/sing v0.5.7 h1:8OC+fhKFSv/l9ehEhJRaZZAOuthfZo68SteBVLe8QqM=
