@@ -18,6 +18,8 @@ replace (
 require (
 	filippo.io/age v1.3.2
 	github.com/coder/websocket v1.8.15
+	github.com/deatil/go-cryptobin v1.1.1003-0.20250606044017-a20f36bd45c6
+	github.com/emmansun/gmsm v0.30.1
 	github.com/exclavenetwork/sing-juicity v0.3.1-0.20260904153201-e6f55d83049c
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/gofrs/uuid/v5 v5.5.1

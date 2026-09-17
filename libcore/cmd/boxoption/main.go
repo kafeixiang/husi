@@ -181,6 +181,7 @@ var outboundList = []any{
 	pluginoption.TrustTunnelOutboundOptions{},
 	option.SnellOutboundOptions{},
 	option.BridgeOutboundOptions{},
+	pluginoption.SSROutboundOptions{},
 	pluginoption.BalancerOutboundOptions{},
 }
 
