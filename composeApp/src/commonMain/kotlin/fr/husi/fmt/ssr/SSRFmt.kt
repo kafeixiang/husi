@@ -15,42 +15,56 @@ private fun String.ssrB64Decode(): String {
         str += "=".repeat(4 - remainder)
     }
     return try {
-        str.b64Decode().decodeToString()
-    } catch (e: Exception) {
-        ""
+        val decodedBytes = str.b64Decode()
+        val decodedStr = decodedBytes.decodeToString()
+        if (decodedStr.all { it.code in 32..126 || it.code > 127 || it == '\t' || it == '\n' || it == '\r' }) {
+            decodedStr
+        } else {
+            this
+        }
+    } catch (_: Exception) {
+        this
     }
 }
-
 
 fun parseSSR(rawUrl: String): SSRBean {
     val b64 = rawUrl.removePrefix("ssr://").substringBefore("#")
     val decoded = b64.ssrB64Decode()
     if (decoded.isBlank()) throw IllegalArgumentException("Invalid SSR link: Base64 decode failed")
-    
+
     val queryIndex = decoded.indexOf("/?")
     val mainPart = if (queryIndex >= 0) decoded.substring(0, queryIndex) else decoded
     val queryPart = if (queryIndex >= 0) decoded.substring(queryIndex + 2) else ""
-    
+
     val parts = mainPart.split(":")
     if (parts.size < 6) throw IllegalArgumentException("Invalid SSR link: missing parts")
-    
+
+    val size = parts.size
+    val rawHost = parts.subList(0, size - 5).joinToString(":")
+    val cleanHost = if (rawHost.startsWith("[") && rawHost.endsWith("]")) {
+        rawHost.substring(1, rawHost.length - 1)
+    } else {
+        rawHost
+    }
+
     return SSRBean().apply {
-        serverAddress = parts[0]
-        serverPort = parts[1].toIntOrNull() ?: 8388
-        protocol = parts[2]
-        method = parts[3]
-        obfs = parts[4]
-        password = parts[5].ssrB64Decode()
-        
+        serverAddress = cleanHost
+        serverPort = parts[size - 5].toIntOrNull() ?: 8388
+        protocol = parts[size - 4]
+        method = parts[size - 3]
+        obfs = parts[size - 2]
+        password = parts[size - 1].ssrB64Decode()
+
         if (queryPart.isNotBlank()) {
             val params = queryPart.split("&")
             params.forEach { param ->
                 val key = param.substringBefore("=")
-                val value = param.substringAfter("=").ssrB64Decode()
-                when (key) {
-                    "obfsparam" -> obfsParam = value
-                    "protoparam" -> protocolParam = value
-                    "remarks" -> name = value
+                val rawValue = param.substringAfter("=")
+                val value = rawValue.ssrB64Decode()
+                when (key.lowercase()) {
+                    "obfsparam", "obfs_param", "obfsparameters" -> obfsParam = value
+                    "protoparam", "protocol_param", "protoparameters" -> protocolParam = value
+                    "remarks", "name", "tag" -> name = value
                 }
             }
         }
@@ -60,12 +74,12 @@ fun parseSSR(rawUrl: String): SSRBean {
 fun SSRBean.toUri(): String {
     val b64Pass = password.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')
     val mainPart = "$serverAddress:$serverPort:$protocol:$method:$obfs:$b64Pass"
-    
+
     val queryParams = mutableListOf<String>()
     if (obfsParam.isNotBlank()) queryParams.add("obfsparam=${obfsParam.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')}")
     if (protocolParam.isNotBlank()) queryParams.add("protoparam=${protocolParam.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')}")
     if (name.isNotBlank()) queryParams.add("remarks=${name.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')}")
-    
+
     val url = if (queryParams.isEmpty()) mainPart else "$mainPart/?${queryParams.joinToString("&")}"
     return "ssr://${url.encodeToByteArray().b64EncodeUrlSafe().trimEnd('=')}"
 }
@@ -99,7 +113,7 @@ fun buildSingBoxOutboundSSRBean(bean: SSRBean): SingBoxOptions.Outbound_Shadowso
     }
 }
 
-fun parseSSROutbound(json: JSONMap): SSRBean = SSRBean().apply {
+fun parseSSROutbound(json: JSONMap): SSRBean = json.parseSSR().apply {
     parseBoxOutbound(json) { key, value ->
         when (key) {
             "password" -> password = value.toString()
