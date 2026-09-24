@@ -58,7 +58,7 @@ jobs:
           fi
 
       - name: Golang Status
-        run: find buildScript libcore/*.sh | xargs cat | sha1sum > golang_status
+        run: git ls-files buildScript libcore | xargs cat | sha1sum > golang_status
       - name: Libcore Status
         run: git ls-files libcore | xargs cat | sha1sum > libcore_status
 
@@ -68,6 +68,7 @@ jobs:
         with:
           path: |
             composeApp/libs
+            libcore/build
           key: libcore-${{ matrix.platform }}-${{ matrix.arch }}-${{ hashFiles('.github/workflows/*', 'golang_status', 'libcore_status') }}
 
       - name: Verify LibCore cache
@@ -75,10 +76,12 @@ jobs:
         run: |
           if [ "${{ matrix.platform }}" = "macos" ]; then
             TARGET_FILE="composeApp/libs/libcore-desktop-darwin-${{ matrix.arch }}.jar"
+            NATIVE_FILE="libcore/build/darwin_${{ matrix.arch }}/libhusicore.dylib"
           else
             TARGET_FILE="composeApp/libs/libcore-desktop-windows-${{ matrix.arch }}.jar"
+            NATIVE_FILE="libcore/build/windows_${{ matrix.arch }}/husicore.dll"
           fi
-          if [ -f "$TARGET_FILE" ]; then
+          if [ -f "$TARGET_FILE" ] && [ -f "$NATIVE_FILE" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
