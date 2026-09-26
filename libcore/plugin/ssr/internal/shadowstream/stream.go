@@ -19,13 +19,23 @@ func NewWriter(w io.Writer, s cipher.Stream) *Writer { return &Writer{Writer: w,
 
 func (w *Writer) Write(p []byte) (n int, err error) {
 	buf := w.buf[:]
-	for nw := 0; n < len(p) && err == nil; n += nw {
-		end := n + len(buf)
-		if end > len(p) {
-			end = len(p)
+	for len(p) > 0 && err == nil {
+		chunk := len(p)
+		if chunk > len(buf) {
+			chunk = len(buf)
 		}
-		w.XORKeyStream(buf, p[n:end])
-		nw, err = w.Writer.Write(buf[:end-n])
+		w.XORKeyStream(buf[:chunk], p[:chunk])
+		var nw int
+		nw, err = w.Writer.Write(buf[:chunk])
+		n += nw
+		if err != nil {
+			return
+		}
+		if nw < chunk {
+			err = io.ErrShortWrite
+			return
+		}
+		p = p[chunk:]
 	}
 	return
 }
@@ -34,11 +44,13 @@ func (w *Writer) ReadFrom(r io.Reader) (n int64, err error) {
 	buf := w.buf[:]
 	for {
 		nr, er := r.Read(buf)
-		n += int64(nr)
-		b := buf[:nr]
-		w.XORKeyStream(b, b)
-		if _, err = w.Writer.Write(b); err != nil {
-			return
+		if nr > 0 {
+			n += int64(nr)
+			b := buf[:nr]
+			w.XORKeyStream(b, b)
+			if _, err = w.Writer.Write(b); err != nil {
+				return
+			}
 		}
 		if er != nil {
 			if er != io.EOF {
@@ -59,10 +71,9 @@ func NewReader(r io.Reader, s cipher.Stream) *Reader { return &Reader{Reader: r,
 
 func (r *Reader) Read(p []byte) (n int, err error) {
 	n, err = r.Reader.Read(p)
-	if err != nil {
-		return 0, err
+	if n > 0 {
+		r.XORKeyStream(p[:n], p[:n])
 	}
-	r.XORKeyStream(p, p[:n])
 	return
 }
 
