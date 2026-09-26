@@ -4,6 +4,7 @@ import fr.husi.database.DataStore
 import fr.husi.database.ProxyGroup
 import fr.husi.database.SubscriptionBean
 import fr.husi.fmt.AbstractBean
+import fr.husi.fmt.clash.parseClashConfig
 import fr.husi.fmt.hysteria.parseHysteria1Json
 import fr.husi.fmt.openconnect.parseOpenConnectConfig
 import fr.husi.fmt.openvpn.looksLikeOpenVPNConfig
@@ -102,6 +103,15 @@ object RawUpdater : GroupUpdater() {
 
         val proxies = mutableListOf<AbstractBean>()
 
+        parseClashConfig(text)?.let { beans ->
+            val hasFileName = fileName.isNotBlank()
+            if (hasFileName) {
+                val cleanName = fileName.removeSuffix(".yaml").removeSuffix(".yml").removeSuffix(".json")
+                if (beans.size == 1) beans[0].name = cleanName
+            }
+            return beans
+        }
+
         runCatching {
             parseOpenConnectConfig(text)
         }.onSuccess { bean ->
@@ -145,7 +155,9 @@ object RawUpdater : GroupUpdater() {
 
         if (!text.contains("://")) {
             try {
-                parseProxies(text.b64DecodeToString()).takeIf { it.isNotEmpty() }?.let { return it }
+                val decoded = text.b64DecodeToString()
+                parseClashConfig(decoded)?.let { return it }
+                parseProxies(decoded).takeIf { it.isNotEmpty() }?.let { return it }
             } catch (e: Exception) {
                 Logs.w(e)
             }
