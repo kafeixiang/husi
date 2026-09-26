@@ -3,6 +3,7 @@ package fr.husi.ktx
 import fr.husi.fmt.AbstractBean
 import fr.husi.fmt.Serializable
 import fr.husi.fmt.anytls.parseAnyTLS
+import fr.husi.fmt.clash.parseClashConfig
 import fr.husi.fmt.http.parseHttp
 import fr.husi.fmt.hysteria.parseHysteria1
 import fr.husi.fmt.hysteria.parseHysteria2
@@ -102,6 +103,7 @@ fun ByteArray.zlibDecompress(): ByteArray {
 class SubscriptionFoundException(val link: String) : RuntimeException()
 
 suspend fun parseProxies(text: String): List<AbstractBean> {
+    parseClashConfig(text)?.let { if (it.isNotEmpty()) return it }
     val links = text.split('\n').flatMap { it.trim().split(' ') }
     val linksByLine = text.split('\n').map { it.trim() }
 
