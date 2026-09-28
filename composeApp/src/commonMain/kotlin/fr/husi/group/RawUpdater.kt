@@ -64,6 +64,17 @@ object RawUpdater : GroupUpdater() {
             }.execute()
             contentText = response.contentString
             userInfo = response.getHeader("Subscription-Userinfo")
+
+            val profileTitleHeader = response.getHeader("profile-title") ?: response.getHeader("subscription-title")
+            val contentDispositionHeader = response.getHeader("content-disposition")
+            val extractedTitle = SubscriptionTitleExtractor.extractTitle(
+                profileTitleHeader,
+                contentDispositionHeader,
+                contentText,
+            )
+            if (!extractedTitle.isNullOrBlank()) {
+                proxyGroup.name = extractedTitle
+            }
         }
 
         val proxies = parseRaw(contentText) ?: errNotFound()
