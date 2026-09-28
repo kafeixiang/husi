@@ -57,7 +57,7 @@ require (
 require (
 	filippo.io/hpke v0.4.0 // indirect
 	github.com/RyuaNerin/go-krypto v1.3.0 // indirect
-	github.com/ajg/form v1.7.1 // indirect
+	github.com/ajg/form v1.5.1 // indirect
 	github.com/anchore/go-lzo v0.1.0 // indirect
 	github.com/andybalholm/brotli v1.2.4 // indirect
 	github.com/caddyserver/certmagic v0.25.3-0.20260421143802-60d9d8b415d6 // indirect
