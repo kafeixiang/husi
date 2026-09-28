@@ -138,6 +138,17 @@ object OpenOnlineConfigUpdater : GroupUpdater() {
             error(repository.getString(Res.string.ooc_subscription_token_invalid))
         }
 
+        val profileTitleHeader = response.getHeader("profile-title") ?: response.getHeader("subscription-title")
+        val contentDispositionHeader = response.getHeader("content-disposition")
+        val extractedTitle = SubscriptionTitleExtractor.extractTitle(
+            profileTitleHeader,
+            contentDispositionHeader,
+            null,
+        )
+        if (!extractedTitle.isNullOrBlank()) {
+            proxyGroup.name = extractedTitle
+        }
+
         val protocols = oocResponse.protocols
         for (protocol in protocols) {
             if (protocol !in OOC_PROTOCOLS) {
