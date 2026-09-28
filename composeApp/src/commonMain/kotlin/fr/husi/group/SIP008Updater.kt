@@ -108,6 +108,17 @@ object SIP008Updater : GroupUpdater() {
             }.execute()
 
             sip008Response = kxs.decodeFromString(response.contentString)
+
+            val profileTitleHeader = response.getHeader("profile-title") ?: response.getHeader("subscription-title")
+            val contentDispositionHeader = response.getHeader("content-disposition")
+            val extractedTitle = SubscriptionTitleExtractor.extractTitle(
+                profileTitleHeader,
+                contentDispositionHeader,
+                response.contentString,
+            )
+            if (!extractedTitle.isNullOrBlank()) {
+                proxyGroup.name = extractedTitle
+            }
         }
 
         subscription.bytesUsed = sip008Response.bytesUsed ?: -1
