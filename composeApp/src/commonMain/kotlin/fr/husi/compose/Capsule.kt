@@ -202,10 +202,21 @@ private fun CapsuleBarLayout(
     center: @Composable RowScope.() -> Unit,
 ) {
     SetHeightOffsetLimit(scrollBehavior)
+    val appBarContainerColor = husiAppBarContainerColor(scrollBehavior)
     Box(
         modifier = modifier
             .husiTopBarBackground(scrollBehavior)
             .fillMaxWidth()
+            .then(
+                if (hazeState != null) {
+                    Modifier.hazeBlur(
+                        input = HazeInput.Backdrop(hazeState),
+                        style = CapsuleDefaults.blurStyle(tintColor = appBarContainerColor),
+                    )
+                } else {
+                    Modifier
+                },
+            )
             .windowInsetsPadding(windowInsets),
     ) {
         Row(
