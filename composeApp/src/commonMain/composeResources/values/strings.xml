@@ -824,6 +824,7 @@
     <string name="can_not_be_empty">Cann\'t be empty</string>
     <string name="juicity_provider">Juicity Provider</string>
     <string name="mieru_provider">Mieru Provider</string>
+    <string name="handshake_mode">Handshake Mode</string>
     <string name="action_format">Format</string>
     <string name="action_test_config">Test config</string>
     <string name="mutual_tls">Mutual TLS</string>

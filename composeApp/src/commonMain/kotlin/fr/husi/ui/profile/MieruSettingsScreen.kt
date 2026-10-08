@@ -21,6 +21,7 @@ import fr.husi.resources.compare_arrows
 import fr.husi.resources.directions_boat
 import fr.husi.resources.disable
 import fr.husi.resources.emoji_symbols
+import fr.husi.resources.handshake_mode
 import fr.husi.resources.high
 import fr.husi.resources.low
 import fr.husi.resources.middle
@@ -104,22 +105,18 @@ private fun LazyListScope.mieruSettings(
             valueToText = { it },
         )
         TextFieldPreference(
-            value = uiState.port,
-            onValueChange = { viewModel.setPort(it) },
+            value = uiState.ports,
+            onValueChange = { viewModel.setPorts(it) },
             title = { Text(stringResource(Res.string.server_port)) },
-            textToValue = { it.toIntOrNull() ?: 443 },
-            enabled = uiState.ports.isBlank(),
+            textToValue = { it },
             icon = {
                 MaskedIcon(
                     Res.drawable.directions_boat,
                     color = IconMaskColors.IconCyan,
                 )
             },
-            summary = { Text(uiState.port.toString()) },
-            valueToText = { it.toString() },
-            textField = { value, onValueChange, onOk ->
-                UIntegerTextField(value, onValueChange, onOk)
-            },
+            summary = { Text(contentOrUnset(uiState.ports)) },
+            valueToText = { it },
         )
         ListPreference(
             value = uiState.protocol,
@@ -201,7 +198,7 @@ private fun LazyListScope.mieruSettings(
             value = uiState.handshakeMode,
             values = intListN(3),
             onValueChange = { viewModel.setHandshakeMode(it) },
-            title = { Text("Handshake Mode") },
+            title = { Text(stringResource(Res.string.handshake_mode)) },
             icon = {
                 MaskedIcon(
                     Res.drawable.compare_arrows,

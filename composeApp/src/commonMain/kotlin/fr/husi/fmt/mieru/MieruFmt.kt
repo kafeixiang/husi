@@ -9,7 +9,6 @@ import fr.husi.ktx.kxs
 import fr.husi.ktx.listByLineOrComma
 import fr.husi.ktx.queryParameterNotBlank
 import fr.husi.ktx.toJsonStringKxs
-import fr.husi.libcore.Libcore
 import fr.husi.logLevelString
 import io.github.xchacha20_poly1305.kpuri.Url
 import io.github.xchacha20_poly1305.kpuri.buildUrl
@@ -153,7 +152,7 @@ fun MieruBean.toUri(): String = buildUrl("mierus") {
     this@toUri.username.blankAsNull()?.let { username = it }
     this@toUri.password.blankAsNull()?.let { password = it }
     host = serverAddress
-    if (serverPort != 0 && serverPort != 1080) {
+    if (serverPort != 0 && serverPort != defaultPort) {
         port = serverPort.toString()
     }
     if (name.isNotBlank()) {
@@ -175,7 +174,7 @@ fun MieruBean.toUri(): String = buildUrl("mierus") {
     trafficPattern.blankAsNull()?.let { pattern ->
         val base64TrafficPattern = if (pattern.startsWith("{")) {
             runCatching {
-                Libcore.encodeMieruTrafficPattern(pattern)
+                encodeMieruTrafficPattern(pattern)
             }.getOrNull() ?: pattern
         } else {
             pattern

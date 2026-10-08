@@ -34,7 +34,7 @@ class MieruFmtTest {
     fun `parseMieru should use defaults for missing or unknown optional fields`() {
         val bean = parseMieru("mierus://user:pass@example.com?multiplexing=UNKNOWN")
 
-        assertEquals(1080, bean.serverPort)
+        assertEquals(443, bean.serverPort)
         assertEquals(0, bean.mtu)
         assertEquals(0, bean.serverMuxNumber)
     }

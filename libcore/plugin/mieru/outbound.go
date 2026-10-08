@@ -2,6 +2,7 @@ package mieru
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -24,8 +25,8 @@ import (
 	mierumodel "github.com/enfein/mieru/v3/apis/model"
 	mierutp "github.com/enfein/mieru/v3/apis/trafficpattern"
 	mierupb "github.com/enfein/mieru/v3/pkg/appctl/appctlpb"
-	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/mieru/mieruproto"
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/pluginoption"
+	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -245,11 +246,18 @@ func socksAddrToNetAddrSpec(sa M.Socksaddr, network string) (mierumodel.NetAddrS
 func parseTrafficPattern(s string) (*mierupb.TrafficPattern, error) {
 	s = strings.TrimSpace(s)
 	if strings.HasPrefix(s, "{") {
-		encoded, err := mieruproto.EncodeJSONBase64(s)
-		if err != nil {
-			return nil, fmt.Errorf("encode json traffic pattern: %w", err)
+		var raw map[string]json.RawMessage
+		if err := json.Unmarshal([]byte(s), &raw); err == nil {
+			if tp, ok := raw["trafficPattern"]; ok {
+				s = string(tp)
+			}
 		}
-		s = encoded
+		pattern := &mierupb.TrafficPattern{}
+		unmarshalOpts := protojson.UnmarshalOptions{DiscardUnknown: true}
+		if err := unmarshalOpts.Unmarshal([]byte(s), pattern); err != nil {
+			return nil, fmt.Errorf("unmarshal json traffic pattern: %w", err)
+		}
+		return pattern, nil
 	}
 	return mierutp.Decode(s)
 }

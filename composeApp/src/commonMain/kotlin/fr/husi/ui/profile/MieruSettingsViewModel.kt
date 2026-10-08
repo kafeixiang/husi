@@ -2,6 +2,7 @@ package fr.husi.ui.profile
 
 import androidx.compose.runtime.Stable
 import fr.husi.fmt.mieru.MieruBean
+import fr.husi.ktx.applyDefaultValues
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,7 +13,7 @@ internal data class MieruUiState(
     override val customOutbound: String = "",
     val name: String = "",
     val address: String = "127.0.0.1",
-    val port: Int = 1080,
+    val port: Int = 443,
     val ports: String = "",
     val protocol: String = MieruBean.PROTOCOL_TCP,
     val username: String = "",
@@ -28,7 +29,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
     private val _uiState = MutableStateFlow(MieruUiState())
     override val uiState: StateFlow<MieruUiState> = _uiState.asStateFlow()
 
-    override fun createBean(): MieruBean = MieruBean()
+    override fun createBean(): MieruBean = MieruBean().applyDefaultValues()
 
     override suspend fun MieruBean.writeToUiState() {
         _uiState.update {
@@ -38,7 +39,7 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
                 name = name,
                 address = serverAddress,
                 port = serverPort,
-                ports = serverPorts,
+                ports = serverPorts.ifBlank { serverPort.toString() },
                 protocol = protocol,
                 username = username,
                 password = password,
@@ -56,8 +57,14 @@ internal class MieruSettingsViewModel : ProfileEditorViewModel<MieruBean>() {
         customOutboundJson = state.customOutbound
         name = state.name
         serverAddress = state.address
-        serverPort = state.port
-        serverPorts = state.ports
+        val singlePort = state.ports.toIntOrNull()
+        if (singlePort != null) {
+            serverPort = singlePort
+            serverPorts = ""
+        } else {
+            serverPort = 443
+            serverPorts = state.ports
+        }
         protocol = state.protocol
         username = state.username
         password = state.password
