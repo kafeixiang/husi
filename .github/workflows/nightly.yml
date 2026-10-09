@@ -106,7 +106,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: "libcore"
-          path: composeApp/libs
+          path: .
       - name: Verify libcore artifacts
         run: |
           ls -la composeApp/libs || true
@@ -166,7 +166,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: "libcore"
-          path: composeApp/libs
+          path: .
       - name: Verify libcore artifacts
         run: |
           ls -la composeApp/libs || true
