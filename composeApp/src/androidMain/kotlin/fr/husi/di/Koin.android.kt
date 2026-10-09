@@ -4,6 +4,7 @@ import fr.husi.bg.ServiceEventMirror
 import fr.husi.compose.material3.PlatformMaterialApi
 import fr.husi.compose.material3.TvPlatformMaterialApi
 import fr.husi.compose.material3.standardPlatformMaterialApi
+import fr.husi.compose.theme.AndroidPlatformThemeApi
 import fr.husi.compose.theme.PlatformThemeApi
 import fr.husi.compose.theme.TvPlatformThemeApi
 import fr.husi.compose.theme.standardPlatformThemeApi
@@ -31,7 +32,7 @@ internal actual fun platformThemeApi(): PlatformThemeApi {
     return if (resolveRepository().isTv) {
         TvPlatformThemeApi
     } else {
-        standardPlatformThemeApi()
+        AndroidPlatformThemeApi
     }
 }
 

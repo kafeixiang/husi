@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import fr.husi.compose.theme.DYNAMIC
 import fr.husi.database.DataStore
 
 /**
@@ -27,10 +26,9 @@ import fr.husi.database.DataStore
 @OptIn(ExperimentalMaterial3Api::class)
 fun Modifier.husiTopBarBackground(scrollBehavior: TopAppBarScrollBehavior?): Modifier = composed {
     val isEnabled by DataStore.themedTopBar.collectAsStateWithLifecycle()
-    val appTheme by DataStore.appTheme.collectAsStateWithLifecycle()
 
-    // 严格遵循：如果功能关闭或处于动态主题，不添加任何背景修饰符，保持 100% 原生透明滚动效果
-    if (!isEnabled || (appTheme == DYNAMIC)) return@composed this
+    // 功能关闭时不添加任何背景修饰符，保持 100% 原生透明滚动效果
+    if (!isEnabled) return@composed this
 
     background(husiAppBarContainerColor(scrollBehavior))
 }
@@ -42,19 +40,19 @@ fun Modifier.husiTopBarBackground(scrollBehavior: TopAppBarScrollBehavior?): Mod
  * 1. 统一所有页面的颜色计算逻辑。
  * 2. 使用 DataStore 属性作为 collectAsStateWithLifecycle 的初始值，减少初次渲染时的加载闪烁。
  * 3. 当功能关闭时，自动返回 Material 3 标准的插值背景色，确保 100% 视觉一致性。
+ * 4. 浮光跃彩（动态主题）下，isEnabled 时也使用 primaryContainer 作主题色，
+ *    动态主题的 ColorScheme 已包含壁纸提取色，无需再特殊排除。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun husiAppBarContainerColor(scrollBehavior: TopAppBarScrollBehavior?): Color {
     val isEnabled by DataStore.themedTopBar.collectAsStateWithLifecycle()
-    val appTheme by DataStore.appTheme.collectAsStateWithLifecycle()
 
     val topAppBarColors = TopAppBarDefaults.topAppBarColors()
-    val isThemed = isEnabled && (appTheme != DYNAMIC)
 
     val overlappedFraction = scrollBehavior?.state?.overlappedFraction?.fastCoerceIn(0f, 1f) ?: 0f
 
-    val targetColor = if (isThemed) {
+    val targetColor = if (isEnabled) {
         lerp(
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.surfaceColorAtElevation(3.dp).copy(alpha = 0.7f),

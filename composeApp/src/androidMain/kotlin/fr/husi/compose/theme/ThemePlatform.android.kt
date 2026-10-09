@@ -8,8 +8,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import fr.husi.compose.material3.ProvideTvMaterialBridge
 import fr.husi.repository.resolveRepository
 import androidx.tv.material3.ColorScheme as TvColorScheme
@@ -31,6 +34,29 @@ internal actual fun rememberDynamicColorScheme(isDarkMode: Boolean): ColorScheme
     }
 }
 
+internal object AndroidPlatformThemeApi : PlatformThemeApi {
+    @Composable
+    override fun ApplyTheme(
+        colorScheme: ColorScheme,
+        isDarkMode: Boolean,
+        content: @Composable () -> Unit,
+    ) {
+        val view = LocalView.current
+        if (!view.isInEditMode) {
+            SideEffect {
+                val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
+                val insetsController = WindowCompat.getInsetsController(window, view)
+                insetsController.isAppearanceLightStatusBars = !isDarkMode
+                insetsController.isAppearanceLightNavigationBars = !isDarkMode
+            }
+        }
+        MaterialTheme(
+            colorScheme = colorScheme,
+            content = content,
+        )
+    }
+}
+
 internal object TvPlatformThemeApi : PlatformThemeApi {
     @Composable
     override fun ApplyTheme(
@@ -40,6 +66,15 @@ internal object TvPlatformThemeApi : PlatformThemeApi {
     ) {
         val tvColorScheme = remember(colorScheme, isDarkMode) {
             colorScheme.toTvColorScheme(isDarkMode)
+        }
+        val view = LocalView.current
+        if (!view.isInEditMode) {
+            SideEffect {
+                val window = (view.context as? android.app.Activity)?.window ?: return@SideEffect
+                val insetsController = WindowCompat.getInsetsController(window, view)
+                insetsController.isAppearanceLightStatusBars = !isDarkMode
+                insetsController.isAppearanceLightNavigationBars = !isDarkMode
+            }
         }
         MaterialTheme(
             colorScheme = colorScheme,
@@ -56,6 +91,7 @@ internal object TvPlatformThemeApi : PlatformThemeApi {
 
 @Composable
 actual fun rememberPlatformSystemDarkMode(): Boolean = isSystemInDarkTheme()
+
 
 private fun ColorScheme.toTvColorScheme(
     isDarkMode: Boolean,
