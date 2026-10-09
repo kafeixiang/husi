@@ -236,11 +236,6 @@ jobs:
           if-no-files-found: error
       - uses: actions/upload-artifact@v7
         with:
-          name: libcore-${{ matrix.id }}
-          path: composeApp/libs/libcore-desktop-*.jar
-          if-no-files-found: error
-      - uses: actions/upload-artifact@v7
-        with:
           name: mapping-${{ matrix.id }}
           path: composeApp/build/compose/mapping/*-mapping.txt
           if-no-files-found: error
