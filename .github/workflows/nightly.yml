@@ -37,6 +37,7 @@ jobs:
         with:
           path: |
             composeApp/libs
+            libcore/build
           key: ${{ hashFiles('.github/workflows/*', 'golang_status', 'libcore_status') }}
       - name: Verify LibCore cache
         id: verify_libcore
@@ -44,8 +45,8 @@ jobs:
           missing=0
           required_files=(
             "composeApp/libs/libcore.aar"
-            "composeApp/libs/libcore-desktop-linux-amd64.jar"
-            "composeApp/libs/libcore-desktop-linux-arm64.jar"
+            "libcore/build/linux_amd64/husi-core"
+            "libcore/build/linux_arm64/husi-core"
           )
           for file in "${required_files[@]}"; do
             if [ ! -f "$file" ]; then
@@ -86,8 +87,7 @@ jobs:
         with:
           path: |
             composeApp/libs/libcore.aar
-            composeApp/libs/libcore-desktop-linux-amd64.jar
-            composeApp/libs/libcore-desktop-linux-arm64.jar
+            libcore/build
           if-no-files-found: error
           name: "libcore"
 
@@ -111,7 +111,6 @@ jobs:
         run: |
           ls -la composeApp/libs || true
           test -f composeApp/libs/libcore.aar
-          test -f composeApp/libs/libcore-desktop-linux-amd64.jar
       - uses: actions/setup-java@v6
         with:
           java-version: ${{ env.JAVA_VERSION }}
@@ -170,13 +169,8 @@ jobs:
           path: composeApp/libs
       - name: Verify libcore artifacts
         run: |
-          target="${{ matrix.target }}"
-          platform="${target%%/*}"
-          arch="${target##*/}"
-          required_jar="composeApp/libs/libcore-desktop-${platform}-${arch}.jar"
           ls -la composeApp/libs || true
           test -f composeApp/libs/libcore.aar
-          test -f "$required_jar"
       - uses: actions/setup-java@v6
         with:
           java-version: ${{ env.JAVA_VERSION }}
