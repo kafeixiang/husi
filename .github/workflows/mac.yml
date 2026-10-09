@@ -173,10 +173,10 @@ jobs:
           if [ ! -d "$JNI_PATH" ]; then JNI_PATH="$HOME/jni-headers"; fi
 
           if [ "${{ matrix.platform }}" = "macos" ]; then
-            ./run lib core --desktop --desktoptargets darwin/${{ matrix.arch }} --jniinclude "$JNI_PATH" --darwinsdk "$DARWIN_SDKROOT"
+            ./run lib core --desktop --desktoptargets darwin/${{ matrix.arch }} --darwinsdk "$DARWIN_SDKROOT"
           else
             # Windows 编译不需要 --darwinsdk
-            ./run lib core --desktop --desktoptargets windows/${{ matrix.arch }} --jniinclude "$JNI_PATH"
+            ./run lib core --desktop --desktoptargets windows/${{ matrix.arch }}
           fi
 
       - name: Upload libcore Artifacts
