@@ -305,25 +305,20 @@ fun CapsuleHeader(
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val topAppBarColors = TopAppBarDefaults.topAppBarColors()
-    val appBarContainerColor by animateColorAsState(
-        targetValue = lerp(
-            topAppBarColors.containerColor,
-            topAppBarColors.scrolledContainerColor,
-            scrollBehavior.state.overlappedFraction.fastCoerceIn(0f, 1f),
-        ),
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "appBarContainerColor",
-    )
+    val appBarContainerColor = husiAppBarContainerColor(scrollBehavior)
     Column(
         modifier = modifier
             .fillMaxWidth()
             .hazeBlur(
                 input = HazeInput.Backdrop(hazeState),
                 style = CapsuleDefaults.blurStyle(tintColor = appBarContainerColor),
-            ),
-        content = content,
-    )
+            )
+            .husiTopBarBackground(scrollBehavior),
+    ) {
+        CompositionLocalProvider(LocalInThemedHeader provides true) {
+            content()
+        }
+    }
 }
 
 @Composable

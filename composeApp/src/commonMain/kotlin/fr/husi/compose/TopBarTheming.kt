@@ -10,6 +10,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -21,6 +22,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import fr.husi.compose.theme.DYNAMIC
 import fr.husi.database.DataStore
 
+val LocalInThemedHeader = compositionLocalOf { false }
+
 /**
  * 集中处理 Husi 的顶部栏背景注入逻辑。
  */
@@ -28,9 +31,10 @@ import fr.husi.database.DataStore
 fun Modifier.husiTopBarBackground(scrollBehavior: TopAppBarScrollBehavior?): Modifier = composed {
     val isEnabled by DataStore.themedTopBar.collectAsStateWithLifecycle()
     val appTheme by DataStore.appTheme.collectAsStateWithLifecycle()
+    val inHeader = LocalInThemedHeader.current
 
-    // 严格遵循：如果功能关闭或处于动态主题，不添加任何背景修饰符，保持 100% 原生透明滚动效果
-    if (!isEnabled || (appTheme == DYNAMIC)) return@composed this
+    // 严格遵循：如果功能关闭或处于动态主题或已在 ThemedHeader 中，不添加任何背景修饰符，保持 100% 原生透明滚动效果
+    if (!isEnabled || (appTheme == DYNAMIC) || inHeader) return@composed this
 
     background(husiAppBarContainerColor(scrollBehavior))
 }
