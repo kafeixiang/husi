@@ -315,7 +315,10 @@ fun CapsuleHeader(
             )
             .husiTopBarBackground(scrollBehavior),
     ) {
-        CompositionLocalProvider(LocalInThemedHeader provides true) {
+        CompositionLocalProvider(
+            LocalInThemedHeader provides true,
+            LocalHusiTopBarColor provides appBarContainerColor,
+        ) {
             content()
         }
     }

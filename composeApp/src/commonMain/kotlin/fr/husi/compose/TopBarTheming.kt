@@ -12,6 +12,7 @@ import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
@@ -23,6 +24,12 @@ import fr.husi.compose.theme.DYNAMIC
 import fr.husi.database.DataStore
 
 val LocalInThemedHeader = compositionLocalOf { false }
+
+/**
+ * 全局 TopBar 颜色注入 Local。
+ * 用于将 TopBar 的“浮光跃彩”计算色向下传递给 TabRow 等组件。
+ */
+val LocalHusiTopBarColor = staticCompositionLocalOf<Color?> { null }
 
 /**
  * 集中处理 Husi 的顶部栏背景注入逻辑。
