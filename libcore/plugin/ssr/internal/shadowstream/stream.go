@@ -20,10 +20,7 @@ func NewWriter(w io.Writer, s cipher.Stream) *Writer { return &Writer{Writer: w,
 func (w *Writer) Write(p []byte) (n int, err error) {
 	buf := w.buf[:]
 	for len(p) > 0 && err == nil {
-		chunk := len(p)
-		if chunk > len(buf) {
-			chunk = len(buf)
-		}
+		chunk := min(len(p), len(buf))
 		w.XORKeyStream(buf[:chunk], p[:chunk])
 		var nw int
 		nw, err = w.Writer.Write(buf[:chunk])

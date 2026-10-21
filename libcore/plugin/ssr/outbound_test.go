@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sagernet/sing-box/option"
-
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/pluginoption"
 )
 
@@ -70,10 +68,8 @@ func TestNewOutbound(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			opts := pluginoption.SSROutboundOptions{
-				ServerOptions: option.ServerOptions{
-					Server:     "127.0.0.1",
-					ServerPort: 8388,
-				},
+				Server:        "127.0.0.1",
+				ServerPort:    8388,
 				Method:        tt.method,
 				Password:      tt.password,
 				Obfs:          tt.obfs,

@@ -16,7 +16,7 @@ type TableCipher struct {
 type tableCipherStream []byte
 
 func (t tableCipherStream) XORKeyStream(dst, src []byte) {
-	for i := 0; i < len(src); i++ {
+	for i := range len(src) {
 		dst[i] = t[src[i]]
 	}
 }
@@ -50,7 +50,7 @@ func newTableCipher(key []byte) (enc, dec tableCipherStream) {
 	var a uint64
 	buf := bytes.NewBuffer(key)
 	_ = binary.Read(buf, binary.LittleEndian, &a)
-	for i := uint64(0); i < tableSize; i++ {
+	for i := range uint64(tableSize) {
 		table[i] = i
 	}
 	for i := uint64(1); i < 1024; i++ {
@@ -59,10 +59,10 @@ func newTableCipher(key []byte) (enc, dec tableCipherStream) {
 			return int64(a%(table[x]+step)-a%(table[y]+step)) < 0
 		})
 	}
-	for i := 0; i < tableSize; i++ {
+	for i := range tableSize {
 		enc[i] = byte(table[i])
 	}
-	for i := 0; i < tableSize; i++ {
+	for i := range tableSize {
 		dec[enc[i]] = byte(i)
 	}
 	return enc, dec
