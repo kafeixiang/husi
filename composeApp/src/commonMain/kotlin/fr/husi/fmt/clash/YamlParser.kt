@@ -191,7 +191,7 @@ object YamlParser {
         return findUnquotedColon(s) >= 0
     }
 
-    private fun findUnquotedColon(s: String): Int {
+    private fun findUnquotedColon(s: String, isFlow: Boolean = false): Int {
         var inSingle = false
         var inDouble = false
         var escape = false
@@ -213,7 +213,9 @@ object YamlParser {
                 if (c == '[' || c == '{') bracketDepth++
                 else if (c == ']' || c == '}') bracketDepth--
                 else if (c == ':' && bracketDepth == 0) {
-                    if (i == s.length - 1 || s[i + 1].isWhitespace() || s[i + 1] == '{' || s[i + 1] == '[' || s[i + 1] == '"' || s[i + 1] == '\'') {
+                    val prevNonWhitespace = s.substring(0, i).trimEnd().lastOrNull()
+                    val keyWasQuoted = prevNonWhitespace == '"' || prevNonWhitespace == '\''
+                    if (isFlow || keyWasQuoted || i == s.length - 1 || s[i + 1].isWhitespace() || s[i + 1] == '{' || s[i + 1] == '[' || s[i + 1] == '"' || s[i + 1] == '\'') {
                         return i
                     }
                 }
@@ -253,7 +255,7 @@ object YamlParser {
         val map = mutableMapOf<String, Any?>()
         val tokens = splitFlowTokens(inner)
         for (token in tokens) {
-            val colonIdx = findUnquotedColon(token)
+            val colonIdx = findUnquotedColon(token, isFlow = true)
             if (colonIdx >= 0) {
                 val k = unquote(token.substring(0, colonIdx).trim())
                 val vText = token.substring(colonIdx + 1).trim()

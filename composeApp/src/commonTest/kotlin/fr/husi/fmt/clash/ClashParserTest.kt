@@ -5,6 +5,7 @@ import fr.husi.fmt.hysteria.HysteriaBean
 import fr.husi.fmt.juicity.JuicityBean
 import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.socks.SOCKSBean
+import fr.husi.fmt.ssr.SSRBean
 import fr.husi.fmt.trojan.TrojanBean
 import fr.husi.fmt.tuic.TuicBean
 import fr.husi.fmt.v2ray.VLESSBean
@@ -213,5 +214,35 @@ class ClashParserTest {
         assertEquals("JSON SS Node", ss.name)
         assertEquals("2.2.2.2", ss.serverAddress)
         assertEquals("aes-128-gcm", ss.method)
+    }
+
+    @Test
+    fun `parseRaw should parse Clash YAML with inline flow JSON and compact numbers`() = runBlocking {
+        val yaml = """
+            proxies:
+              - {"name":"SSR Flow Node","type":"ssr","server":"ssr.example.com","port":30806,"cipher":"chacha20-ietf","password":"dummypassword","protocol":"auth_aes128_sha1","protocol-param":"123456:dummy","obfs":"tls1.2_ticket_auth","obfs-param":"dummy.example.com","udp":true,"tags":"hk"}
+              - {"name":"VMess Flow Node","type":"vmess","server":"vmess.example.com","port":31449,"uuid":"00000000-0000-0000-0000-000000000000","alterId":0,"cipher":"auto","udp":true,"tags":"tag","network":"ws","ws-opts":{"path":"/dummy-path"},"skip-cert-verify":false}
+        """.trimIndent()
+
+        val proxies = assertNotNull(RawUpdater.parseRaw(yaml))
+        assertEquals(2, proxies.size)
+
+        val ssr = assertIs<SSRBean>(proxies[0])
+        assertEquals("SSR Flow Node", ssr.name)
+        assertEquals("ssr.example.com", ssr.serverAddress)
+        assertEquals(30806, ssr.serverPort)
+        assertEquals("chacha20-ietf", ssr.method)
+        assertEquals("dummypassword", ssr.password)
+        assertEquals("auth_aes128_sha1", ssr.protocol)
+        assertEquals("123456:dummy", ssr.protocolParam)
+        assertEquals("tls1.2_ticket_auth", ssr.obfs)
+        assertEquals("dummy.example.com", ssr.obfsParam)
+
+        val vmess = assertIs<VMessBean>(proxies[1])
+        assertEquals("VMess Flow Node", vmess.name)
+        assertEquals("vmess.example.com", vmess.serverAddress)
+        assertEquals(31449, vmess.serverPort)
+        assertEquals(0, vmess.alterId)
+        assertEquals("/dummy-path", vmess.path)
     }
 }

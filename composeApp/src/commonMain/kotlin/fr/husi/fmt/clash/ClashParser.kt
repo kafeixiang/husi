@@ -124,9 +124,9 @@ fun parseClashProxy(map: Map<String, Any?>): AbstractBean? {
                 this.method = map.getStr("cipher") ?: map.getStr("method") ?: ""
                 this.password = map.getStr("password") ?: ""
                 this.protocol = map.getStr("protocol") ?: ""
-                this.protocolParam = map.getStr("protocol-param") ?: map.getStr("protocolparam") ?: ""
+                this.protocolParam = map.getStr("protocol-param") ?: map.getStr("protocolparam") ?: map.getStr("protocol_param") ?: ""
                 this.obfs = map.getStr("obfs") ?: ""
-                this.obfsParam = map.getStr("obfs-param") ?: map.getStr("obfsparam") ?: ""
+                this.obfsParam = map.getStr("obfs-param") ?: map.getStr("obfsparam") ?: map.getStr("obfs_param") ?: ""
             }
         }
 
