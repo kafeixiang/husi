@@ -16,6 +16,7 @@ import fr.husi.fmt.shadowsocks.parseShadowsocks
 import fr.husi.fmt.socks.parseSOCKS
 import fr.husi.fmt.ssr.parseSSR
 import fr.husi.fmt.trojan.parseTrojan
+import fr.husi.fmt.trojan_go.parseTrojanGo
 import fr.husi.fmt.trusttunnel.parseTrustTunnel
 import fr.husi.fmt.tuic.parseTuic
 import fr.husi.fmt.v2ray.parseV2Ray
@@ -146,11 +147,23 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
                 }
             }
 
-            // Trojan-go was partially compatible
-            "trojan", "trojan-go" -> {
+            "trojan" -> {
                 Logs.d("Try parse trojan link: $this")
                 runCatching {
-                    entities.add(parseTrojan(this))
+                    if (this.contains("encryption=ss") || this.contains("plugin=trojan-go")) {
+                        entities.add(parseTrojanGo(this))
+                    } else {
+                        entities.add(parseTrojan(this))
+                    }
+                }.onFailure {
+                    Logs.w(it)
+                }
+            }
+
+            "trojan-go", "trojango" -> {
+                Logs.d("Try parse trojan-go link: $this")
+                runCatching {
+                    entities.add(parseTrojanGo(this))
                 }.onFailure {
                     Logs.w(it)
                 }

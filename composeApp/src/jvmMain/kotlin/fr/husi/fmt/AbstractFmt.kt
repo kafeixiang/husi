@@ -27,6 +27,7 @@ import fr.husi.fmt.SingBoxOptions.TYPE_SSH
 import fr.husi.fmt.SingBoxOptions.TYPE_TAILCAT
 import fr.husi.fmt.SingBoxOptions.TYPE_TAILSCALE
 import fr.husi.fmt.SingBoxOptions.TYPE_TROJAN
+import fr.husi.fmt.SingBoxOptions.TYPE_TROJAN_GO
 import fr.husi.fmt.SingBoxOptions.TYPE_TUIC
 import fr.husi.fmt.SingBoxOptions.TYPE_VLESS
 import fr.husi.fmt.SingBoxOptions.TYPE_VMESS
@@ -83,6 +84,9 @@ import fr.husi.fmt.tailscale.TailscaleBean
 import fr.husi.fmt.tailscale.buildSingBoxEndpointTailscaleBean
 import fr.husi.fmt.tailscale.buildSingBoxOutboundTailcatBean
 import fr.husi.fmt.tailscale.parseTailcatOutbound
+import fr.husi.fmt.trojan_go.TrojanGoBean
+import fr.husi.fmt.trojan_go.buildSingBoxOutboundTrojanGoBean
+import fr.husi.fmt.trojan_go.parseTrojanGoOutbound
 import fr.husi.fmt.tailscale.parseTailscaleEndpoint
 import fr.husi.fmt.trojan.TrojanBean
 import fr.husi.fmt.trusttunnel.TrustTunnelBean
@@ -215,6 +219,8 @@ suspend fun buildSingBoxOutbound(bean: AbstractBean): String = when (bean) {
 
     is MieruBean ->
         buildSingBoxOutboundMieruBean(bean).apply { tag = bean.name }.toJsonStringKxs()
+    is TrojanGoBean ->
+        kxs.encodeToString(buildSingBoxOutboundTrojanGoBean(bean).apply { tag = bean.name })
     is TrustTunnelBean ->
         kxs.encodeToString(buildSingBoxOutboundTrustTunnelBean(bean).apply { tag = bean.name })
 
@@ -299,6 +305,8 @@ fun parseOutbound(json: JSONMap): AbstractBean? = when (json["type"].toString())
     TYPE_NAIVE -> parseNaiveOutbound(json)
 
     TYPE_MIERU -> parseMieruOutbound(json)
+
+    TYPE_TROJAN_GO, "trojango" -> parseTrojanGoOutbound(json)
 
     else -> null
 }
