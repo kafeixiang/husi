@@ -53,6 +53,8 @@ import fr.husi.fmt.toUniversalLink
 import fr.husi.fmt.tailscale.TailcatBean
 import fr.husi.fmt.tailscale.TailscaleBean
 import fr.husi.fmt.trojan.TrojanBean
+import fr.husi.fmt.trojan_go.TrojanGoBean
+import fr.husi.fmt.trojan_go.toUri
 import fr.husi.fmt.trusttunnel.TrustTunnelBean
 import fr.husi.fmt.trusttunnel.toUri
 import fr.husi.fmt.tuic.TuicBean
@@ -89,6 +91,7 @@ data class ProxyEntity(
     var vmessBean: VMessBean? = null,
     var vlessBean: VLESSBean? = null,
     var trojanBean: TrojanBean? = null,
+    var trojanGoBean: TrojanGoBean? = null,
     var mieruBean: MieruBean? = null,
     var naiveBean: NaiveBean? = null,
     var hysteriaBean: HysteriaBean? = null,
@@ -120,7 +123,7 @@ data class ProxyEntity(
         const val TYPE_VMESS = 4
         const val TYPE_VLESS = 5
         const val TYPE_TROJAN = 6
-        const val TYPE_TROJAN_GO = 7 // Deleted
+        const val TYPE_TROJAN_GO = 7
         const val TYPE_CHAIN = 8
         const val TYPE_NAIVE = 9
         const val TYPE_HYSTERIA = 15
@@ -227,6 +230,7 @@ data class ProxyEntity(
             TYPE_VMESS -> vmessBean = BeanConverters.vmessDeserialize(byteArray)
             TYPE_VLESS -> vlessBean = BeanConverters.vlessDeserialize(byteArray)
             TYPE_TROJAN -> trojanBean = BeanConverters.trojanDeserialize(byteArray)
+            TYPE_TROJAN_GO -> trojanGoBean = BeanConverters.trojanGoDeserialize(byteArray)
             TYPE_MIERU -> mieruBean = BeanConverters.mieruDeserialize(byteArray)
             TYPE_NAIVE -> naiveBean = BeanConverters.naiveDeserialize(byteArray)
             TYPE_HYSTERIA -> hysteriaBean = BeanConverters.hysteriaDeserialize(byteArray)
@@ -272,6 +276,7 @@ data class ProxyEntity(
             TYPE_VMESS -> vmessBean
             TYPE_VLESS -> vlessBean
             TYPE_TROJAN -> trojanBean
+            TYPE_TROJAN_GO -> trojanGoBean
             TYPE_MIERU -> mieruBean
             TYPE_NAIVE -> naiveBean
             TYPE_HYSTERIA -> hysteriaBean
@@ -329,6 +334,7 @@ data class ProxyEntity(
             is VMessBean -> toUriVMessVLESSTrojan()
             is VLESSBean -> toUriVMessVLESSTrojan()
             is TrojanBean -> toUriVMessVLESSTrojan()
+            is TrojanGoBean -> toUri()
             is NaiveBean -> toUri()
             is HysteriaBean -> toUri()
             is TuicBean -> toUri()
@@ -442,6 +448,7 @@ data class ProxyEntity(
         vmessBean = null
         vlessBean = null
         trojanBean = null
+        trojanGoBean = null
         mieruBean = null
         naiveBean = null
         hysteriaBean = null
@@ -503,6 +510,11 @@ data class ProxyEntity(
             is TrojanBean -> {
                 type = TYPE_TROJAN
                 trojanBean = bean
+            }
+
+            is TrojanGoBean -> {
+                type = TYPE_TROJAN_GO
+                trojanGoBean = bean
             }
 
             is MieruBean -> {

@@ -118,6 +118,7 @@ import fr.husi.resources.action_socks
 import fr.husi.resources.action_ssh
 import fr.husi.resources.action_tailcat
 import fr.husi.resources.action_trojan
+import fr.husi.resources.action_trojan_go
 import fr.husi.resources.action_trusttunnel
 import fr.husi.resources.action_tuic
 import fr.husi.resources.action_vless
@@ -314,6 +315,7 @@ fun ConfigurationScreen(
             Res.string.action_vmess to ProxyEntity.TYPE_VMESS,
             Res.string.action_vless to ProxyEntity.TYPE_VLESS,
             Res.string.action_trojan to ProxyEntity.TYPE_TROJAN,
+            Res.string.action_trojan_go to ProxyEntity.TYPE_TROJAN_GO,
             Res.string.action_mieru to ProxyEntity.TYPE_MIERU,
             Res.string.action_naive to ProxyEntity.TYPE_NAIVE,
             Res.string.action_hysteria to ProxyEntity.TYPE_HYSTERIA,

@@ -39,6 +39,7 @@ object SingBoxOptions {
     const val TYPE_SOCKS = "socks"
     const val TYPE_SSH = "ssh"
     const val TYPE_TROJAN = "trojan"
+    const val TYPE_TROJAN_GO = "trojan-go"
     const val TYPE_TUIC = "tuic"
     const val TYPE_JUICITY = "juicity"
     const val TYPE_VMESS = "vmess"
@@ -3840,6 +3841,43 @@ object SingBoxOptions {
         @JvmField
         var transport: JsonElement? = null
 
+    }
+
+    @KxsSerializable
+    open class Outbound_TrojanGoOptions : Outbound() {
+        @JvmField var server: String? = null
+        @JvmField var server_port: Int? = null
+        @JvmField var password: String? = null
+        @JvmField var network: MutableList<String>? = null
+        @JvmField var tls: OutboundTLSOptions? = null
+        @JvmField var transport: JsonElement? = null
+        @JvmField var shadowsocks: TrojanGoShadowsocksOptions? = null
+        @JvmField var mux: TrojanGoMuxOptions? = null
+
+        @JvmField var detour: String? = null
+        @JvmField var bind_interface: String? = null
+        @JvmField var inet4_bind_address: String? = null
+        @JvmField var inet6_bind_address: String? = null
+        @JvmField var routing_mark: Int? = null
+        @JvmField var reuse_addr: Boolean? = null
+        @JvmField var connect_timeout: String? = null
+        @JvmField var tcp_fast_open: Boolean? = null
+        @JvmField var network_strategy: String? = null
+        @JvmField var network_type: MutableList<String>? = null
+    }
+
+    @KxsSerializable
+    class TrojanGoShadowsocksOptions {
+        @JvmField var enabled: Boolean? = null
+        @JvmField var method: String? = null
+        @JvmField var password: String? = null
+    }
+
+    @KxsSerializable
+    class TrojanGoMuxOptions {
+        @JvmField var enabled: Boolean? = null
+        @JvmField var concurrency: Int? = null
+        @JvmField var idle_timeout: Int? = null
     }
 
     @KxsSerializable
