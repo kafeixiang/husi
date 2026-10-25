@@ -26,6 +26,7 @@ import fr.husi.fmt.ssh.SSHBean
 import fr.husi.fmt.tailscale.TailcatBean
 import fr.husi.fmt.tailscale.TailscaleBean
 import fr.husi.fmt.trojan.TrojanBean
+import fr.husi.fmt.trojan_go.TrojanGoBean
 import fr.husi.fmt.trusttunnel.TrustTunnelBean
 import fr.husi.fmt.tuic.TuicBean
 import fr.husi.fmt.v2ray.VLESSBean
@@ -101,6 +102,13 @@ class BeanConverters {
         fun ssrDeserialize(bytes: ByteArray?): SSRBean? {
             if (bytes?.isNotEmpty() != true) return null
             return deserialize(SSRBean(), bytes)
+        }
+
+        @TypeConverter
+        @JvmStatic
+        fun trojanGoDeserialize(bytes: ByteArray?): TrojanGoBean? {
+            if (bytes?.isNotEmpty() != true) return null
+            return deserialize(TrojanGoBean(), bytes)
         }
 
         @TypeConverter

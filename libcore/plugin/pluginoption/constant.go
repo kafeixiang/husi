@@ -9,4 +9,5 @@ const (
 	TypeProtect     = "protect"
 	TypeSSR         = "ssr"
 	TypeMieru       = "mieru"
+	TypeTrojanGo    = "trojan-go"
 )

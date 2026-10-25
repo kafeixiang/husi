@@ -69,6 +69,8 @@ import fr.husi.fmt.shadowsocks.ShadowsocksBean
 import fr.husi.fmt.shadowsocks.buildSingBoxOutboundShadowsocksBean
 import fr.husi.fmt.ssr.SSRBean
 import fr.husi.fmt.ssr.buildSingBoxOutboundSSRBean
+import fr.husi.fmt.trojan_go.TrojanGoBean
+import fr.husi.fmt.trojan_go.buildSingBoxOutboundTrojanGoBean
 import fr.husi.fmt.shadowtls.ShadowTLSBean
 import fr.husi.fmt.shadowtls.buildSingBoxOutboundShadowTLSBean
 import fr.husi.fmt.snell.SnellBean
@@ -919,6 +921,8 @@ suspend fun buildConfig(
                         is SnellBean -> buildSingBoxOutboundSnellBean(bean).asKxsMap()
 
                         is SSRBean -> buildSingBoxOutboundSSRBean(bean).asKxsMap()
+
+                        is TrojanGoBean -> buildSingBoxOutboundTrojanGoBean(bean).asKxsMap()
 
                         is WireGuardBean -> buildSingBoxEndpointWireGuardBean(bean).asKxsMap()
 
