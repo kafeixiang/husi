@@ -23,6 +23,7 @@ import fr.husi.database.ProxyEntity.Companion.TYPE_SSH
 import fr.husi.database.ProxyEntity.Companion.TYPE_TAILCAT
 import fr.husi.database.ProxyEntity.Companion.TYPE_TAILSCALE
 import fr.husi.database.ProxyEntity.Companion.TYPE_TROJAN
+import fr.husi.database.ProxyEntity.Companion.TYPE_TROJAN_GO
 import fr.husi.database.ProxyEntity.Companion.TYPE_TRUST_TUNNEL
 import fr.husi.database.ProxyEntity.Companion.TYPE_TUIC
 import fr.husi.database.ProxyEntity.Companion.TYPE_VLESS
@@ -41,6 +42,7 @@ fun ProxyEntity.displayType(): String = when (type) {
     TYPE_VMESS -> "VMess"
     TYPE_VLESS -> "VLESS"
     TYPE_TROJAN -> "Trojan"
+    TYPE_TROJAN_GO -> "Trojan-Go"
     TYPE_MIERU -> "Mieru"
     TYPE_NAIVE -> "Naïve"
     TYPE_HYSTERIA -> "Hysteria" + hysteriaBean!!.protocolVersion
