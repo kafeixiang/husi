@@ -7,6 +7,7 @@ import (
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/juicity"
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/mieru"
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/ssr"
+	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/trojango"
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/trusttunnel"
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/vless"
 )
@@ -18,4 +19,5 @@ func registerPluginsOutbound(registry *outbound.Registry) {
 	trusttunnel.RegisterOutbound(registry)
 	balancer.RegisterOutbound(registry)
 	ssr.RegisterOutbound(registry)
+	trojango.RegisterOutbound(registry)
 }
