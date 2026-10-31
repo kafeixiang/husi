@@ -3881,6 +3881,7 @@ object SingBoxOptions {
         @JvmField var transport: JsonElement? = null
         @JvmField var shadowsocks: TrojanGoShadowsocksOptions? = null
         @JvmField var mux: TrojanGoMuxOptions? = null
+        @JvmField var plugin: String? = null
 
         @JvmField var detour: String? = null
         @JvmField var bind_interface: String? = null

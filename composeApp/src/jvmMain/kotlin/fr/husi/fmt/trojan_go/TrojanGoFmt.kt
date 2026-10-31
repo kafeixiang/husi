@@ -19,33 +19,127 @@ import kotlinx.serialization.json.put
 
 fun parseTrojanGo(link: String): TrojanGoBean = TrojanGoBean().apply {
     val url = Url.parse(link)
-    serverAddress = url.host.orEmpty()
-    serverPort = url.port?.toIntOrNull() ?: 443
-    password = url.username.orEmpty().ifBlank { url.password.orEmpty() }
-    name = url.fragment.orEmpty()
-
-    url.queryParameterNotBlank("sni")?.let { sni = it }
-    url.queryParameterNotBlank("peer")?.let { sni = it }
-
-    url.queryParameterNotBlank("type")?.let {
-        type = it
-    }
-    if (type == "ws") {
-        url.queryParameterNotBlank("host")?.let { host = it }
-        url.queryParameterNotBlank("path")?.let { path = it }
-    }
-
-    url.queryParameterNotBlank("encryption")?.let { enc ->
-        encryption = enc
-        if (enc.startsWith("ss;")) {
-            val ssPart = enc.removePrefix("ss;")
-            ssMethod = ssPart.substringBefore(":")
-            ssPassword = ssPart.substringAfter(":")
+    val scheme = url.scheme?.lowercase()
+    if (scheme == "trojan") {
+        require(link.contains("encryption=ss") || link.contains("plugin=trojan-go")) {
+            "standard trojan link is not a trojan-go link"
+        }
+    } else {
+        require(scheme == "trojan-go" || scheme == "trojango") {
+            "url does not have a trojan-go:// scheme"
         }
     }
 
+    val rawUser = url.username.orEmpty()
+    require(rawUser.isNotEmpty()) { "no password specified" }
+    require(url.encodedPassword == null) { "password possibly missing percentage encoding for colon" }
+    password = rawUser
+
+    val rawHost = url.host.orEmpty()
+    require(rawHost.isNotEmpty()) { "host is empty" }
+    serverAddress = rawHost
+
+    val portStr = url.port
+    serverPort = if (portStr.isNullOrEmpty()) {
+        443
+    } else {
+        val p = portStr.toIntOrNull()
+        require(p != null && p in 1..65535) { "invalid port $portStr" }
+        p
+    }
+
+    name = url.fragment.orEmpty()
+
+    val snis = url.queryParameterValues("sni")
+    if (snis.isNotEmpty()) {
+        require(snis.size == 1) { "multiple SNIs" }
+        require(snis[0].isNotEmpty()) { "empty SNI" }
+        sni = snis[0]
+    } else {
+        val peers = url.queryParameterValues("peer")
+        if (peers.isNotEmpty()) {
+            require(peers.size == 1) { "multiple SNIs" }
+            require(peers[0].isNotEmpty()) { "empty SNI" }
+            sni = peers[0]
+        } else {
+            sni = serverAddress
+        }
+    }
+
+    val types = url.queryParameterValues("type")
+    if (types.isNotEmpty()) {
+        require(types.size == 1) { "multiple transport types" }
+        val t = types[0]
+        require(t.isNotEmpty()) { "empty transport type" }
+        require(t == "original" || t == "ws") { "unknown transport type: $t" }
+        type = t
+    } else {
+        type = "original"
+    }
+
+    val hosts = url.queryParameterValues("host")
+    if (hosts.isNotEmpty()) {
+        require(hosts.size == 1) { "multiple hosts" }
+        val h = hosts[0]
+        require(h.isNotEmpty()) { "empty host" }
+        host = h
+    } else {
+        host = serverAddress
+    }
+
+    if (type == "ws") {
+        val paths = url.queryParameterValues("path")
+        require(paths.isNotEmpty()) { "path is required in websocket" }
+        require(paths.size == 1) { "multiple paths" }
+        val p = paths[0]
+        require(p.isNotEmpty()) { "empty path" }
+        require(p.startsWith("/")) { "path must start with /" }
+        path = p
+    } else {
+        val paths = url.queryParameterValues("path")
+        if (paths.isNotEmpty() && paths[0].isNotEmpty()) {
+            path = paths[0]
+        }
+    }
+
+    val encs = url.queryParameterValues("encryption")
+    if (encs.isNotEmpty()) {
+        require(encs.size == 1) { "multiple encryption fields" }
+        val enc = encs[0]
+        require(enc.isNotEmpty()) { "empty encryption" }
+        val parts = enc.split(';', limit = 2)
+        val provider = parts[0]
+        require(provider == "ss" || provider == "none") { "unsupported encryption provider name: $provider" }
+        encryption = enc
+        if (provider == "ss") {
+            require(parts.size >= 2) { "missing ss password" }
+            val ssParams = parts[1].split(':', limit = 2)
+            require(ssParams.size >= 2) { "missing ss password" }
+            val method = ssParams[0]
+            val pass = ssParams[1]
+            require(method in setOf("aes-128-gcm", "aes-256-gcm", "chacha20-ietf-poly1305")) {
+                "unsupported ss method: $method"
+            }
+            require(pass.isNotEmpty()) { "ss password cannot be empty" }
+            ssMethod = method
+            ssPassword = pass
+        }
+    } else {
+        encryption = "none"
+    }
+
+    val plugins = url.queryParameterValues("plugin")
+    if (plugins.isNotEmpty()) {
+        require(plugins.size == 1) { "multiple plugins" }
+        val pl = plugins[0]
+        require(pl.isNotEmpty()) { "empty plugin" }
+        plugin = pl
+    }
+
     mux = url.parseBoolean("mux")
-    url.queryParameterNotBlank("concurrency")?.toIntOrNull()?.let { muxConcurrency = it }
+    url.queryParameterNotBlank("concurrency")?.toIntOrNull()?.let {
+        if (it > 0) muxConcurrency = it
+    }
     allowInsecure = url.parseBoolean("allowInsecure")
 }
 
@@ -61,7 +155,10 @@ fun TrojanGoBean.toUri(): String = buildUrl("trojan-go") {
         addQueryParameter("type", this@toUri.type)
         if (this@toUri.type == "ws") {
             this@toUri.host.blankAsNull()?.let { addQueryParameter("host", it) }
-            this@toUri.path.blankAsNull()?.let { addQueryParameter("path", it) }
+            this@toUri.path.blankAsNull()?.let {
+                val wsPath = if (it.startsWith("/")) it else "/$it"
+                addQueryParameter("path", wsPath)
+            }
         }
     }
 
@@ -70,6 +167,8 @@ fun TrojanGoBean.toUri(): String = buildUrl("trojan-go") {
         val encValue = if (encryption.startsWith("ss;")) encryption else "ss;$ssMethod:$ssPassword"
         addQueryParameter("encryption", encValue)
     }
+
+    plugin.blankAsNull()?.let { addQueryParameter("plugin", it) }
 
     if (mux) {
         addQueryParameter("mux", "true")
@@ -141,6 +240,10 @@ fun buildSingBoxOutboundTrojanGoBean(bean: TrojanGoBean): SingBoxOptions.Outboun
                 idle_timeout = 60
             }
         }
+
+        if (bean.plugin.isNotBlank()) {
+            plugin = bean.plugin
+        }
     }
 }
 
@@ -186,5 +289,9 @@ fun parseTrojanGoOutbound(json: JSONMap): TrojanGoBean = TrojanGoBean().apply {
             mux = true
             muxConcurrency = muxMap.getIntOrNull("concurrency") ?: 8
         }
+    }
+
+    json.getStr("plugin")?.let {
+        plugin = it
     }
 }

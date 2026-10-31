@@ -11,6 +11,7 @@ import fr.husi.ktx.toJsonMapKxs
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -310,5 +311,149 @@ class TrojanGoFmtTest {
         assertEquals("example2.com", list[1].serverAddress)
         assertEquals("aes-128-gcm", (list[1] as TrojanGoBean).ssMethod)
         assertEquals("sspass", (list[1] as TrojanGoBean).ssPassword)
+    }
+
+    @Test
+    fun `parseTrojanGo should strictly validate scheme and basic structure`() {
+        assertFailsWith<Throwable> { parseTrojanGo("") }
+        assertFailsWith<Throwable> { parseTrojanGo("vmess://eyJhZGQiOiJleGFtcGxlLmNvbSJ9") }
+        assertFailsWith<Throwable> { parseTrojanGo("ssr://YWJjZGVm") }
+        assertFailsWith<Throwable> {
+            parseTrojanGo("trojan://what.ever@www.twitter.com:443?allowInsecure=1#some-trojan")
+        }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://fuckyou@:443/") }
+    }
+
+    @Test
+    fun `parseTrojanGo should strictly validate ports matching trojan-go spec`() {
+        val goodPorts = listOf("1", "80", "443", "8080", "10086", "65535")
+        for (p in goodPorts) {
+            val bean = parseTrojanGo("trojan-go://pass@example.com:$p")
+            assertEquals(p.toInt(), bean.serverPort)
+        }
+        val defaultPortBean = parseTrojanGo("trojan-go://pass@example.com")
+        assertEquals(443, defaultPortBean.serverPort)
+
+        val badPorts = listOf("443.0", "443.000", "8e2", "3.5", "-1", "-65535", "65536", "0", "114514", "fuck")
+        for (bp in badPorts) {
+            assertFailsWith<Throwable> {
+                parseTrojanGo("trojan-go://pass@example.com:$bp")
+            }
+        }
+    }
+
+    @Test
+    fun `parseTrojanGo should strictly validate passwords matching trojan-go spec`() {
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://@password.404") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://mother.fuck#yeah") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://we:are:the:champion@114514.go") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://evilpassword:@1919810.me") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://evilpassword::@1919810.me") }
+
+        val good1 = parseTrojanGo("trojan-go://we%3Aare%3Athe%3Achampion@114514.go")
+        assertEquals("we:are:the:champion", good1.password)
+
+        val good2 = parseTrojanGo("trojan-go://evilpassword%3A@1919810.me")
+        assertEquals("evilpassword:", good2.password)
+
+        val good3 = parseTrojanGo("trojan-go://passw0rd-is-a-must@password.200")
+        assertEquals("passw0rd-is-a-must", good3.password)
+    }
+
+    @Test
+    fun `parseTrojanGo should strictly validate sni, type and host matching trojan-go spec`() {
+        // SNI
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?sni=") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?sni=a&sni=b&sni=c") }
+        val defaultSni = parseTrojanGo("trojan-go://a@b.c")
+        assertEquals("b.c", defaultSni.sni)
+
+        // Type
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?type=") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?type=nmsl") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?type=a&type=b") }
+        val defaultType = parseTrojanGo("trojan-go://a@b.c")
+        assertEquals("original", defaultType.type)
+
+        // Host
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?host=") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?host=a&host=b") }
+        val defaultHost = parseTrojanGo("trojan-go://a@b.c")
+        assertEquals("b.c", defaultHost.host)
+    }
+
+    @Test
+    fun `parseTrojanGo should strictly validate websocket paths matching trojan-go spec`() {
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?type=ws") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?type=ws&path=") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?type=ws&path=a&path=b") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?type=ws&path=../") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?type=ws&path=.+!") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?type=ws&path=foo") }
+
+        val plainEmptyPath = parseTrojanGo("trojan-go://a@b.c?type=original&path=")
+        assertEquals("original", plainEmptyPath.type)
+
+        val validWs = parseTrojanGo("trojan-go://a@b.c?type=ws&path=%2Fwebsocket")
+        assertEquals("ws", validWs.type)
+        assertEquals("/websocket", validWs.path)
+    }
+
+    @Test
+    fun `parseTrojanGo should strictly validate encryption matching trojan-go spec`() {
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?encryption=") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?encryption=unknown_enc") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?encryption=a&encryption=b") }
+
+        val noneEnc = parseTrojanGo("trojan-go://what@ever.me?encryption=none")
+        assertEquals("none", noneEnc.encryption)
+
+        val invalidMethods = listOf("rc4-md5", "rc4", "des-cfb", "table", "salsa20-ctr")
+        for (m in invalidMethods) {
+            assertFailsWith<Throwable> {
+                parseTrojanGo("trojan-go://a@b.c?encryption=ss%3B$m%3Ashabi")
+            }
+        }
+
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?encryption=ss%3Baes-256-gcm%3A") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?encryption=ss%3Ba") }
+
+        val validSS1 = parseTrojanGo("trojan-go://a@b.c?encryption=ss%3Baes-128-gcm%3Amypass")
+        assertEquals("aes-128-gcm", validSS1.ssMethod)
+        assertEquals("mypass", validSS1.ssPassword)
+
+        val validSS2 = parseTrojanGo("trojan-go://a@b.c?encryption=ss%3Bchacha20-ietf-poly1305%3Achachapass")
+        assertEquals("chacha20-ietf-poly1305", validSS2.ssMethod)
+        assertEquals("chachapass", validSS2.ssPassword)
+    }
+
+    @Test
+    fun `parseTrojanGo should strictly validate plugin matching trojan-go spec`() {
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?plugin=") }
+        assertFailsWith<Throwable> { parseTrojanGo("trojan-go://a@b.c?plugin=a&plugin=b") }
+
+        val withPlugin = parseTrojanGo("trojan-go://a@b.c?plugin=obfs-local%3Bobfs%3Dhttp")
+        assertEquals("obfs-local;obfs=http", withPlugin.plugin)
+
+        val uri = withPlugin.toUri()
+        val parsedAgain = parseTrojanGo(uri)
+        assertEquals("obfs-local;obfs=http", parsedAgain.plugin)
+    }
+
+    @Test
+    fun `TrojanGoBean with plugin should serialize and build outbound properly`() {
+        val bean = TrojanGoBean().apply {
+            serverAddress = "plugin.test.com"
+            serverPort = 443
+            password = "password"
+            plugin = "v2ray-plugin;mode=websocket"
+        }
+        val outbound = buildSingBoxOutboundTrojanGoBean(bean)
+        assertEquals("v2ray-plugin;mode=websocket", outbound.plugin)
+
+        val bytes = BeanConverters.serialize(bean)
+        val deserialized = BeanConverters.trojanGoDeserialize(bytes)
+        assertNotNull(deserialized)
+        assertEquals("v2ray-plugin;mode=websocket", deserialized.plugin)
     }
 }
