@@ -28,6 +28,7 @@ class TrojanGoBean : AbstractBean() {
     var encryption: String = "none"
     var ssMethod: String = "aes-128-gcm"
     var ssPassword: String = ""
+    var plugin: String = ""
     var mux: Boolean = false
     var muxConcurrency: Int = 8
     var allowInsecure: Boolean = false
@@ -53,7 +54,7 @@ class TrojanGoBean : AbstractBean() {
     }
 
     override fun serialize(output: BinaryOutput) {
-        output.writeInt(1)
+        output.writeInt(2)
         super.serialize(output)
         output.writeString(password)
         output.writeString(sni)
@@ -67,6 +68,7 @@ class TrojanGoBean : AbstractBean() {
         output.writeInt(muxConcurrency)
         output.writeBoolean(allowInsecure)
         output.writeBoolean(udp)
+        output.writeString(plugin)
     }
 
     override fun deserialize(input: BinaryInput) {
@@ -84,6 +86,9 @@ class TrojanGoBean : AbstractBean() {
         muxConcurrency = input.readInt()
         allowInsecure = input.readBoolean()
         udp = input.readBoolean()
+        if (version >= 2) {
+            plugin = input.readString()
+        }
     }
 
     override fun applyFeatureSettings(other: AbstractBean) {
@@ -91,6 +96,7 @@ class TrojanGoBean : AbstractBean() {
         other.allowInsecure = allowInsecure
         other.mux = mux
         other.udp = udp
+        other.plugin = plugin
     }
 
     override fun clone(): TrojanGoBean {

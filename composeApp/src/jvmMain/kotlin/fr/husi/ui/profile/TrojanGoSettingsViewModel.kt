@@ -23,6 +23,7 @@ internal data class TrojanGoUiState(
     val encryption: String = "none",
     val ssMethod: String = "aes-128-gcm",
     val ssPassword: String = "",
+    val plugin: String = "",
     val mux: Boolean = false,
     val muxConcurrency: Int = 8,
     val allowInsecure: Boolean = false,
@@ -52,6 +53,7 @@ internal class TrojanGoSettingsViewModel : ProfileEditorViewModel<TrojanGoBean>(
                 encryption = if (encryption.startsWith("ss;")) "ss" else encryption,
                 ssMethod = ssMethod,
                 ssPassword = ssPassword,
+                plugin = plugin,
                 mux = mux,
                 muxConcurrency = muxConcurrency,
                 allowInsecure = allowInsecure,
@@ -79,6 +81,7 @@ internal class TrojanGoSettingsViewModel : ProfileEditorViewModel<TrojanGoBean>(
         }
         ssMethod = state.ssMethod
         ssPassword = state.ssPassword
+        plugin = state.plugin
         mux = state.mux
         muxConcurrency = state.muxConcurrency
         allowInsecure = state.allowInsecure
@@ -104,6 +107,7 @@ internal class TrojanGoSettingsViewModel : ProfileEditorViewModel<TrojanGoBean>(
     fun setEncryption(encryption: String) = _uiState.update { it.copy(encryption = encryption) }
     fun setSSMethod(method: String) = _uiState.update { it.copy(ssMethod = method) }
     fun setSSPassword(password: String) = _uiState.update { it.copy(ssPassword = password) }
+    fun setPlugin(plugin: String) = _uiState.update { it.copy(plugin = plugin) }
     fun setMux(mux: Boolean) = _uiState.update { it.copy(mux = mux) }
     fun setMuxConcurrency(concurrency: Int) = _uiState.update { it.copy(muxConcurrency = concurrency) }
     fun setAllowInsecure(allowInsecure: Boolean) = _uiState.update { it.copy(allowInsecure = allowInsecure) }
