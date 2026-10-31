@@ -330,6 +330,11 @@ fun parseClashProxy(map: Map<String, Any?>): AbstractBean? {
                         }
                     }
 
+                    val pluginVal = tgOpts?.getStr("plugin") ?: map.getStr("plugin")?.takeIf { it != "trojan-go" }
+                    if (pluginVal != null) {
+                        this.plugin = pluginVal
+                    }
+
                     val muxMap = map.getMap("mux")
                     if (muxMap != null && muxMap.getBool("enabled") != false) {
                         this.mux = true
@@ -407,6 +412,11 @@ fun parseClashProxy(map: Map<String, Any?>): AbstractBean? {
                             this.ssPassword = ssPart.substringAfter(":")
                         }
                     }
+                }
+
+                val pluginVal = tgOpts?.getStr("plugin") ?: map.getStr("plugin")?.takeIf { it != "trojan-go" }
+                if (pluginVal != null) {
+                    this.plugin = pluginVal
                 }
 
                 val muxMap = map.getMap("mux")
