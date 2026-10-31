@@ -36,6 +36,7 @@ import fr.husi.resources.mux_number
 import fr.husi.resources.mux_preference
 import fr.husi.resources.mux_sum
 import fr.husi.resources.network
+import fr.husi.resources.plugin
 import fr.husi.resources.profile_config
 import fr.husi.resources.profile_name
 import fr.husi.resources.proxy_cat
@@ -214,6 +215,17 @@ private fun LazyListScope.trojanGoSettings(
                 valueToText = { it },
             )
         }
+        TextFieldPreference(
+            value = uiState.plugin,
+            onValueChange = { viewModel.setPlugin(it) },
+            title = { Text(stringResource(Res.string.plugin)) },
+            textToValue = { it },
+            icon = {
+                MaskedIcon(Res.drawable.router, color = IconMaskColors.IconLightBlue)
+            },
+            summary = { Text(contentOrUnset(uiState.plugin)) },
+            valueToText = { it },
+        )
     }
 
     item("category_shadowsocks") {
