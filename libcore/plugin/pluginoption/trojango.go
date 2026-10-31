@@ -13,6 +13,7 @@ type TrojanGoOutboundOptions struct {
 	Transport   *option.V2RayTransportOptions `json:"transport,omitempty"`
 	Shadowsocks *TrojanGoShadowsocksOptions   `json:"shadowsocks,omitempty"`
 	Mux         *TrojanGoMuxOptions           `json:"mux,omitempty"`
+	Plugin      string                        `json:"plugin,omitempty"`
 }
 
 type TrojanGoShadowsocksOptions struct {
