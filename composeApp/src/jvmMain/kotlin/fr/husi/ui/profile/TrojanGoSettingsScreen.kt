@@ -123,8 +123,8 @@ private fun LazyListScope.trojanGoSettings(
             },
             summary = { Text(uiState.port.toString()) },
             valueToText = { it.toString() },
-            textField = { value, onValueChange, onOk ->
-                UIntegerTextField(value, onValueChange, onOk, minValue = 1, maxValue = 65535)
+            textField = { state, onOk ->
+                UIntegerTextField(state, onOk, minValue = 1, maxValue = 65535)
             },
         )
         PasswordPreference(
@@ -302,8 +302,8 @@ private fun LazyListScope.trojanGoSettings(
                 },
                 summary = { Text(uiState.muxConcurrency.toString()) },
                 valueToText = { it.toString() },
-                textField = { value, onValueChange, onOk ->
-                    UIntegerTextField(value, onValueChange, onOk, minValue = 1, maxValue = 128)
+                textField = { state, onOk ->
+                    UIntegerTextField(state, onOk, minValue = 1, maxValue = 128)
                 },
             )
         }
