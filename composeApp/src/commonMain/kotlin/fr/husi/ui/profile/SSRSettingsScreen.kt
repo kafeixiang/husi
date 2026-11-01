@@ -170,8 +170,8 @@ private fun LazyListScope.ssrSettings(
             },
             summary = { Text(uiState.port.toString()) },
             valueToText = { it.toString() },
-            textField = { value, onValueChange, onOk ->
-                UIntegerTextField(value, onValueChange, onOk, minValue = 1, maxValue = 65535)
+            textField = { state, onOk ->
+                UIntegerTextField(state, onOk, minValue = 1, maxValue = 65535)
             },
         )
         ListPreference(
