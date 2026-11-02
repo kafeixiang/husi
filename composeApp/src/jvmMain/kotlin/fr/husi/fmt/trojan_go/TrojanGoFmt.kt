@@ -17,6 +17,12 @@ import io.github.xchacha20_poly1305.kpuri.buildUrl
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
+private val URL_USERINFO_REGEX = Regex("([a-zA-Z][a-zA-Z0-9+.\\-]*://)[^/@\\s]*@")
+
+fun maskUrlUserinfo(url: String): String {
+    return URL_USERINFO_REGEX.replace(url, "$1[REDACTED]@")
+}
+
 fun parseTrojanGo(link: String): TrojanGoBean = TrojanGoBean().apply {
     val url = Url.parse(link)
     val scheme = url.scheme?.lowercase()
@@ -136,6 +142,24 @@ fun parseTrojanGo(link: String): TrojanGoBean = TrojanGoBean().apply {
         plugin = pl
     }
 
+    val fps = url.queryParameterValues("fp").ifEmpty { url.queryParameterValues("fingerprint") }
+    if (fps.isNotEmpty()) {
+        require(fps.size == 1) { "multiple fingerprints" }
+        val fp = fps[0]
+        require(fp.isNotEmpty()) { "empty fingerprint" }
+        fingerprint = fp
+    }
+
+    val alpns = url.queryParameterValues("alpn")
+    if (alpns.isNotEmpty()) {
+        require(alpns.size == 1) { "multiple alpn parameters" }
+        val a = alpns[0]
+        require(a.isNotEmpty()) { "empty alpn" }
+        alpn = a
+    }
+
+    tcpFastOpen = url.parseBoolean("tfo") || url.parseBoolean("fastopen") || url.parseBoolean("tcpFastOpen")
+
     mux = url.parseBoolean("mux")
     url.queryParameterNotBlank("concurrency")?.toIntOrNull()?.let {
         if (it > 0) muxConcurrency = it
@@ -169,6 +193,12 @@ fun TrojanGoBean.toUri(): String = buildUrl("trojan-go") {
     }
 
     plugin.blankAsNull()?.let { addQueryParameter("plugin", it) }
+    fingerprint.blankAsNull()?.let { addQueryParameter("fp", it) }
+    alpn.blankAsNull()?.let { addQueryParameter("alpn", it) }
+
+    if (tcpFastOpen) {
+        addQueryParameter("tfo", "true")
+    }
 
     if (mux) {
         addQueryParameter("mux", "true")
@@ -196,6 +226,19 @@ fun buildSingBoxOutboundTrojanGoBean(bean: TrojanGoBean): SingBoxOptions.Outboun
             enabled = true
             server_name = bean.sni.ifBlank { bean.serverAddress }
             insecure = bean.allowInsecure
+            if (bean.fingerprint.isNotBlank()) {
+                utls = SingBoxOptions.OutboundUTLSOptions().apply {
+                    enabled = true
+                    fingerprint = bean.fingerprint
+                }
+            }
+            if (bean.alpn.isNotBlank()) {
+                alpn = bean.alpn.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toMutableList()
+            }
+        }
+
+        if (bean.tcpFastOpen) {
+            tcp_fast_open = true
         }
 
         if (bean.type == "ws") {
@@ -264,6 +307,18 @@ fun parseTrojanGoOutbound(json: JSONMap): TrojanGoBean = TrojanGoBean().apply {
         val tlsOpts = parseBoxTLS(tlsMap)
         sni = tlsOpts.server_name.orEmpty()
         allowInsecure = tlsOpts.insecure ?: false
+        tlsOpts.utls?.let {
+            if (it.enabled == true || !it.fingerprint.isNullOrBlank()) {
+                fingerprint = it.fingerprint.orEmpty()
+            }
+        }
+        tlsOpts.alpn?.let {
+            alpn = it.joinToString(",")
+        }
+    }
+
+    json.getBool("tcp_fast_open")?.let {
+        tcpFastOpen = it
     }
 
     json.getObject("transport")?.let { transportMap ->

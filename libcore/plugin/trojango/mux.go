@@ -2,7 +2,9 @@ package trojango
 
 import (
 	"context"
+	crand "crypto/rand"
 	"net"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -14,6 +16,110 @@ import (
 	M "github.com/sagernet/sing/common/metadata"
 	"github.com/sagernet/smux"
 )
+
+type stickyConn struct {
+	net.Conn
+	writeMu   sync.Mutex
+	closeOnce sync.Once
+	synQueue  chan []byte
+	finQueue  chan []byte
+}
+
+func newStickyConn(conn net.Conn) *stickyConn {
+	return &stickyConn{
+		Conn:     conn,
+		synQueue: make(chan []byte, 128),
+		finQueue: make(chan []byte, 128),
+	}
+}
+
+func (c *stickyConn) stickToPayload(p []byte) []byte {
+	if len(c.synQueue) == 0 && len(c.finQueue) == 0 {
+		return p
+	}
+
+	buf := make([]byte, 0, len(p)+16)
+	for {
+		select {
+		case header := <-c.synQueue:
+			buf = append(buf, header...)
+		default:
+			goto stick1
+		}
+	}
+stick1:
+	buf = append(buf, p...)
+	for {
+		select {
+		case header := <-c.finQueue:
+			buf = append(buf, header...)
+		default:
+			goto stick2
+		}
+	}
+stick2:
+	return buf
+}
+
+func (c *stickyConn) pushFrameHeader(queue chan []byte, header []byte) error {
+	select {
+	case queue <- header:
+		return nil
+	default:
+		_, err := c.Conn.Write(c.stickToPayload(header))
+		return err
+	}
+}
+
+func (c *stickyConn) Write(p []byte) (int, error) {
+	c.writeMu.Lock()
+	defer c.writeMu.Unlock()
+	if len(p) == 8 {
+		if p[0] == 1 || p[0] == 2 { // smux protocol version 1 or 2
+			switch p[1] {
+			case 0: // cmdSYN
+				header := make([]byte, 8)
+				copy(header, p)
+				return 8, c.pushFrameHeader(c.synQueue, header)
+			case 1: // cmdFIN
+				header := make([]byte, 8)
+				copy(header, p)
+				return 8, c.pushFrameHeader(c.finQueue, header)
+			}
+		}
+	}
+	_, err := c.Conn.Write(c.stickToPayload(p))
+	return len(p), err
+}
+
+const closePaddingDeadline = 10 * time.Second
+
+func (c *stickyConn) Close() error {
+	var err error
+	c.closeOnce.Do(func() {
+		const maxPaddingLength = 512
+		c.writeMu.Lock()
+		defer c.writeMu.Unlock()
+		_ = c.Conn.SetWriteDeadline(time.Now().Add(closePaddingDeadline))
+
+		var padLen int
+		var b [1]byte
+		if _, randErr := crand.Read(b[:]); randErr == nil {
+			padLen = int(b[0]) * maxPaddingLength / 256
+		}
+		padding := make([]byte, padLen)
+		if padLen > 0 {
+			_, _ = crand.Read(padding)
+		}
+		payload := c.stickToPayload(append(c.stickToPayload(nil), padding...))
+		if len(payload) > 0 {
+			_, _ = c.Conn.Write(payload)
+		}
+		_ = c.Conn.SetWriteDeadline(time.Time{})
+		err = c.Conn.Close()
+	})
+	return err
+}
 
 type smuxSessionInfo struct {
 	session        *smux.Session
@@ -58,21 +164,25 @@ func (p *SessionPool) cleanLoop() {
 		}
 		now := time.Now()
 		var alive []*smuxSessionInfo
+		var dead []*smuxSessionInfo
 		for _, info := range p.sessions {
 			if info.session.IsClosed() {
-				info.session.Close()
-				info.underlayConn.Close()
+				dead = append(dead, info)
 				continue
 			}
 			if info.activeStreams.Load() == 0 && now.Sub(info.lastActiveTime) > p.idleTimeout {
-				info.session.Close()
-				info.underlayConn.Close()
+				dead = append(dead, info)
 				continue
 			}
 			alive = append(alive, info)
 		}
 		p.sessions = alive
 		p.mu.Unlock()
+
+		for _, info := range dead {
+			info.session.Close()
+			info.underlayConn.Close()
+		}
 	}
 }
 
@@ -83,14 +193,41 @@ func (p *SessionPool) getOrCreateSession(ctx context.Context) (*smuxSessionInfo,
 		return nil, net.ErrClosed
 	}
 
+	var dead []*smuxSessionInfo
+	var usable *smuxSessionInfo
 	for _, info := range p.sessions {
-		if !info.session.IsClosed() && int(info.activeStreams.Load()) < p.concurrency {
-			info.lastActiveTime = time.Now()
-			p.mu.Unlock()
-			return info, nil
+		if info.session.IsClosed() {
+			dead = append(dead, info)
+			continue
+		}
+		if usable == nil && int(info.activeStreams.Load()) < p.concurrency {
+			usable = info
 		}
 	}
+	if len(dead) > 0 {
+		var alive []*smuxSessionInfo
+		for _, info := range p.sessions {
+			if !slices.Contains(dead, info) {
+				alive = append(alive, info)
+			}
+		}
+		p.sessions = alive
+	}
+	if usable != nil {
+		usable.lastActiveTime = time.Now()
+		p.mu.Unlock()
+		for _, info := range dead {
+			info.session.Close()
+			info.underlayConn.Close()
+		}
+		return usable, nil
+	}
 	p.mu.Unlock()
+
+	for _, info := range dead {
+		info.session.Close()
+		info.underlayConn.Close()
+	}
 
 	// Create new session outside mutex to avoid blocking other concurrent requests
 	conn, err := p.outbound.dialUnderlay(ctx)
@@ -105,25 +242,29 @@ func (p *SessionPool) getOrCreateSession(ctx context.Context) (*smuxSessionInfo,
 		return nil, E.Cause(err, "trojan-go mux handshake")
 	}
 
+	sticky := newStickyConn(conn)
 	cfg := smux.DefaultConfig()
-	session, err := smux.Client(conn, cfg)
+	session, err := smux.Client(sticky, cfg)
 	if err != nil {
-		conn.Close()
+		sticky.Close()
 		return nil, E.Cause(err, "smux client create")
 	}
 
 	info := &smuxSessionInfo{
 		session:        session,
-		underlayConn:   conn,
+		underlayConn:   sticky,
 		lastActiveTime: time.Now(),
 	}
 
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if p.closed {
+	if p.closed || ctx.Err() != nil {
 		session.Close()
-		conn.Close()
-		return nil, net.ErrClosed
+		sticky.Close()
+		if p.closed {
+			return nil, net.ErrClosed
+		}
+		return nil, ctx.Err()
 	}
 	p.sessions = append(p.sessions, info)
 	return info, nil
@@ -131,15 +272,16 @@ func (p *SessionPool) getOrCreateSession(ctx context.Context) (*smuxSessionInfo,
 
 func (p *SessionPool) removeSession(target *smuxSessionInfo) {
 	p.mu.Lock()
-	defer p.mu.Unlock()
-	target.session.Close()
-	target.underlayConn.Close()
 	for i, info := range p.sessions {
 		if info == target {
 			p.sessions = append(p.sessions[:i], p.sessions[i+1:]...)
 			break
 		}
 	}
+	p.mu.Unlock()
+
+	target.session.Close()
+	target.underlayConn.Close()
 }
 
 func (p *SessionPool) DialContext(ctx context.Context, destination M.Socksaddr) (net.Conn, error) {
@@ -256,12 +398,14 @@ func (p *SessionPool) ListenPacket(ctx context.Context, destination M.Socksaddr)
 
 func (p *SessionPool) Reset() {
 	p.mu.Lock()
-	defer p.mu.Unlock()
-	for _, info := range p.sessions {
+	sessions := p.sessions
+	p.sessions = nil
+	p.mu.Unlock()
+
+	for _, info := range sessions {
 		info.session.Close()
 		info.underlayConn.Close()
 	}
-	p.sessions = nil
 }
 
 func (p *SessionPool) Close() error {
