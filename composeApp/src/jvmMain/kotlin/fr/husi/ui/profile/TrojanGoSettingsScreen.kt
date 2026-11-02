@@ -21,6 +21,7 @@ import fr.husi.resources.action_shadowsocks
 import fr.husi.resources.action_trojan_go
 import fr.husi.resources.allow_insecure
 import fr.husi.resources.allow_insecure_sum
+import fr.husi.resources.alpn
 import fr.husi.resources.compare_arrows
 import fr.husi.resources.copyright
 import fr.husi.resources.directions_boat
@@ -41,10 +42,13 @@ import fr.husi.resources.profile_config
 import fr.husi.resources.profile_name
 import fr.husi.resources.proxy_cat
 import fr.husi.resources.router
+import fr.husi.resources.security
 import fr.husi.resources.server_address
 import fr.husi.resources.server_port
 import fr.husi.resources.sni
+import fr.husi.resources.toc
 import fr.husi.resources.udp
+import fr.husi.resources.utls_fingerprint
 import fr.husi.resources.ws_host
 import fr.husi.resources.ws_path
 import fr.husi.ui.NavRoutes
@@ -140,6 +144,29 @@ private fun LazyListScope.trojanGoSettings(
                 MaskedIcon(Res.drawable.copyright, color = IconMaskColors.IconLightGreen)
             },
             summary = { Text(contentOrUnset(uiState.sni)) },
+            valueToText = { it },
+        )
+        ListPreference(
+            value = uiState.fingerprint,
+            values = fingerprints,
+            onValueChange = { viewModel.setFingerprint(it) },
+            title = { Text(stringResource(Res.string.utls_fingerprint)) },
+            icon = {
+                MaskedIcon(Res.drawable.security, color = IconMaskColors.IconCyan)
+            },
+            summary = { Text(contentOrUnset(uiState.fingerprint)) },
+            type = ListPreferenceType.DROPDOWN_MENU,
+            valueToText = { AnnotatedString(it) },
+        )
+        TextFieldPreference(
+            value = uiState.alpn,
+            onValueChange = { viewModel.setAlpn(it) },
+            title = { Text(stringResource(Res.string.alpn)) },
+            textToValue = { it },
+            icon = {
+                MaskedIcon(Res.drawable.toc, color = IconMaskColors.IconLightBlue)
+            },
+            summary = { Text(contentOrUnset(uiState.alpn)) },
             valueToText = { it },
         )
         SwitchPreference(

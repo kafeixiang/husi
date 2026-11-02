@@ -5,6 +5,7 @@ import (
 	"io"
 	"net"
 	"testing"
+	"time"
 
 	"github.com/sagernet/sing-box/adapter/outbound"
 	"github.com/sagernet/sing-box/transport/trojan"
@@ -183,6 +184,44 @@ func TestMuxHandshakeAndStream(t *testing.T) {
 	require.Equal(t, "HELLO", string(resp))
 
 	require.NoError(t, <-errChan)
+}
+
+func TestStickyConnCoalescing(t *testing.T) {
+	cConn, sConn := net.Pipe()
+	defer cConn.Close()
+	defer sConn.Close()
+
+	sticky := newStickyConn(cConn)
+
+	// Write smux cmdSYN (8 bytes)
+	cmdSYN := []byte{1, 0, 0, 0, 0, 1, 0, 0}
+	n, err := sticky.Write(cmdSYN)
+	require.NoError(t, err)
+	require.Equal(t, 8, n)
+
+	// In a separate goroutine, write payload to trigger coalescing
+	payload := []byte("sticky-payload-data")
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		_, _ = sticky.Write(payload)
+	}()
+
+	// Server should read coalesced SYN header + payload
+	buf := make([]byte, len(cmdSYN)+len(payload))
+	_, err = io.ReadFull(sConn, buf)
+	require.NoError(t, err)
+	require.Equal(t, cmdSYN, buf[:8])
+	require.Equal(t, payload, buf[8:])
+
+	// Drain sConn in background so Close() can flush padding without blocking on net.Pipe
+	drainDone := make(chan struct{})
+	go func() {
+		_, _ = io.Copy(io.Discard, sConn)
+		close(drainDone)
+	}()
+
+	require.NoError(t, sticky.Close())
+	<-drainDone
 }
 
 func TestRegisterOutbound(t *testing.T) {

@@ -16,6 +16,7 @@ import fr.husi.fmt.shadowsocks.parseShadowsocks
 import fr.husi.fmt.socks.parseSOCKS
 import fr.husi.fmt.ssr.parseSSR
 import fr.husi.fmt.trojan.parseTrojan
+import fr.husi.fmt.trojan_go.maskUrlUserinfo
 import fr.husi.fmt.trojan_go.parseTrojanGo
 import fr.husi.fmt.trusttunnel.parseTrustTunnel
 import fr.husi.fmt.tuic.parseTuic
@@ -148,7 +149,7 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
             }
 
             "trojan" -> {
-                Logs.d("Try parse trojan link: $this")
+                Logs.d("Try parse trojan link: ${maskUrlUserinfo(this)}")
                 runCatching {
                     if (this.contains("encryption=ss") || this.contains("plugin=trojan-go")) {
                         entities.add(parseTrojanGo(this))
@@ -161,7 +162,7 @@ suspend fun parseProxies(text: String): List<AbstractBean> {
             }
 
             "trojan-go", "trojango" -> {
-                Logs.d("Try parse trojan-go link: $this")
+                Logs.d("Try parse trojan-go link: ${maskUrlUserinfo(this)}")
                 runCatching {
                     entities.add(parseTrojanGo(this))
                 }.onFailure {

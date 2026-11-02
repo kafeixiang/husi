@@ -456,4 +456,62 @@ class TrojanGoFmtTest {
         assertNotNull(deserialized)
         assertEquals("v2ray-plugin;mode=websocket", deserialized.plugin)
     }
+
+    @Test
+    fun `maskUrlUserinfo should redact password but preserve host and parameters`() {
+        val raw = "trojan-go://secret_password@example.com:443?type=ws&path=%2Fws#MyNode"
+        val masked = maskUrlUserinfo(raw)
+        assertEquals("trojan-go://[REDACTED]@example.com:443?type=ws&path=%2Fws#MyNode", masked)
+
+        val rawStandard = "trojan://secret123@example.org:8443#Test"
+        val maskedStandard = maskUrlUserinfo(rawStandard)
+        assertEquals("trojan://[REDACTED]@example.org:8443#Test", maskedStandard)
+    }
+
+    @Test
+    fun `TrojanGoBean should support uTLS fingerprint, alpn, and tfo across formats`() {
+        val url = "trojan-go://mypass@tg.example.com:443?fp=chrome&alpn=h2%2Chttp%2F1.1&tfo=true#OptimizedNode"
+        val bean = parseTrojanGo(url)
+
+        assertEquals("chrome", bean.fingerprint)
+        assertEquals("h2,http/1.1", bean.alpn)
+        assertTrue(bean.tcpFastOpen)
+
+        val generatedUri = bean.toUri()
+        val reparsed = parseTrojanGo(generatedUri)
+        assertEquals("chrome", reparsed.fingerprint)
+        assertEquals("h2,http/1.1", reparsed.alpn)
+        assertTrue(reparsed.tcpFastOpen)
+
+        val outbound = buildSingBoxOutboundTrojanGoBean(bean)
+        assertEquals("chrome", outbound.tls?.utls?.fingerprint)
+        assertEquals(true, outbound.tls?.utls?.enabled)
+        assertEquals(listOf("h2", "http/1.1"), outbound.tls?.alpn?.toList())
+        assertEquals(true, outbound.tcp_fast_open)
+
+        val bytes = BeanConverters.serialize(bean)
+        val deserialized = BeanConverters.trojanGoDeserialize(bytes)
+        assertNotNull(deserialized)
+        assertEquals("chrome", deserialized.fingerprint)
+        assertEquals("h2,http/1.1", deserialized.alpn)
+        assertTrue(deserialized.tcpFastOpen)
+    }
+
+    @Test
+    fun `parseClashProxy should parse trojan-go with fingerprint, alpn, and tfo`() {
+        val map = mapOf(
+            "name" to "ClashTG",
+            "type" to "trojan-go",
+            "server" to "1.2.3.4",
+            "port" to 443,
+            "password" to "mypass",
+            "client-fingerprint" to "chrome",
+            "alpn" to listOf("h2", "http/1.1"),
+            "tfo" to true,
+        )
+        val bean = parseClashProxy(map) as TrojanGoBean
+        assertEquals("chrome", bean.fingerprint)
+        assertEquals("h2,http/1.1", bean.alpn)
+        assertTrue(bean.tcpFastOpen)
+    }
 }
