@@ -445,11 +445,23 @@ type muxPacketConn struct {
 	closeOnce sync.Once
 }
 
+func (c *muxPacketConn) FrontHeadroom() int {
+	return M.MaxSocksaddrLength + 4
+}
+
 func (c *muxPacketConn) ReadPacket(buffer *buf.Buffer) (M.Socksaddr, error) {
 	return trojan.ReadPacket(c.stream, buffer)
 }
 
 func (c *muxPacketConn) WritePacket(buffer *buf.Buffer, destination M.Socksaddr) error {
+	headerLen := M.SocksaddrSerializer.AddrPortLen(destination) + 4
+	if buffer.Start() < headerLen {
+		newBuffer := buf.NewSize(buffer.Len() + headerLen)
+		newBuffer.Resize(headerLen, 0)
+		_, _ = newBuffer.Write(buffer.Bytes())
+		buffer.Release()
+		buffer = newBuffer
+	}
 	return trojan.WritePacket(c.stream, buffer, destination)
 }
 
