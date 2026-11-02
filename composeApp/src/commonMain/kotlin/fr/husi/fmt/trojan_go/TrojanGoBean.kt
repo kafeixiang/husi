@@ -33,6 +33,9 @@ class TrojanGoBean : AbstractBean() {
     var muxConcurrency: Int = 8
     var allowInsecure: Boolean = false
     var udp: Boolean = true
+    var fingerprint: String = ""
+    var alpn: String = ""
+    var tcpFastOpen: Boolean = false
 
     override fun network(): String = if (udp) "tcp,udp" else "tcp"
 
@@ -54,7 +57,7 @@ class TrojanGoBean : AbstractBean() {
     }
 
     override fun serialize(output: BinaryOutput) {
-        output.writeInt(2)
+        output.writeInt(3)
         super.serialize(output)
         output.writeString(password)
         output.writeString(sni)
@@ -69,6 +72,9 @@ class TrojanGoBean : AbstractBean() {
         output.writeBoolean(allowInsecure)
         output.writeBoolean(udp)
         output.writeString(plugin)
+        output.writeString(fingerprint)
+        output.writeString(alpn)
+        output.writeBoolean(tcpFastOpen)
     }
 
     override fun deserialize(input: BinaryInput) {
@@ -89,6 +95,11 @@ class TrojanGoBean : AbstractBean() {
         if (version >= 2) {
             plugin = input.readString()
         }
+        if (version >= 3) {
+            fingerprint = input.readString()
+            alpn = input.readString()
+            tcpFastOpen = input.readBoolean()
+        }
     }
 
     override fun applyFeatureSettings(other: AbstractBean) {
@@ -97,6 +108,9 @@ class TrojanGoBean : AbstractBean() {
         other.mux = mux
         other.udp = udp
         other.plugin = plugin
+        other.fingerprint = fingerprint
+        other.alpn = alpn
+        other.tcpFastOpen = tcpFastOpen
     }
 
     override fun clone(): TrojanGoBean {
