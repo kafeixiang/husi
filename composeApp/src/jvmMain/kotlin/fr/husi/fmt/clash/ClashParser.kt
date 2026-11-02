@@ -299,6 +299,15 @@ fun parseClashProxy(map: Map<String, Any?>): AbstractBean? {
                     if (sni.isNotBlank()) this.sni = sni
                     this.allowInsecure = map.getBool("skip-cert-verify") == true
 
+                    val fp = map.getStr("client-fingerprint") ?: map.getStr("fingerprint") ?: map.getStr("fp")
+                    if (fp != null) this.fingerprint = fp
+                    val alpnList = map.getStrList("alpn")
+                    if (alpnList != null) this.alpn = alpnList.joinToString(",")
+                    val tfoVal = map.getBool("tfo") ?: map.getBool("fast-open") ?: map.getMap("trojan-go-opts")?.getBool("tfo") ?: map.getMap("trojan-go-opts")?.getBool("fast-open")
+                    if (tfoVal == true) this.tcpFastOpen = true
+                    val udpVal = map.getBool("udp") ?: map.getMap("trojan-go-opts")?.getBool("udp")
+                    if (udpVal != null) this.udp = udpVal
+
                     val tgOpts = map.getMap("trojan-go-opts") ?: map.getMap("plugin-opts")
                     val network = tgOpts?.getStr("mode") ?: map.getStr("network") ?: ""
                     val wsOpts = map.getMap("ws-opts")
@@ -382,6 +391,15 @@ fun parseClashProxy(map: Map<String, Any?>): AbstractBean? {
                 val sni = map.getStr("sni") ?: map.getStr("servername") ?: ""
                 if (sni.isNotBlank()) this.sni = sni
                 this.allowInsecure = map.getBool("skip-cert-verify") == true
+
+                val fp = map.getStr("client-fingerprint") ?: map.getStr("fingerprint") ?: map.getStr("fp")
+                if (fp != null) this.fingerprint = fp
+                val alpnList = map.getStrList("alpn")
+                if (alpnList != null) this.alpn = alpnList.joinToString(",")
+                val tfoVal = map.getBool("tfo") ?: map.getBool("fast-open") ?: map.getMap("trojan-go-opts")?.getBool("tfo") ?: map.getMap("trojan-go-opts")?.getBool("fast-open")
+                if (tfoVal == true) this.tcpFastOpen = true
+                val udpVal = map.getBool("udp") ?: map.getMap("trojan-go-opts")?.getBool("udp")
+                if (udpVal != null) this.udp = udpVal
 
                 val tgOpts = map.getMap("trojan-go-opts") ?: map.getMap("plugin-opts")
                 val network = tgOpts?.getStr("mode") ?: map.getStr("network") ?: ""
