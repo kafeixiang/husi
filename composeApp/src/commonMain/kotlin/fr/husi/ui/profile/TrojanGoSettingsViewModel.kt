@@ -28,6 +28,9 @@ internal data class TrojanGoUiState(
     val muxConcurrency: Int = 8,
     val allowInsecure: Boolean = false,
     val udp: Boolean = true,
+    val fingerprint: String = "",
+    val alpn: String = "",
+    val tcpFastOpen: Boolean = false,
 ) : ProfileEditorUiState
 
 @Stable
@@ -58,6 +61,9 @@ internal class TrojanGoSettingsViewModel : ProfileEditorViewModel<TrojanGoBean>(
                 muxConcurrency = muxConcurrency,
                 allowInsecure = allowInsecure,
                 udp = udp,
+                fingerprint = fingerprint,
+                alpn = alpn,
+                tcpFastOpen = tcpFastOpen,
             )
         }
     }
@@ -86,6 +92,9 @@ internal class TrojanGoSettingsViewModel : ProfileEditorViewModel<TrojanGoBean>(
         muxConcurrency = state.muxConcurrency
         allowInsecure = state.allowInsecure
         udp = state.udp
+        fingerprint = state.fingerprint
+        alpn = state.alpn
+        tcpFastOpen = state.tcpFastOpen
     }
 
     override fun setCustomConfig(config: String) {
@@ -112,4 +121,7 @@ internal class TrojanGoSettingsViewModel : ProfileEditorViewModel<TrojanGoBean>(
     fun setMuxConcurrency(concurrency: Int) = _uiState.update { it.copy(muxConcurrency = concurrency) }
     fun setAllowInsecure(allowInsecure: Boolean) = _uiState.update { it.copy(allowInsecure = allowInsecure) }
     fun setUdp(udp: Boolean) = _uiState.update { it.copy(udp = udp) }
+    fun setFingerprint(fingerprint: String) = _uiState.update { it.copy(fingerprint = fingerprint) }
+    fun setAlpn(alpn: String) = _uiState.update { it.copy(alpn = alpn) }
+    fun setTcpFastOpen(tcpFastOpen: Boolean) = _uiState.update { it.copy(tcpFastOpen = tcpFastOpen) }
 }
