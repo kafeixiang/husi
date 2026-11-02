@@ -72,6 +72,11 @@ func (a *authSHA1V4) Decode(dst, src *bytes.Buffer) error {
 		} else {
 			pos = int(binary.BigEndian.Uint16(src.Bytes()[5:7])) + 4
 		}
+		if pos > length-4 {
+			a.rawTrans = true
+			src.Reset()
+			return errAuthSHA1V4LengthError
+		}
 		dst.Write(src.Bytes()[pos : length-4])
 		src.Next(length)
 	}

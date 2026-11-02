@@ -1,8 +1,8 @@
 package shadowstream
 
 import (
-	"bytes"
 	"crypto/cipher"
+	"crypto/md5"
 	"encoding/binary"
 	"sort"
 )
@@ -47,16 +47,15 @@ func newTableCipher(key []byte) (enc, dec tableCipherStream) {
 	dec = make([]byte, tableSize)
 	table := make([]uint64, tableSize)
 
-	var a uint64
-	buf := bytes.NewBuffer(key)
-	_ = binary.Read(buf, binary.LittleEndian, &a)
+	h := md5.Sum(key)
+	a := binary.LittleEndian.Uint64(h[:8])
 	for i := range uint64(tableSize) {
 		table[i] = i
 	}
 	for i := uint64(1); i < 1024; i++ {
 		step := i
 		sort.SliceStable(table, func(x, y int) bool {
-			return int64(a%(table[x]+step)-a%(table[y]+step)) < 0
+			return a%(table[x]+step) < a%(table[y]+step)
 		})
 	}
 	for i := range tableSize {

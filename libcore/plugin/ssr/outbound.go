@@ -45,6 +45,9 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	if err != nil {
 		return nil, err
 	}
+	if logger == nil {
+		logger = log.NewNOPFactory().Logger()
+	}
 	networks := options.Network.Build()
 	h := &Outbound{
 		Adapter:    outbound.NewAdapterWithDialerOptions(pluginoption.TypeSSR, tag, networks, options.DialerOptions),
@@ -202,7 +205,7 @@ func (spc *ssPacketConn) ReadFrom(b []byte) (int, net.Addr, error) {
 		rAddr = socksAddr
 	}
 
-	copy(b, b[len(addr):])
+	copy(b, b[len(addr):n])
 	return n - len(addr), rAddr, e
 }
 
