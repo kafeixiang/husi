@@ -56,6 +56,9 @@ func NewOutbound(ctx context.Context, router adapter.Router, logger log.ContextL
 	if err != nil {
 		return nil, err
 	}
+	if logger == nil {
+		logger = log.NewNOPFactory().Logger()
+	}
 
 	dnsRouter := service.FromContext[adapter.DNSRouter](ctx)
 	config, err := buildMieruClientConfig(options, mieruDialer{dialer: outboundDialer}, dnsRouter)
@@ -243,6 +246,15 @@ func (c *threadSafePacketConn) WriteTo(p []byte, addr net.Addr) (n int, err erro
 
 // socksAddrToNetAddrSpec converts a Socksaddr object to NetAddrSpec, and overrides the network.
 func socksAddrToNetAddrSpec(sa M.Socksaddr, network string) (mierumodel.NetAddrSpec, error) {
+	if !sa.IsValid() {
+		return mierumodel.NetAddrSpec{
+			AddrSpec: mierumodel.AddrSpec{
+				IP:   net.IPv4zero,
+				Port: 0,
+			},
+			Net: network,
+		}, nil
+	}
 	var nas mierumodel.NetAddrSpec
 	if err := nas.From(sa); err != nil {
 		return nas, err
