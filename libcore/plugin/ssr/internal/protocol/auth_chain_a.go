@@ -100,6 +100,9 @@ func (a *authChainA) Decode(dst, src *bytes.Buffer) error {
 		return nil
 	}
 	for src.Len() > 4 {
+		if len(a.lastServerHash) < 16 {
+			return errors.New("auth_chain: decode called before handshake initialized")
+		}
 		macKey := pool.Get(len(a.userKey) + 4)
 		defer pool.Put(macKey)
 		copy(macKey, a.userKey)
@@ -134,14 +137,16 @@ func (a *authChainA) Decode(dst, src *bytes.Buffer) error {
 		if dataLength > 0 && randDataLength > 0 {
 			pos += getRandStartPos(randDataLength, &a.randomServer)
 		}
-		if pos < 0 || pos+dataLength < 0 || dataLength < 0 {
+		if pos < 0 || pos+dataLength < 0 || dataLength < 0 || pos+dataLength > src.Len() {
 			return errors.New("ssr crashing blocked")
 		}
 
 		wantedData := src.Bytes()[pos : pos+dataLength]
 		a.decrypter.XORKeyStream(wantedData, wantedData)
 		if a.recvID == 1 {
-			dst.Write(wantedData[2:])
+			if len(wantedData) >= 2 {
+				dst.Write(wantedData[2:])
+			}
 		} else {
 			dst.Write(wantedData)
 		}
