@@ -131,6 +131,11 @@ func (a *authAES128) Decode(dst, src *bytes.Buffer) error {
 		} else {
 			pos = int(binary.LittleEndian.Uint16(src.Bytes()[5:7])) + 4
 		}
+		if pos > length-4 {
+			a.rawTrans = true
+			src.Reset()
+			return errAuthAES128LengthError
+		}
 		dst.Write(src.Bytes()[pos : length-4])
 		src.Next(length)
 	}
