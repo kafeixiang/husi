@@ -103,14 +103,14 @@ class BeanConverters {
             return deserialize(SSRBean(), bytes)
         }
 
-        @TypeConverter
+        @ColumnTypeConverter
         @JvmStatic
         fun trojanGoDeserialize(bytes: ByteArray?): TrojanGoBean? {
             if (bytes?.isNotEmpty() != true) return null
             return deserialize(TrojanGoBean(), bytes)
         }
 
-        @TypeConverter
+        @ColumnTypeConverter
         @JvmStatic
         fun configDeserialize(bytes: ByteArray?): ConfigBean? {
             if (bytes?.isNotEmpty() != true) return null
