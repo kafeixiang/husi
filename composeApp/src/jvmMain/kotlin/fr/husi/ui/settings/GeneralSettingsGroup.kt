@@ -32,6 +32,7 @@ import fr.husi.resources.always_show_address_sum
 import fr.husi.resources.blurred_address
 import fr.husi.resources.bug_report
 import fr.husi.resources.center_focus_weak
+import fr.husi.resources.color_lens
 import fr.husi.resources.description
 import fr.husi.resources.developer_board
 import fr.husi.resources.developer_mode
@@ -49,9 +50,6 @@ import fr.husi.resources.service_mode_vpn
 import fr.husi.resources.show_direct_speed
 import fr.husi.resources.show_direct_speed_sum
 import fr.husi.resources.speed
-import fr.husi.resources.speed_interval
-import fr.husi.resources.terminal
-import fr.husi.resources.theme
 import fr.husi.resources.themed_top_bar
 import fr.husi.resources.themed_top_bar_summary
 import fr.husi.resources.traffic
@@ -110,12 +108,6 @@ internal fun GeneralSettingsGroup(
             )
         },
         summary = { Text(stringResource(Res.string.themed_top_bar_summary)) },
-    )
-            DataStore.nightTheme.setBlocking(it)
-            applyNightMode(it)
-        },
-        appLanguage = appLanguage,
-        onAppLanguageChange = { languageController.value = it },
     )
 
     fun serviceModeText(mode: String): StringResource = when (mode) {
