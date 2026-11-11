@@ -15,6 +15,7 @@ import (
 	"time"
 
 	M "github.com/sagernet/sing/common/metadata"
+
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/pluginoption"
 )
 
@@ -117,7 +118,7 @@ func runOfficialPythonSSRTest(t *testing.T, method, protocol, obfs, protocolPara
 
 	// Wait for server to listen on TCP
 	ready := false
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		c, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", ssrPort), 100*time.Millisecond)
 		if err == nil {
 			c.Close()
@@ -355,7 +356,7 @@ func TestOfficialPythonSSR_Concurrency(t *testing.T) {
 		cmd.Wait()
 	}()
 
-	for i := 0; i < 50; i++ {
+	for range 50 {
 		c, err := net.DialTimeout("tcp", fmt.Sprintf("127.0.0.1:%d", ssrPort), 100*time.Millisecond)
 		if err == nil {
 			c.Close()
@@ -382,7 +383,7 @@ func TestOfficialPythonSSR_Concurrency(t *testing.T) {
 	concurrentClients := 10
 	errChan := make(chan error, concurrentClients)
 
-	for i := 0; i < concurrentClients; i++ {
+	for i := range concurrentClients {
 		wg.Add(1)
 		go func(id int) {
 			defer wg.Done()
