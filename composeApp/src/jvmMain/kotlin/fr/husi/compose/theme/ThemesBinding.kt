@@ -1,8 +1,10 @@
 package fr.husi.compose.theme
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import fr.husi.compose.LocalThemedTopBarEnabled
 import fr.husi.compose.collectAsStateWithLifecycle
 import fr.husi.database.DataStore
 
@@ -18,10 +20,15 @@ fun AppTheme(content: @Composable () -> Unit) {
         }
     }
     val appTheme by DataStore.appTheme.collectAsStateWithLifecycle()
+    val themedTopBar by DataStore.themedTopBar.collectAsStateWithLifecycle()
     val dynamicScheme = if (appTheme == DYNAMIC) {
         rememberDynamicColorScheme(isDarkMode)
     } else {
         null
     }
-    AppTheme(appTheme = appTheme, isDarkMode = isDarkMode, dynamicScheme = dynamicScheme, content = content)
+    CompositionLocalProvider(
+        LocalThemedTopBarEnabled provides (themedTopBar && appTheme != DYNAMIC),
+    ) {
+        AppTheme(appTheme = appTheme, isDarkMode = isDarkMode, dynamicScheme = dynamicScheme, content = content)
+    }
 }

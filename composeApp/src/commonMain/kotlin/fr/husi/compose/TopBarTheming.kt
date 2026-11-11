@@ -11,7 +11,6 @@ import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.surfaceColorAtElevation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -19,11 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastCoerceIn
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import fr.husi.compose.theme.DYNAMIC
-import fr.husi.database.DataStore
 
 val LocalInThemedHeader = compositionLocalOf { false }
+
+/**
+ * 全局 TopBar 是否启用“浮光跃彩”的注入状态（由平台主题绑定层根据用户设置提供）。
+ */
+val LocalThemedTopBarEnabled = compositionLocalOf { false }
 
 /**
  * 全局 TopBar 颜色注入 Local。
@@ -35,11 +36,7 @@ val LocalHusiTopBarColor = staticCompositionLocalOf<Color?> { null }
  * 获取当前是否开启了“浮光跃彩”。
  */
 @Composable
-fun isThemedTopBarEnabled(): Boolean {
-    val isEnabled by DataStore.themedTopBar.collectAsStateWithLifecycle()
-    val appTheme by DataStore.appTheme.collectAsStateWithLifecycle()
-    return isEnabled && (appTheme != DYNAMIC)
-}
+fun isThemedTopBarEnabled(): Boolean = LocalThemedTopBarEnabled.current
 
 /**
  * 获取“浮光跃彩”计算色，供 TabRow 等组件同步使用。
