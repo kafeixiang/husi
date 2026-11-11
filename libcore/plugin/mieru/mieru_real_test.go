@@ -10,6 +10,9 @@ import (
 	"testing"
 	"time"
 
+	singcommon "github.com/sagernet/sing/common"
+	M "github.com/sagernet/sing/common/metadata"
+
 	apicommon "github.com/enfein/mieru/v3/apis/common"
 	"github.com/enfein/mieru/v3/apis/constant"
 	"github.com/enfein/mieru/v3/apis/model"
@@ -17,11 +20,8 @@ import (
 	"github.com/enfein/mieru/v3/pkg/appctl/appctlpb"
 	"github.com/enfein/mieru/v3/pkg/common"
 	"github.com/enfein/mieru/v3/pkg/socks5"
-	singcommon "github.com/sagernet/sing/common"
-	M "github.com/sagernet/sing/common/metadata"
 	"github.com/stretchr/testify/require"
 	"github.com/xchacha20-poly1305/husi/libcore/v2/plugin/pluginoption"
-	"google.golang.org/protobuf/proto"
 )
 
 type realMieruServer struct {
@@ -61,7 +61,7 @@ func startRealMieruServerCustom(t *testing.T, opts mieruServerOptions) *realMier
 	var portBinding *appctlpb.PortBinding
 	if opts.portRange != "" {
 		portBinding = &appctlpb.PortBinding{
-			PortRange: proto.String(opts.portRange),
+			PortRange: new(opts.portRange),
 			Protocol:  transportProto,
 		}
 	} else {
@@ -72,7 +72,7 @@ func startRealMieruServerCustom(t *testing.T, opts mieruServerOptions) *realMier
 			_ = ln.Close()
 		}
 		portBinding = &appctlpb.PortBinding{
-			Port:     proto.Int32(int32(opts.port)),
+			Port:     new(int32(opts.port)),
 			Protocol: transportProto,
 		}
 	}
@@ -87,8 +87,8 @@ func startRealMieruServerCustom(t *testing.T, opts mieruServerOptions) *realMier
 				{
 					Name:            &opts.username,
 					Password:        &opts.password,
-					AllowPrivateIP:  proto.Bool(true),
-					AllowLoopbackIP: proto.Bool(true),
+					AllowPrivateIP:  new(true),
+					AllowLoopbackIP: new(true),
 				},
 			},
 		},
@@ -107,9 +107,7 @@ func startRealMieruServerCustom(t *testing.T, opts mieruServerOptions) *realMier
 		cancel: cancel,
 	}
 
-	rms.wg.Add(1)
-	go func() {
-		defer rms.wg.Done()
+	rms.wg.Go(func() {
 		for {
 			proxyConn, req, err := s.Accept()
 			if err != nil {
@@ -117,7 +115,7 @@ func startRealMieruServerCustom(t *testing.T, opts mieruServerOptions) *realMier
 			}
 			go handleMieruProxyConn(ctx, proxyConn, req)
 		}
-	}()
+	})
 
 	return rms
 }
@@ -680,7 +678,7 @@ func TestMieru_Concurrency(t *testing.T) {
 	var wg sync.WaitGroup
 	errChan := make(chan error, numWorkers)
 
-	for i := 0; i < numWorkers; i++ {
+	for i := range numWorkers {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()

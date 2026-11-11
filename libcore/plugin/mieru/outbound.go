@@ -248,11 +248,9 @@ func (c *threadSafePacketConn) WriteTo(p []byte, addr net.Addr) (n int, err erro
 func socksAddrToNetAddrSpec(sa M.Socksaddr, network string) (mierumodel.NetAddrSpec, error) {
 	if !sa.IsValid() {
 		return mierumodel.NetAddrSpec{
-			AddrSpec: mierumodel.AddrSpec{
-				IP:   net.IPv4zero,
-				Port: 0,
-			},
-			Net: network,
+			IP:   net.IPv4zero,
+			Port: 0,
+			Net:  network,
 		}, nil
 	}
 	var nas mierumodel.NetAddrSpec
