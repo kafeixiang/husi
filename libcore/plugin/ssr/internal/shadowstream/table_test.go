@@ -36,7 +36,7 @@ func TestTablePythonCompat(t *testing.T) {
 	}
 
 	enc1, _ := newTableCipher([]byte("foobar!"))
-	for i := 0; i < len(wantEnc); i++ {
+	for i := range wantEnc {
 		if enc1[i] != wantEnc[i] {
 			t.Fatalf("mismatch at %d: got %d, want %d", i, enc1[i], wantEnc[i])
 		}
