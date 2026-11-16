@@ -35,6 +35,8 @@ type SSRServerConfig struct {
 	ObfsParam     string
 	Protocol      string
 	ProtocolParam string
+	ListenAddr    string
+	TargetAddr    string
 }
 
 type SSRMockServer struct {
@@ -95,14 +97,24 @@ func StartSSRMockServer(cfg SSRServerConfig) (*SSRMockServer, error) {
 
 	s.initUserData()
 
-	tcpLn, err := net.Listen("tcp", "127.0.0.1:0")
+	bindAddr := cfg.ListenAddr
+	if bindAddr == "" {
+		bindAddr = "127.0.0.1:0"
+	}
+	tcpLn, err := net.Listen("tcp", bindAddr)
 	if err != nil {
 		return nil, err
 	}
 	s.tcpLn = tcpLn
 
 	tcpPort := tcpLn.Addr().(*net.TCPAddr).Port
-	udpAddr := &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: tcpPort}
+	var udpIP net.IP
+	if strings.HasPrefix(bindAddr, "0.0.0.0") {
+		udpIP = net.IPv4zero
+	} else {
+		udpIP = net.ParseIP("127.0.0.1")
+	}
+	udpAddr := &net.UDPAddr{IP: udpIP, Port: tcpPort}
 	udpLn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
 		tcpLn.Close()
@@ -218,9 +230,31 @@ func (s *SSRMockServer) handleTCP(rawConn net.Conn) {
 		}
 	}
 
-	// 4. Handle Request (Echo back targetAddr and payload with server acknowledgement)
-	responsePayload := append([]byte("ECHO:"), payload...)
+	// 4. Handle Request
+	var responsePayload []byte
 	_ = targetAddr
+	if s.cfg.TargetAddr != "" {
+		targetConn, dialErr := net.DialTimeout("tcp", s.cfg.TargetAddr, 3*time.Second)
+		if dialErr == nil {
+			defer targetConn.Close()
+			if len(payload) > 0 {
+				_, _ = targetConn.Write(payload)
+			}
+			_ = targetConn.SetReadDeadline(time.Now().Add(4 * time.Second))
+			respBuf := make([]byte, 16384)
+			rn, _ := targetConn.Read(respBuf)
+			if rn > 0 {
+				responsePayload = respBuf[:rn]
+			}
+		}
+	}
+	if len(responsePayload) == 0 {
+		if bytes.HasPrefix(payload, []byte("GET ")) || bytes.HasPrefix(payload, []byte("HEAD ")) {
+			responsePayload = []byte("HTTP/1.1 204 No Content\r\nConnection: close\r\n\r\n")
+		} else {
+			responsePayload = append([]byte("ECHO:"), payload...)
+		}
+	}
 
 	// 5. Send Response through Protocol + Cipher + Obfs
 	err = s.serverSendResponse(cipherConn, responsePayload)
