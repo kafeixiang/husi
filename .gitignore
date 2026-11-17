@@ -10,6 +10,7 @@ build/
 .cxx
 local.properties
 /composeApp/libs/
+/app/libs/
 /service_account_credentials.json
 jniLibs/
 go.work*
