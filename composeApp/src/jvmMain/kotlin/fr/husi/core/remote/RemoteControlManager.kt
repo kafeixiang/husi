@@ -88,21 +88,21 @@ class RemoteControlManager(
 
     val runningTarget: StateFlow<CoreTarget?> = combine(
         session,
-        BackendState.status.map { it.state.started }.distinctUntilChanged(),
-    ) { remoteSession, localStarted ->
-        runningTargetOf(remoteSession, localStarted)
+        BackendState.status.map { it.state.connected }.distinctUntilChanged(),
+    ) { remoteSession, localConnected ->
+        runningTargetOf(remoteSession, localConnected)
     }.distinctUntilChanged().stateIn(
         scope = scope,
         started = SharingStarted.Eagerly,
-        initialValue = runningTargetOf(null, BackendState.status.value.state.started),
+        initialValue = runningTargetOf(null, BackendState.status.value.state.connected),
     )
 
-    private fun runningTargetOf(remoteSession: RemoteSession?, localStarted: Boolean): CoreTarget? = when {
+    private fun runningTargetOf(remoteSession: RemoteSession?, localConnected: Boolean): CoreTarget? = when {
         remoteSession != null -> remoteSession
             .takeIf { it.state == RemoteSessionState.CONNECTED }
             ?.let { CoreTarget(it.client, it.server.id) }
 
-        localStarted -> CoreTarget(localClient)
+        localConnected -> CoreTarget(localClient)
         else -> null
     }
 
