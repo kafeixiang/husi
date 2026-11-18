@@ -159,6 +159,10 @@ class RemoteControlManagerTest : HusiKoinMainDispatcherTest() {
 
                 BackendState.updateState(ServiceState.Connecting)
                 runCurrent()
+                assertNull(manager.runningTarget.value)
+
+                BackendState.updateState(ServiceState.Connected)
+                runCurrent()
                 assertEquals(CoreTarget(localClient), manager.runningTarget.value)
 
                 manager.enterRemote(server())
