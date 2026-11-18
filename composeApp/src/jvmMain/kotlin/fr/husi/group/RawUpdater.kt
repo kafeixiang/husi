@@ -108,6 +108,17 @@ object RawUpdater : GroupUpdater() {
 
         val proxies = mutableListOf<AbstractBean>()
 
+        val trimmed = text.trimStart()
+        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+            try {
+                val element = kxs.parseToJsonElement(text)
+                if (element is JsonPrimitive) error("unexpected JSON primitive")
+                parseJSON(element).takeIf { it.isNotEmpty() }?.let { return it }
+            } catch (e: Exception) {
+                Logs.w(e)
+            }
+        }
+
         parseClashConfig(text)?.let { beans ->
             val hasFileName = fileName.isNotBlank()
             if (hasFileName) {
@@ -147,20 +158,18 @@ object RawUpdater : GroupUpdater() {
             }
         }
 
-        val trimmed = text.trimStart()
-        if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
-            try {
-                val element = kxs.parseToJsonElement(text)
-                if (element is JsonPrimitive) error("unexpected JSON primitive")
-                parseJSON(element).takeIf { it.isNotEmpty() }?.let { return it }
-            } catch (e: Exception) {
-                Logs.w(e)
-            }
-        }
-
         if (!text.contains("://")) {
             try {
                 val decoded = text.b64DecodeToString()
+                val decodedTrimmed = decoded.trimStart()
+                if (decodedTrimmed.startsWith("{") || decodedTrimmed.startsWith("[")) {
+                    runCatching {
+                        val element = kxs.parseToJsonElement(decoded)
+                        if (element !is JsonPrimitive) {
+                            parseJSON(element).takeIf { it.isNotEmpty() }?.let { return it }
+                        }
+                    }
+                }
                 parseClashConfig(decoded)?.let { return it }
                 parseProxies(decoded).takeIf { it.isNotEmpty() }?.let { return it }
             } catch (e: Exception) {

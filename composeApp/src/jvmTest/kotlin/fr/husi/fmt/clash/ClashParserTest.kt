@@ -568,4 +568,104 @@ class ClashParserTest {
         val ssr = assertIs<SSRBean>(proxies[0])
         assertFalse(ssr.udp)
     }
+
+    @Test
+    fun `parseRaw should not let ClashParser hijack sing-box JSON outbounds`(): Unit = runBlocking {
+        val singBoxJson = """
+            {
+              "outbounds": [
+                {
+                  "type": "direct",
+                  "tag": "direct"
+                },
+                {
+                  "type": "vless",
+                  "tag": "VLESS-WS-TLS",
+                  "server": "edge.example.com",
+                  "server_port": 8443,
+                  "uuid": "52ebd9d7-afde-4a6c-a483-9e4f083933e0",
+                  "packet_encoding": "xudp",
+                  "flow": "",
+                  "tls": {
+                    "enabled": true,
+                    "insecure": false,
+                    "server_name": "sni.example.com",
+                    "utls": { "enabled": true, "fingerprint": "ios" }
+                  },
+                  "transport": {
+                    "type": "ws",
+                    "path": "/ws/path",
+                    "headers": { "Host": ["sni.example.com"] },
+                    "max_early_data": 2048,
+                    "early_data_header_name": "Sec-WebSocket-Protocol"
+                  }
+                },
+                {
+                  "type": "vless",
+                  "tag": "VLESS-Reality-Vision",
+                  "server": "reality.example.com",
+                  "server_port": 443,
+                  "uuid": "52ebd9d7-afde-4a6c-a483-9e4f083933e0",
+                  "flow": "xtls-rprx-vision",
+                  "tls": {
+                    "enabled": true,
+                    "insecure": false,
+                    "server_name": "iosapps.itunes.apple.com",
+                    "reality": {
+                      "enabled": true,
+                      "public_key": "test-pubkey",
+                      "short_id": "abcd1234"
+                    },
+                    "utls": { "enabled": true, "fingerprint": "chrome" }
+                  }
+                },
+                {
+                  "type": "hysteria2",
+                  "tag": "Hy2-Hop",
+                  "server": "hy2.example.com",
+                  "server_ports": ["35000:39000"],
+                  "password": "hy2-secret",
+                  "tls": {
+                    "enabled": true,
+                    "insecure": true,
+                    "server_name": "www.apple.com",
+                    "certificate_public_key_sha256": ["UcJYcAQaiGjNCAeJOhbevdcfAN2uPSsSFwRfY4dTsJA="]
+                  }
+                }
+              ]
+            }
+        """.trimIndent()
+
+        assertEquals(null, parseClashConfig(singBoxJson))
+
+        val proxies = assertNotNull(RawUpdater.parseRaw(singBoxJson))
+        assertEquals(3, proxies.size)
+
+        val ws = assertIs<VLESSBean>(proxies[0])
+        assertEquals("VLESS-WS-TLS", ws.name)
+        assertEquals(8443, ws.serverPort)
+        assertEquals("tls", ws.security)
+        assertEquals("sni.example.com", ws.sni)
+        assertEquals("ws", ws.v2rayTransport)
+        assertEquals("sni.example.com", ws.host)
+        assertEquals("/ws/path", ws.path)
+        assertEquals(2048, ws.wsMaxEarlyData)
+        assertEquals("ios", ws.utlsFingerprint)
+
+        val reality = assertIs<VLESSBean>(proxies[1])
+        assertEquals("VLESS-Reality-Vision", reality.name)
+        assertEquals("tls", reality.security)
+        assertEquals("xtls-rprx-vision", reality.flow)
+        assertEquals("iosapps.itunes.apple.com", reality.sni)
+        assertEquals("test-pubkey", reality.realityPublicKey)
+        assertEquals("abcd1234", reality.realityShortID)
+        assertEquals("chrome", reality.utlsFingerprint)
+
+        val hy2 = assertIs<HysteriaBean>(proxies[2])
+        assertEquals("Hy2-Hop", hy2.name)
+        assertEquals("35000:39000", hy2.serverPorts)
+        assertEquals("www.apple.com", hy2.sni)
+        assertTrue(hy2.allowInsecure)
+        assertEquals("UcJYcAQaiGjNCAeJOhbevdcfAN2uPSsSFwRfY4dTsJA=", hy2.certPublicKeySha256)
+    }
 }
