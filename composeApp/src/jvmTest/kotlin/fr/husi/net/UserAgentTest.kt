@@ -40,6 +40,16 @@ class UserAgentTest {
     }
 
     @Test
+    fun `leading v prefix in box version is stripped`() = runTest {
+        coreClient.nextVersion = GetVersionResponse(sing_box_version = "v1.15.0-alpha.13")
+
+        assertEquals(
+            "husi/${BuildConfig.VERSION_NAME} (sing-box 1.15.0-alpha.13)",
+            buildUserAgent("", CoreVersionCache(coreClient)),
+        )
+    }
+
+    @Test
     fun `unreachable core leaves box version unknown`() = runTest {
         coreClient.getVersionThrowable = IOException("connection refused")
 
