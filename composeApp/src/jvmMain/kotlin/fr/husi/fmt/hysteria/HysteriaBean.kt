@@ -250,21 +250,33 @@ class HysteriaBean : AbstractBean() {
 
     override fun applyFeatureSettings(other: AbstractBean) {
         if (other !is HysteriaBean) return
-        other.allowInsecure = allowInsecure
-        other.disableSNI = disableSNI
-        other.disableMtuDiscovery = disableMtuDiscovery
-        other.hopInterval = hopInterval
-        other.ech = ech
-        other.echConfig = echConfig
-        other.congestionControl = congestionControl
-        other.bbrProfile = bbrProfile
-        other.disableChromeParrot = disableChromeParrot
-        other.idleTimeout = idleTimeout
-        other.keepAlivePeriod = keepAlivePeriod
-        other.maxConcurrentStreams = maxConcurrentStreams
-        other.initialPacketSize = initialPacketSize
-        other.geckoMinPacketSize = geckoMinPacketSize
-        other.geckoMaxPacketSize = geckoMaxPacketSize
+        if (allowInsecure) other.allowInsecure = true
+        if (disableSNI) other.disableSNI = true
+        if (disableMtuDiscovery) other.disableMtuDiscovery = true
+        if (hopInterval != "10s" && other.hopInterval == "10s") other.hopInterval = hopInterval
+        if (ech) other.ech = true
+        if (echConfig.isNotBlank() && other.echConfig.isBlank()) other.echConfig = echConfig
+        if (congestionControl != CONGESTION_CONTROL_BBR && other.congestionControl == CONGESTION_CONTROL_BBR) {
+            other.congestionControl = congestionControl
+        }
+        if (bbrProfile != BBR_PROFILE_STANDARD && other.bbrProfile == BBR_PROFILE_STANDARD) {
+            other.bbrProfile = bbrProfile
+        }
+        if (!disableChromeParrot) other.disableChromeParrot = false
+        if (idleTimeout.isNotBlank() && other.idleTimeout.isBlank()) other.idleTimeout = idleTimeout
+        if (keepAlivePeriod.isNotBlank() && other.keepAlivePeriod.isBlank()) other.keepAlivePeriod = keepAlivePeriod
+        if (maxConcurrentStreams != 0 && other.maxConcurrentStreams == 0) {
+            other.maxConcurrentStreams = maxConcurrentStreams
+        }
+        if (initialPacketSize != 0 && other.initialPacketSize == 0) {
+            other.initialPacketSize = initialPacketSize
+        }
+        if (geckoMinPacketSize != 0 && other.geckoMinPacketSize == 0) {
+            other.geckoMinPacketSize = geckoMinPacketSize
+        }
+        if (geckoMaxPacketSize != 0 && other.geckoMaxPacketSize == 0) {
+            other.geckoMaxPacketSize = geckoMaxPacketSize
+        }
     }
 
     override val defaultPort get() = 443

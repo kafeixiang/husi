@@ -168,21 +168,31 @@ class TuicBean : AbstractBean() {
 
     override fun applyFeatureSettings(other: AbstractBean) {
         if (other !is TuicBean) return
-        other.allowInsecure = allowInsecure
-        other.disableSNI = disableSNI
-        other.zeroRTT = zeroRTT
-        other.mtu = mtu
-        other.udpRelayMode = udpRelayMode
-        other.congestionController = congestionController
-        other.ech = ech
-        other.echConfig = echConfig
-        other.idleTimeout = idleTimeout
-        other.keepAlivePeriod = keepAlivePeriod
-        other.streamReceiveWindow = streamReceiveWindow
-        other.connectionReceiveWindow = connectionReceiveWindow
-        other.maxConcurrentStreams = maxConcurrentStreams
-        other.initialPacketSize = initialPacketSize
-        other.disablePathMtuDiscovery = disablePathMtuDiscovery
+        if (allowInsecure) other.allowInsecure = true
+        if (disableSNI) other.disableSNI = true
+        if (zeroRTT) other.zeroRTT = true
+        if (mtu != 1400 && other.mtu == 1400) other.mtu = mtu
+        if (udpRelayMode != "native" && other.udpRelayMode == "native") other.udpRelayMode = udpRelayMode
+        if (congestionController != "cubic" && other.congestionController == "cubic") {
+            other.congestionController = congestionController
+        }
+        if (ech) other.ech = true
+        if (echConfig.isNotBlank() && other.echConfig.isBlank()) other.echConfig = echConfig
+        if (idleTimeout.isNotBlank() && other.idleTimeout.isBlank()) other.idleTimeout = idleTimeout
+        if (keepAlivePeriod.isNotBlank() && other.keepAlivePeriod.isBlank()) other.keepAlivePeriod = keepAlivePeriod
+        if (streamReceiveWindow != 0 && other.streamReceiveWindow == 0) {
+            other.streamReceiveWindow = streamReceiveWindow
+        }
+        if (connectionReceiveWindow != 0 && other.connectionReceiveWindow == 0) {
+            other.connectionReceiveWindow = connectionReceiveWindow
+        }
+        if (maxConcurrentStreams != 0 && other.maxConcurrentStreams == 0) {
+            other.maxConcurrentStreams = maxConcurrentStreams
+        }
+        if (initialPacketSize != 0 && other.initialPacketSize == 0) {
+            other.initialPacketSize = initialPacketSize
+        }
+        if (disablePathMtuDiscovery) other.disablePathMtuDiscovery = true
     }
 
     override val defaultPort get() = 443

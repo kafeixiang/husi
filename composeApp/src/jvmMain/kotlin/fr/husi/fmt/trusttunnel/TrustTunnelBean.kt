@@ -117,15 +117,21 @@ class TrustTunnelBean : AbstractBean() {
 
     override fun applyFeatureSettings(other: AbstractBean) {
         if (other !is TrustTunnelBean) return
-        other.allowInsecure = allowInsecure
-        other.utlsFingerprint = utlsFingerprint
-        other.ech = ech
-        other.echConfig = echConfig
-        other.tlsFragment = tlsFragment
-        other.tlsFragmentFallbackDelay = tlsFragmentFallbackDelay
-        other.tlsRecordFragment = tlsRecordFragment
-        other.healthCheck = healthCheck
-        other.quicCongestionControl = quicCongestionControl
+        if (allowInsecure) other.allowInsecure = true
+        if (utlsFingerprint.isNotBlank() && other.utlsFingerprint.isBlank()) {
+            other.utlsFingerprint = utlsFingerprint
+        }
+        if (ech) other.ech = true
+        if (echConfig.isNotBlank() && other.echConfig.isBlank()) other.echConfig = echConfig
+        if (tlsFragment) other.tlsFragment = true
+        if (tlsFragmentFallbackDelay.isNotBlank() && other.tlsFragmentFallbackDelay.isBlank()) {
+            other.tlsFragmentFallbackDelay = tlsFragmentFallbackDelay
+        }
+        if (tlsRecordFragment) other.tlsRecordFragment = true
+        if (healthCheck) other.healthCheck = true
+        if (quicCongestionControl != "bbr" && other.quicCongestionControl == "bbr") {
+            other.quicCongestionControl = quicCongestionControl
+        }
     }
 
     override val defaultPort get() = 443

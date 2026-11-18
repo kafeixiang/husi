@@ -181,19 +181,29 @@ class AnyTLSBean : AbstractBean() {
 
     override fun applyFeatureSettings(other: AbstractBean) {
         if (other !is AnyTLSBean) return
-        other.allowInsecure = allowInsecure
-        other.disableSNI = disableSNI
-        other.utlsFingerprint = utlsFingerprint
-        other.ech = ech
-        other.echConfig = echConfig
-        other.tlsFragment = tlsFragment
-        other.tlsFragmentFallbackDelay = tlsFragmentFallbackDelay
-        other.tlsRecordFragment = tlsRecordFragment
-        other.idleSessionCheckInterval = idleSessionCheckInterval
-        other.idleSessionTimeout = idleSessionTimeout
-        other.minIdleSession = minIdleSession
-        other.disableReuse = disableReuse
-        other.clientMetadata = clientMetadata
+        if (allowInsecure) other.allowInsecure = true
+        if (disableSNI) other.disableSNI = true
+        if (utlsFingerprint.isNotBlank() && other.utlsFingerprint.isBlank()) {
+            other.utlsFingerprint = utlsFingerprint
+        }
+        if (ech) other.ech = true
+        if (echConfig.isNotBlank() && other.echConfig.isBlank()) other.echConfig = echConfig
+        if (tlsFragment) other.tlsFragment = true
+        if (tlsFragmentFallbackDelay != "500ms" && other.tlsFragmentFallbackDelay == "500ms") {
+            other.tlsFragmentFallbackDelay = tlsFragmentFallbackDelay
+        }
+        if (tlsRecordFragment) other.tlsRecordFragment = true
+        if (idleSessionCheckInterval != "30s" && other.idleSessionCheckInterval == "30s") {
+            other.idleSessionCheckInterval = idleSessionCheckInterval
+        }
+        if (idleSessionTimeout != "30s" && other.idleSessionTimeout == "30s") {
+            other.idleSessionTimeout = idleSessionTimeout
+        }
+        if (minIdleSession != 0 && other.minIdleSession == 0) other.minIdleSession = minIdleSession
+        if (disableReuse) other.disableReuse = true
+        if (clientMetadata.isNotBlank() && other.clientMetadata.isBlank()) {
+            other.clientMetadata = clientMetadata
+        }
     }
 
     override val defaultPort get() = 443

@@ -245,15 +245,23 @@ abstract class StandardV2RayBean : AbstractBean() {
 
     override fun applyFeatureSettings(other: AbstractBean) {
         if (other !is StandardV2RayBean) return
-        other.allowInsecure = allowInsecure
-        other.disableSNI = disableSNI
-        other.utlsFingerprint = utlsFingerprint
-        other.packetEncoding = packetEncoding
-        other.ech = ech
-        other.echConfig = echConfig
-        other.fragment = fragment
-        other.fragmentFallbackDelay = fragmentFallbackDelay
-        other.recordFragment = recordFragment
+        if (allowInsecure) other.allowInsecure = true
+        if (disableSNI) other.disableSNI = true
+        if (utlsFingerprint.isNotBlank() && other.utlsFingerprint.isBlank()) {
+            other.utlsFingerprint = utlsFingerprint
+        }
+        if (packetEncoding != 0 && other.packetEncoding == 0) {
+            other.packetEncoding = packetEncoding
+        }
+        if (ech) other.ech = true
+        if (echConfig.isNotBlank() && other.echConfig.isBlank()) {
+            other.echConfig = echConfig
+        }
+        if (fragment) other.fragment = true
+        if (fragmentFallbackDelay.isNotBlank() && other.fragmentFallbackDelay.isBlank()) {
+            other.fragmentFallbackDelay = fragmentFallbackDelay
+        }
+        if (recordFragment) other.recordFragment = true
     }
 
     protected fun validateTLSSettings(
