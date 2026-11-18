@@ -97,7 +97,10 @@ fun parseClashConfig(text: String): List<AbstractBean>? {
         is Map<*, *> -> {
             @Suppress("UNCHECKED_CAST")
             val map = parsedObj as Map<String, Any?>
-            val rawProxies = map["proxies"] ?: map["Proxy"] ?: map["outbounds"]
+            if (map.containsKey("outbounds") || map.containsKey("endpoints")) {
+                return null
+            }
+            val rawProxies = map["proxies"] ?: map["Proxy"]
             if (rawProxies is List<*>) {
                 for (item in rawProxies) {
                     if (item is Map<*, *>) {
@@ -105,7 +108,7 @@ fun parseClashConfig(text: String): List<AbstractBean>? {
                         proxyMaps.add(item as Map<String, Any?>)
                     }
                 }
-            } else if (map.containsKey("type") && (map.containsKey("server") || map.containsKey("host"))) {
+            } else if (map.containsKey("type") && (map.containsKey("server") || map.containsKey("host")) && !looksLikeSingBoxOutbound(map)) {
                 proxyMaps.add(map)
             }
         }
@@ -113,7 +116,9 @@ fun parseClashConfig(text: String): List<AbstractBean>? {
             for (item in parsedObj) {
                 if (item is Map<*, *>) {
                     @Suppress("UNCHECKED_CAST")
-                    proxyMaps.add(item as Map<String, Any?>)
+                    val map = item as Map<String, Any?>
+                    if (looksLikeSingBoxOutbound(map)) return null
+                    proxyMaps.add(map)
                 }
             }
         }
@@ -123,6 +128,12 @@ fun parseClashConfig(text: String): List<AbstractBean>? {
 
     val beans = proxyMaps.mapNotNull { parseClashProxy(it) }
     return beans.ifEmpty { null }
+}
+
+private fun looksLikeSingBoxOutbound(map: Map<String, Any?>): Boolean {
+    if (map.containsKey("server_port") || map.containsKey("server_ports")) return true
+    if (map["tls"] is Map<*, *> || map["transport"] is Map<*, *>) return true
+    return false
 }
 
 fun parseClashProxy(map: Map<String, Any?>): AbstractBean? {
