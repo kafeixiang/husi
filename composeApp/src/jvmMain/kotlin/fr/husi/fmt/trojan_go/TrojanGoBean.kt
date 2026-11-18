@@ -104,13 +104,13 @@ class TrojanGoBean : AbstractBean() {
 
     override fun applyFeatureSettings(other: AbstractBean) {
         if (other !is TrojanGoBean) return
-        other.allowInsecure = allowInsecure
-        other.mux = mux
-        other.udp = udp
-        other.plugin = plugin
-        other.fingerprint = fingerprint
-        other.alpn = alpn
-        other.tcpFastOpen = tcpFastOpen
+        if (allowInsecure) other.allowInsecure = true
+        if (mux) other.mux = true
+        if (!udp) other.udp = false
+        if (plugin.isNotBlank() && other.plugin.isBlank()) other.plugin = plugin
+        if (fingerprint.isNotBlank() && other.fingerprint.isBlank()) other.fingerprint = fingerprint
+        if (alpn.isNotBlank() && other.alpn.isBlank()) other.alpn = alpn
+        if (tcpFastOpen) other.tcpFastOpen = true
     }
 
     override fun clone(): TrojanGoBean {

@@ -346,6 +346,23 @@ class HysteriaFmtTest : HusiKoinTest() {
     }
 
     @Test
+    fun `applyFeatureSettings should not overwrite incoming allowInsecure with false`() {
+        val existing = HysteriaBean().apply {
+            allowInsecure = false
+            hopInterval = "10s"
+        }
+        val incoming = HysteriaBean().apply {
+            allowInsecure = true
+            hopInterval = "30s"
+        }
+
+        existing.applyFeatureSettings(incoming)
+
+        assertTrue(incoming.allowInsecure)
+        assertEquals("30s", incoming.hopInterval)
+    }
+
+    @Test
     fun `parseHysteria2 should read obfs type from query`() {
         val bean = parseHysteria2(
             "hysteria2://secret@example.com:9443/?sni=sni.example.com&obfs=gecko&obfs-password=pwd",

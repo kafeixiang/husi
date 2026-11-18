@@ -444,4 +444,41 @@ class V2RayFmtTest {
         assertEquals("test-uuid", bean.uuid)
         assertEquals("xtls-rprx-vision", bean.flow)
     }
+
+    @Test
+    fun `applyFeatureSettings should not overwrite incoming subscription defaults`() {
+        val existing = VLESSBean().apply {
+            allowInsecure = false
+            utlsFingerprint = ""
+        }
+        val incoming = VLESSBean().apply {
+            allowInsecure = true
+            utlsFingerprint = "chrome"
+            ech = true
+            echConfig = "ech-cfg"
+        }
+
+        existing.applyFeatureSettings(incoming)
+
+        assertTrue(incoming.allowInsecure)
+        assertEquals("chrome", incoming.utlsFingerprint)
+        assertTrue(incoming.ech)
+        assertEquals("ech-cfg", incoming.echConfig)
+    }
+
+    @Test
+    fun `applyFeatureSettings should preserve custom overrides when incoming is unset`() {
+        val existing = VLESSBean().apply {
+            allowInsecure = true
+            utlsFingerprint = "firefox"
+            fragment = true
+        }
+        val incoming = VLESSBean()
+
+        existing.applyFeatureSettings(incoming)
+
+        assertTrue(incoming.allowInsecure)
+        assertEquals("firefox", incoming.utlsFingerprint)
+        assertTrue(incoming.fragment)
+    }
 }
