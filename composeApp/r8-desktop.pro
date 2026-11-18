@@ -31,6 +31,9 @@
 -keep class <1> {
     *;
 }
+# ComposeNativeTray invokes nested JNI callback interfaces (e.g. MacNativeBridge$ThemeChangeCallback)
+# by name from libMacTray.dylib.
+-keep class dev.nucleusframework.composenativetray.lib.** { *; }
 
 -keep class com.sun.jna.** { *; }
 -keep class * implements com.sun.jna.** { *; }
@@ -65,6 +68,9 @@
 -dontwarn java.beans.VetoableChangeSupport
 -dontwarn java.beans.PropertyVetoException
 -dontwarn kotlinx.parcelize.Parcelize
+-dontwarn android.os.Parcel
+-dontwarn android.os.Parcelable
+-dontwarn android.os.Parcelable$Creator
 -dontwarn com.oracle.svm.core.annotate.**
 -dontwarn com.github.ajalt.mordant.terminal.terminalinterface.ffm.**
 -dontwarn com.github.ajalt.mordant.terminal.terminalinterface.nativeimage.**
