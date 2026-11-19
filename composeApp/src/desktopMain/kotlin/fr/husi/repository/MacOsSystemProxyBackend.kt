@@ -147,6 +147,18 @@ internal fun selectTargetNetworkServices(
     return services.map { it.name }.distinct()
 }
 
+internal fun isVirtualNetworkDevice(name: String): Boolean {
+    val lower = name.lowercase()
+    return lower.startsWith("utun") ||
+        lower.startsWith("tun") ||
+        lower.startsWith("tap") ||
+        lower.startsWith("ppp") ||
+        lower.startsWith("ipsec") ||
+        lower.startsWith("awdl") ||
+        lower.startsWith("llw") ||
+        lower.startsWith("p2p")
+}
+
 /** Returns BSD names of up, non-loopback network interfaces holding at least one routable address. */
 internal fun detectActiveNetworkDevices(): Set<String> {
     val interfaces = runCatching { NetworkInterface.getNetworkInterfaces() }.getOrNull() ?: return emptySet()
@@ -154,6 +166,7 @@ internal fun detectActiveNetworkDevices(): Set<String> {
     while (interfaces.hasMoreElements()) {
         val networkInterface = interfaces.nextElement()
         val name = networkInterface.name ?: continue
+        if (isVirtualNetworkDevice(name)) continue
         val active = runCatching {
             networkInterface.isUp &&
                 !networkInterface.isLoopback &&

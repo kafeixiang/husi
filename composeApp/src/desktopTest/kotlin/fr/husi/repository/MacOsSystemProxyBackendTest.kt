@@ -334,6 +334,19 @@ class MacOsSystemProxyBackendTest {
     }
 
     @Test
+    fun `isVirtualNetworkDevice identifies VPN and tunnel interfaces`() {
+        assertTrue(isVirtualNetworkDevice("utun0"))
+        assertTrue(isVirtualNetworkDevice("utun2"))
+        assertTrue(isVirtualNetworkDevice("tun0"))
+        assertTrue(isVirtualNetworkDevice("tap0"))
+        assertTrue(isVirtualNetworkDevice("ppp0"))
+        assertTrue(isVirtualNetworkDevice("awdl0"))
+        assertFalse(isVirtualNetworkDevice("en0"))
+        assertFalse(isVirtualNetworkDevice("en5"))
+        assertFalse(isVirtualNetworkDevice("bridge0"))
+    }
+
+    @Test
     fun `networksetupDisableArgs turns every proxy kind off`() {
         assertEquals(
             listOf(
