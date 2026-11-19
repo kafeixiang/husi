@@ -75,6 +75,7 @@ import java.io.RandomAccessFile
 import java.nio.file.Path
 import javax.swing.JOptionPane
 import javax.swing.JTextArea
+import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.system.exitProcess
 import kotlin.time.Duration.Companion.seconds
@@ -251,6 +252,13 @@ class DesktopMain(
                     repository.releaseCoreRunDir()
                 }
                 exitApplication()
+            }
+
+            LaunchedEffect(Unit) {
+                registerMacOSAppHandlers(
+                    onReopen = openWindow,
+                    onQuit = ::exitGracefully,
+                )
             }
 
             val leaveWindow: () -> Unit = if (noTray) {
@@ -615,6 +623,32 @@ private fun requestMacOsForeground() {
         }
     } catch (e: Exception) {
         Logs.w("request macOS foreground activation", e)
+    }
+}
+
+private fun registerMacOSAppHandlers(
+    onReopen: () -> Unit,
+    onQuit: () -> Unit,
+) {
+    if (!PlatformInfo.isMacOs) return
+    try {
+        if (!Desktop.isDesktopSupported()) return
+        val desktop = Desktop.getDesktop()
+        runCatching {
+            desktop.addAppEventListener(java.awt.desktop.AppReopenedListener {
+                SwingUtilities.invokeLater(onReopen)
+            })
+        }
+        if (desktop.isSupported(Desktop.Action.APP_QUIT_HANDLER)) {
+            desktop.setQuitHandler { _, response ->
+                SwingUtilities.invokeLater {
+                    onQuit()
+                    response.performQuit()
+                }
+            }
+        }
+    } catch (e: Exception) {
+        Logs.w("register macOS app handlers", e)
     }
 }
 
