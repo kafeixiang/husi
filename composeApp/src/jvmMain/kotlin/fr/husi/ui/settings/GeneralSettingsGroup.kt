@@ -99,7 +99,7 @@ internal fun GeneralSettingsGroup(
     val themedTopBarValue by DataStore.themedTopBar.collectAsStateWithLifecycle()
     SwitchPreference(
         value = themedTopBarValue,
-        onValueChange = { DataStore.themedTopBar.setBlocking(it) },
+        onValueChange = { runOnIoDispatcher { DataStore.themedTopBar.set(it) } },
         title = { Text(stringResource(Res.string.themed_top_bar)) },
         icon = {
             MaskedIcon(
