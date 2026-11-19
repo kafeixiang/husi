@@ -74,3 +74,21 @@ class SagerDatabase_Migration_14_15 : AutoMigrationSpec
     ),
 )
 class SagerDatabase_Migration_22_23 : AutoMigrationSpec
+
+object SagerDatabase_Migration_25_26 : Migration(25, 26) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+        val columns = mutableSetOf<String>()
+        connection.prepare("PRAGMA table_info(`proxy_entities`)").use { statement ->
+            while (statement.step()) {
+                columns.add(statement.getText(1))
+            }
+        }
+        if (!columns.contains("ssrBean")) {
+            connection.execSQL("ALTER TABLE `proxy_entities` ADD COLUMN `ssrBean` BLOB DEFAULT NULL")
+        }
+        if (!columns.contains("trojanGoBean")) {
+            connection.execSQL("ALTER TABLE `proxy_entities` ADD COLUMN `trojanGoBean` BLOB DEFAULT NULL")
+        }
+    }
+}
+
