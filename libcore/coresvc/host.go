@@ -88,7 +88,7 @@ func NewHost(options HostOptions) (*Host, error) {
 		Context:          options.Context,
 		Handler:          platformHandler{},
 		LogMaxLines:      logMaxLines,
-		OOMKillerEnabled: true,
+		OOMKillerEnabled: C.IsAndroid || C.IsIos,
 	})
 	h := &Host{
 		ctx:                      options.Context,
