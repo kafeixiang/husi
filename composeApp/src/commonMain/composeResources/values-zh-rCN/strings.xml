@@ -17,12 +17,6 @@
     <string name="server_address">服务器</string>
     <string name="password">密码</string>
     <string name="protocol">协议</string>
-    <string name="protocol_param">协议参数</string>
-    <string name="obfs">混淆</string>
-    <string name="obfs_param">混淆参数</string>
-    <string name="uuid">用户ID</string>
-    <string name="alter_id">替代 ID</string>
-    <string name="security">传输层加密</string>
     <string name="network">传输协议</string>
     <string name="search">搜索</string>
     <string name="stop">停止</string>
@@ -47,8 +41,6 @@
     <string name="version_x">版本 (%1$s)</string>
     <string name="reset">重置</string>
     <string name="theme">主题颜色</string>
-    <string name="themed_top_bar">浮光跃彩</string>
-    <string name="themed_top_bar_summary">让顶部工具栏随主题灵动起舞</string>
     <string name="themes_amber">寒松凝液</string>
     <string name="themes_black">飞鸿踏雪</string>
     <string name="themes_blue">雨浥轻尘</string>
@@ -196,12 +188,6 @@
     <string name="connection_empty_search">没有匹配的连接</string>
     <string name="connection_empty_no_status">未选择连接状态</string>
     <string name="can_not_be_empty">不能为空</string>
-    <string name="juicity_provider">Juicity 提供程序</string>
-    <string name="mieru_provider">Mieru 提供程序</string>
-    <string name="handshake_mode">握手模式</string>
-    <string name="action_format">格式化</string>
-    <string name="action_test_config">测试配置</string>
-    <string name="mutual_tls">双向 TLS</string>
     <string name="menu">菜单</string>
     <string name="more">更多</string>
     <string name="back">返回</string>
@@ -325,5 +311,12 @@
     <plurals name="taildrop_received_notification">
         <item quantity="other">收到 %1$d 个文件</item>
     </plurals>
+    <string name="protocol_param">协议参数</string>
+    <string name="obfs">混淆</string>
+    <string name="obfs_param">混淆参数</string>
+    <string name="themed_top_bar">浮光跃彩</string>
+    <string name="themed_top_bar_summary">让顶部工具栏随主题灵动起舞</string>
+    <string name="mieru_provider">Mieru 提供程序</string>
+    <string name="handshake_mode">握手模式</string>
     <string name="udp">UDP 转发</string>
 </resources>
