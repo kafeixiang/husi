@@ -60,7 +60,6 @@ import fr.husi.resources.build_environment
 import fr.husi.resources.arrow_back
 import fr.husi.resources.back
 import fr.husi.resources.copy_success
-import fr.husi.resources.data_usage
 import fr.husi.resources.gavel
 import fr.husi.resources.husi_app_icon
 import fr.husi.resources.ignore_battery_optimizations

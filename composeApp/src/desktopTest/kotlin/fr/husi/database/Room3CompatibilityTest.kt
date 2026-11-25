@@ -134,6 +134,7 @@ class Room3CompatibilityTest {
                 )
             }
             fun open() = Room.databaseBuilder<SagerDatabase>(file.absolutePath)
+                .addMigrations(SagerDatabase_Migration_25_26)
                 .setDriver(BundledSQLiteDriver())
                 .build()
             val database = open()
