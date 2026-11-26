@@ -75,20 +75,35 @@ class SagerDatabase_Migration_14_15 : AutoMigrationSpec
 )
 class SagerDatabase_Migration_22_23 : AutoMigrationSpec
 
-object SagerDatabase_Migration_25_26 : Migration(25, 26) {
+private val FORK_PROXY_ENTITY_COLUMNS = listOf(
+    "ssrBean",
+    "trojanGoBean",
+    "customPluginBean",
+)
+
+private suspend fun ensureForkProxyEntityColumns(connection: SQLiteConnection) {
+    val existing = mutableSetOf<String>()
+    connection.prepare("PRAGMA table_info(`proxy_entities`)").use { statement ->
+        while (statement.step()) {
+            existing.add(statement.getText(1))
+        }
+    }
+    for (column in FORK_PROXY_ENTITY_COLUMNS) {
+        if (column !in existing) {
+            connection.execSQL("ALTER TABLE `proxy_entities` ADD COLUMN `$column` BLOB DEFAULT NULL")
+        }
+    }
+}
+
+object SagerDatabase_Migration_25_27 : Migration(25, 27) {
     override suspend fun migrate(connection: SQLiteConnection) {
-        val columns = mutableSetOf<String>()
-        connection.prepare("PRAGMA table_info(`proxy_entities`)").use { statement ->
-            while (statement.step()) {
-                columns.add(statement.getText(1))
-            }
-        }
-        if (!columns.contains("ssrBean")) {
-            connection.execSQL("ALTER TABLE `proxy_entities` ADD COLUMN `ssrBean` BLOB DEFAULT NULL")
-        }
-        if (!columns.contains("trojanGoBean")) {
-            connection.execSQL("ALTER TABLE `proxy_entities` ADD COLUMN `trojanGoBean` BLOB DEFAULT NULL")
-        }
+        ensureForkProxyEntityColumns(connection)
+    }
+}
+
+object SagerDatabase_Migration_26_27 : Migration(26, 27) {
+    override suspend fun migrate(connection: SQLiteConnection) {
+        ensureForkProxyEntityColumns(connection)
     }
 }
 

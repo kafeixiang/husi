@@ -107,34 +107,49 @@ class Room3CompatibilityTest {
         }
     }
 
+    private fun createDatabaseFromSchemaJson(
+        file: File,
+        schemaFile: String,
+        version: Int,
+        beforeSetVersion: (androidx.sqlite.SQLiteConnection) -> Unit = {},
+    ) {
+        val schema = Json.parseToJsonElement(
+            File(schemaFile).readText(),
+        ).jsonObject.getValue("database").jsonObject
+        BundledSQLiteDriver().open(file.absolutePath).use { connection ->
+            for (item in schema.getValue("entities").jsonArray) {
+                val entity = item.jsonObject
+                val table = entity.getValue("tableName").jsonPrimitive.content
+                connection.execSQL(entity.getValue("createSql").jsonPrimitive.content.replace($$"${TABLE_NAME}", table))
+                for (index in entity["indices"]?.jsonArray.orEmpty()) {
+                    connection.execSQL(index.jsonObject.getValue("createSql").jsonPrimitive.content.replace($$"${TABLE_NAME}", table))
+                }
+            }
+            for (query in schema.getValue("setupQueries").jsonArray) {
+                connection.execSQL(query.jsonPrimitive.content)
+            }
+            beforeSetVersion(connection)
+            connection.execSQL("PRAGMA user_version = $version")
+        }
+    }
+
     @Test
     fun `room 3 opens the existing version 25 schema and preserves remote servers`() = runBlocking {
         val directory = createTempDirectory("husi-room3-").toFile()
         val file = directory.resolve("profiles.db")
         try {
-            val schema = Json.parseToJsonElement(
-                File("schemas/fr.husi.database.SagerDatabase/25.json").readText(),
-            ).jsonObject.getValue("database").jsonObject
-            BundledSQLiteDriver().open(file.absolutePath).use { connection ->
-                for (item in schema.getValue("entities").jsonArray) {
-                    val entity = item.jsonObject
-                    val table = entity.getValue("tableName").jsonPrimitive.content
-                    connection.execSQL(entity.getValue("createSql").jsonPrimitive.content.replace($$"${TABLE_NAME}", table))
-                    for (index in entity["indices"]?.jsonArray.orEmpty()) {
-                        connection.execSQL(index.jsonObject.getValue("createSql").jsonPrimitive.content.replace($$"${TABLE_NAME}", table))
-                    }
-                }
-                for (query in schema.getValue("setupQueries").jsonArray) {
-                    connection.execSQL(query.jsonPrimitive.content)
-                }
-                connection.execSQL("PRAGMA user_version = 25")
+            createDatabaseFromSchemaJson(
+                file = file,
+                schemaFile = "schemas/fr.husi.database.SagerDatabase/25.json",
+                version = 25,
+            ) { connection ->
                 connection.execSQL(
                     "INSERT INTO remote_servers (id, userOrder, name, url, secret) " +
                         "VALUES (7, 3, 'existing', 'https://example.com', 'saved-token')",
                 )
             }
             fun open() = Room.databaseBuilder<SagerDatabase>(file.absolutePath)
-                .addMigrations(SagerDatabase_Migration_25_26)
+                .addMigrations(SagerDatabase_Migration_25_27, SagerDatabase_Migration_26_27)
                 .setDriver(BundledSQLiteDriver())
                 .build()
             val database = open()
@@ -157,5 +172,42 @@ class Room3CompatibilityTest {
         } finally {
             directory.deleteRecursively()
         }
+    }
+
+    @Test
+    fun `room 3 migrates both upstream v26 and fork v26 schemas to v27`() = runBlocking {
+        suspend fun verifyMigration(schemaFile: String, addForkColumnsBeforeOpen: Boolean) {
+            val directory = createTempDirectory("husi-room3-v26-").toFile()
+            val file = directory.resolve("profiles.db")
+            try {
+                createDatabaseFromSchemaJson(
+                    file = file,
+                    schemaFile = schemaFile,
+                    version = 26,
+                ) { connection ->
+                    if (addForkColumnsBeforeOpen) {
+                        connection.execSQL("ALTER TABLE `proxy_entities` ADD COLUMN `ssrBean` BLOB DEFAULT NULL")
+                        connection.execSQL("ALTER TABLE `proxy_entities` ADD COLUMN `trojanGoBean` BLOB DEFAULT NULL")
+                    }
+                    connection.execSQL(
+                        "INSERT INTO remote_servers (id, userOrder, name, url, secret) " +
+                            "VALUES (9, 1, 'v26', 'https://example.com', 'tok')",
+                    )
+                }
+                val database = Room.databaseBuilder<SagerDatabase>(file.absolutePath)
+                    .addMigrations(SagerDatabase_Migration_25_27, SagerDatabase_Migration_26_27)
+                    .setDriver(BundledSQLiteDriver())
+                    .build()
+                try {
+                    assertEquals("tok", database.remoteServerDao().getById(9L)?.secret)
+                } finally {
+                    database.close()
+                }
+            } finally {
+                directory.deleteRecursively()
+            }
+        }
+        verifyMigration("schemas/fr.husi.database.SagerDatabase/26.json", addForkColumnsBeforeOpen = false)
+        verifyMigration("schemas/fr.husi.database.SagerDatabase/25.json", addForkColumnsBeforeOpen = true)
     }
 }

@@ -21,7 +21,8 @@ internal actual object SagerDatabaseProvider {
                 SagerDatabase_Migration_3_4,
                 SagerDatabase_Migration_4_5,
                 SagerDatabase_Migration_6_7,
-                SagerDatabase_Migration_25_26,
+                SagerDatabase_Migration_25_27,
+                SagerDatabase_Migration_26_27,
             )
             .setDriver(BundledSQLiteDriver())
             .setQueryCoroutineContext(Dispatchers.IO)
