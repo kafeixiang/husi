@@ -93,9 +93,18 @@ jobs:
           source buildScript/init/version.sh
           echo "go_version=$GO_VERSION" >> $GITHUB_OUTPUT
           echo "ZIG_VERSION=$ZIG_VERSION" >> $GITHUB_ENV
+          echo "NFPM_VERSION=$NFPM_VERSION" >> $GITHUB_ENV
+
+      - name: Cache nfpm
+        id: cache-nfpm
+        if: matrix.platform == 'windows'
+        uses: actions/cache@v6
+        with:
+          path: ~/go/bin/nfpm
+          key: nfpm-${{ runner.os }}-${{ runner.arch }}-${{ env.NFPM_VERSION }}
 
       - name: Install Golang
-        if: steps.verify_libcore.outputs.ready != 'true'
+        if: steps.verify_libcore.outputs.ready != 'true' || (matrix.platform == 'windows' && steps.cache-nfpm.outputs.cache-hit != 'true')
         uses: actions/setup-go@v6
         with:
           go-version: ${{ steps.version.outputs.go_version }}
@@ -122,8 +131,14 @@ jobs:
           if [ "${{ matrix.platform }}" = "macos" ]; then
             sudo apt-get install -y xorriso zstd libarchive-tools
           else
-            sudo apt-get install -y nsis python3
+            sudo apt-get install -y python3
+            mkdir -p "$HOME/go/bin"
+            echo "$HOME/go/bin" >> "$GITHUB_PATH"
           fi
+
+      - name: Install nfpm
+        if: matrix.platform == 'windows' && steps.cache-nfpm.outputs.cache-hit != 'true'
+        run: GOBIN="$HOME/go/bin" go install "github.com/goreleaser/nfpm/v2/cmd/nfpm@v${NFPM_VERSION}"
 
       - name: Build Assets
         run: make assets
@@ -213,7 +228,7 @@ jobs:
           make desktop_package_windows DESKTOP_TARGET=windows/${{ matrix.arch }}
           if [[ -n "${{ env.FILE_SUFFIX }}" ]]; then
             find composeApp/build/compose/packages/windows -name "*.zip" -exec bash -c 'mv "$1" "${1%.zip}$FILE_SUFFIX.zip"' _ {} \;
-            find composeApp/build/compose/packages/windows -name "*-installer.exe" -exec bash -c 'mv "$1" "${1%-installer.exe}$FILE_SUFFIX-installer.exe"' _ {} \;
+            find composeApp/build/compose/packages/windows -name "*.msi" -exec bash -c 'mv "$1" "${1%.msi}$FILE_SUFFIX.msi"' _ {} \;
           fi
 
       - name: Upload Artifacts
@@ -231,12 +246,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          shopt -s nullglob
           if [ "${{ matrix.platform }}" = "macos" ]; then
             FILES=(composeApp/build/compose/packages/macos/*.dmg)
             NOTES=$'# :memo: Release Notes (macOS)\n\n* Fixes and improvements.\n* Build for ${{ matrix.arch }}.\n\n> **注意 / Note:**\n> 如果应用提示损坏或闪退，请在终端执行：\n> `sudo xattr -cr /Applications/Husi.app` \n> `codesign --force --deep -s - /Applications/Husi.app`'
           else
-            FILES=(composeApp/build/compose/packages/windows/*.exe composeApp/build/compose/packages/windows/*.zip)
+            FILES=(composeApp/build/compose/packages/windows/*.msi composeApp/build/compose/packages/windows/*.zip)
             NOTES=$'# :memo: Release Notes (Windows)\n\n* Fixes and improvements.\n* Build for ${{ matrix.arch }}.'
+          fi
+          if [ ${#FILES[@]} -eq 0 ]; then
+            echo "No release files found." >&2
+            exit 1
           fi
 
           gh release create "${{ env.RELEASE_TAG }}" --title "${{ env.RELEASE_TAG }}" --prerelease --notes "$NOTES" 2>/dev/null || true
